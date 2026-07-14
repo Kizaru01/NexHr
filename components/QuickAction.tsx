@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { quickActions } from "@/constants/dashboard-static";
-import Image from "next/image";
 
 export default function QuickActions() {
   return (
