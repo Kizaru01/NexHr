@@ -1,12 +1,19 @@
 import z from "zod";
 
+const objectIdSchema = (field: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${field} is required`)
+    .regex(/^[a-f\d]{24}$/i, `${field} must be a valid ObjectId`);
+
 export const CreateEmployeeSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required."),
   firstName: z.string().trim().min(1, "First name is required."),
   middleName: z.string().trim().optional(),
   lastName: z.string().trim().min(1, "Last name is required."),
-  department: z.string().min(1, "Department is required."),
-  position: z.string().min(1, "Position is required."),
+  department: objectIdSchema("Department"),
+  position: objectIdSchema("Position"),
   hireDate: z.date({
     error: "Hire date is required.",
   }),
@@ -21,7 +28,7 @@ export const CreateEmployeeSchema = z.object({
     basic: z.number().positive("Basic salary must be greater than 0."),
     allowance: z.number().min(0, "Allowance cannot be negative.").optional(),
   }),
-  manager: z.string().optional(),
+  manager: objectIdSchema("Manager").optional(),
   notes: z
     .string()
     .trim()
@@ -75,20 +82,20 @@ export const personalInformationSchema = z.object({
   email: z.string().trim().email("Invalid email address"),
   phone: z.string().trim().optional(),
   birthDate: z.coerce.date().optional(),
-  gender: genderEnum.optional(),
+  gender: genderEnum,
   avatar: z.string().trim().url("Invalid avatar URL").optional(),
 });
 
 // ---- Employment information ----
 export const employmentInformationSchema = z.object({
-  department: z.string().min(1, "Department is required"),
-  position: z.string().min(1, "Position is required"),
-  hireDate: z.date({
+  department: objectIdSchema("Department"),
+  position: objectIdSchema("Position"),
+  hireDate: z.coerce.date({
     error: "Hire date is required.",
   }),
   employmentType: employmentTypeEnum,
   employmentStatus: employmentStatusEnum.optional(),
-  manager: z.string().optional(),
+  manager: objectIdSchema("Manager").optional(),
   notes: z.string().trim().optional(),
 });
 

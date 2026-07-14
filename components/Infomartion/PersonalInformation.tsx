@@ -95,7 +95,11 @@ export function PersonalInformation() {
                 id="birthDate"
                 type="date"
                 aria-invalid={fieldState.invalid}
-                onChange={field.onChange}
+                onChange={(e) =>
+                  field.onChange(
+                    e.target.value ? new Date(e.target.value) : undefined
+                  )
+                }
                 value={formatDate(field.value)}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

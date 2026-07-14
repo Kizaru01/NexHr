@@ -12,36 +12,68 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import ControllerForm from "../Forms/ControllerForm";
 import {
-  departmentOptions,
   EMPLOYMENT_STATUS,
   EMPLOYMENT_TYPES,
-  managerOptions,
-  positionOptions,
+  formatDate,
 } from "@/utils";
-import { EmployeeFormValues } from "../Forms/EmployeeForm";
+import type {
+  EmployeeFormValues,
+  EmployeeSelectOption,
+} from "../Forms/EmployeeForm";
 
-export function EmploymentInformation() {
+type EmploymentInformationProps = {
+  departmentOptions: EmployeeSelectOption[];
+  positionOptions: EmployeeSelectOption[];
+  managerOptions: EmployeeSelectOption[];
+};
+
+export const EmploymentInformation = ({
+  departmentOptions,
+  positionOptions,
+  managerOptions,
+}: EmploymentInformationProps) => {
   const { control } = useFormContext<EmployeeFormValues>();
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Employment Information</h3>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ControllerForm
+        <Controller
           name="employeeId"
-          formControl={control}
-          placeholder="EMP-0001"
-          description="Employee must be unique across the company"
-          title="Employee Id"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="employeeId">Employee Id</FieldLabel>
+              <Input
+                {...field}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="EMP-0001"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
         />
-        <ControllerForm
+        <Controller
           name="hireDate"
-          formControl={control}
-          placeholder="EMP-0001"
-          title="Hire Date"
-          type="date"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="hireDate">Hire Date</FieldLabel>
+              <Input
+                {...field}
+                type="date"
+                value={field.value ? formatDate(field.value) : ""}
+                onChange={(e) =>
+                  field.onChange(
+                    e.target.value ? new Date(e.target.value) : undefined
+                  )
+                }
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
         />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -51,37 +83,32 @@ export function EmploymentInformation() {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="department">Department</FieldLabel>
-              {departmentOptions.length > 0 ? (
-                <Select
-                  name={field.name}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger
-                    id="department"
-                    aria-invalid={fieldState.invalid}
-                  >
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departmentOptions.map((department) => (
+              <Select
+                name={field.name}
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={departmentOptions.length === 0}
+              >
+                <SelectTrigger id="department" aria-invalid={fieldState.invalid}>
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departmentOptions.length === 0 ? (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                      No departments available
+                    </p>
+                  ) : (
+                    departmentOptions.map((department) => (
                       <SelectItem
-                        key={department.label}
+                        key={department.value}
                         value={department.value}
                       >
                         {department.label}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  {...field}
-                  id="department"
-                  aria-invalid={fieldState.invalid}
-                  placeholder="Department ID"
-                />
-              )}
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -93,34 +120,29 @@ export function EmploymentInformation() {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="position">Position</FieldLabel>
-              {positionOptions.length > 0 ? (
-                <Select
-                  name={field.name}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger
-                    id="position"
-                    aria-invalid={fieldState.invalid}
-                  >
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positionOptions.map((position) => (
-                      <SelectItem key={position.label} value={position.value}>
+              <Select
+                name={field.name}
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={positionOptions.length === 0}
+              >
+                <SelectTrigger id="position" aria-invalid={fieldState.invalid}>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  {positionOptions.length === 0 ? (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                      No positions available
+                    </p>
+                  ) : (
+                    positionOptions.map((position) => (
+                      <SelectItem key={position.value} value={position.value}>
                         {position.label}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  {...field}
-                  id="position"
-                  aria-invalid={fieldState.invalid}
-                  placeholder="Position ID"
-                />
-              )}
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -193,44 +215,51 @@ export function EmploymentInformation() {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="manager">Manager</FieldLabel>
-              {managerOptions.length > 0 ? (
-                <Select
-                  name={field.name}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger id="manager" aria-invalid={fieldState.invalid}>
-                    <SelectValue placeholder="Select manager" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {managerOptions.map((manager) => (
-                      <SelectItem key={manager.label} value={manager.value}>
+              <Select
+                name={field.name}
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={managerOptions.length === 0}
+              >
+                <SelectTrigger id="manager" aria-invalid={fieldState.invalid}>
+                  <SelectValue placeholder="Select manager (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {managerOptions.length === 0 ? (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                      No managers available
+                    </p>
+                  ) : (
+                    managerOptions.map((manager) => (
+                      <SelectItem key={manager.value} value={manager.value}>
                         {manager.label}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  {...field}
-                  id="manager"
-                  aria-invalid={fieldState.invalid}
-                  placeholder="Manager ID (optional)"
-                />
-              )}
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
       </div>
 
-      <ControllerForm
+      <Controller
         name="notes"
-        formControl={control}
-        placeholder="Any additional notes about this employee..."
-        row={3}
-        title="notes"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="notes">Notes</FieldLabel>
+            <Input
+              {...field}
+              type="textarea"
+              value={field.value}
+              onChange={field.onChange}
+            />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
       />
     </div>
   );
-}
+};

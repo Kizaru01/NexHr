@@ -35,15 +35,16 @@ const EMPLOYEES_PATH = "/employees";
 export async function createEmployee(
   params: CreateEmployeeInput
 ): Promise<ActionResponse<EmployeeDetail>> {
+  const validationResult = await action({
+    params,
+    schema: createEmployeeSchema,
+    roles: ["admin", "hr"],
+  });
+
+  const employeeParams = validationResult.params as CreateEmployeeInput;
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const validationResult = await action({
-      params,
-      schema: createEmployeeSchema,
-      roles: ["admin", "hr"],
-    });
-
-    const employeeParams = validationResult.params as CreateEmployeeInput;
-
     await assertEmployeeIdIsUnique(employeeParams.employeeId);
     await assertEmailIsUnique(employeeParams.email);
 

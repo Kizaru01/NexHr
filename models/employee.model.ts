@@ -2,7 +2,7 @@ import { Address } from "@/types/global";
 import { Document, Schema, model, models } from "mongoose";
 
 export interface IEmployee {
-  userId: Schema.Types.ObjectId;
+  userId?: Schema.Types.ObjectId;
   employeeId: string;
 
   // Personal Information
@@ -56,8 +56,8 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
       unique: true,
+      sparse: true,
     },
     employeeId: {
       type: String,

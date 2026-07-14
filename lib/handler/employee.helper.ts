@@ -1,5 +1,6 @@
 import Employee, { IEmployeeDoc } from "@/models/employee.model";
 import { EmployeeDetail, EmployeeListItem } from "@/types/global";
+import type { ClientSession } from "mongoose";
 import { ConflictError, NotFoundError } from "../http-errors";
 
 interface PopulatedRef {
@@ -38,9 +39,14 @@ export async function findEmployeeOrThrow(
 }
 
 export async function assertEmployeeIdIsUnique(
-  employeeId: string
+  employeeId: string,
+  session?: ClientSession
 ): Promise<void> {
-  const exists = await Employee.exists({ employeeId });
+  const query = Employee.exists({ employeeId });
+
+  if (session) query.session(session);
+
+  const exists = await query;
 
   if (exists) {
     throw new ConflictError(`Employee ID "${employeeId}" is already in use`);
@@ -49,12 +55,17 @@ export async function assertEmployeeIdIsUnique(
 
 export async function assertEmailIsUnique(
   email: string,
-  excludeEmployeeId?: string
+  excludeEmployeeId?: string,
+  session?: ClientSession
 ): Promise<void> {
-  const exists = await Employee.exists({
+  const query = Employee.exists({
     email,
     ...(excludeEmployeeId ? { employeeId: { $ne: excludeEmployeeId } } : {}),
   });
+
+  if (session) query.session(session);
+
+  const exists = await query;
 
   if (exists) {
     throw new ConflictError(`Email "${email}" is already in use`);

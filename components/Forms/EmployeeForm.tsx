@@ -21,26 +21,31 @@ import { createEmployeeSchema } from "@/validations/employee.schema";
 export type EmployeeFormValues = z.infer<typeof createEmployeeSchema>;
 type EmployeeFormInput = z.input<typeof createEmployeeSchema>;
 type EmployeeFormOutput = z.output<typeof createEmployeeSchema>;
+export type EmployeeSelectOption = {
+  value: string;
+  label: string;
+};
+
+type EmployeeFormProps = {
+  departmentOptions: EmployeeSelectOption[];
+  positionOptions: EmployeeSelectOption[];
+  managerOptions: EmployeeSelectOption[];
+};
+
 const DEFAULT_VALUES: Partial<EmployeeFormValues> = {
   employmentType: "Probationary",
   salary: { basic: 0, allowance: 0 },
 };
 
-// type Option = { id: string; name: string };
-
-// type EmployeeFormProps = {
-//   /** Departments fetched server-side, rendered as a select instead of a raw ID input. */
-//   departments?: Option[];
-//   /** Positions fetched server-side, rendered as a select instead of a raw ID input. */
-//   positions?: Option[];
-//   /** Existing employees eligible to be selected as a manager. */
-//   managers?: Option[];
-// };
-
-export default function EmployeeForm() {
+export default function EmployeeForm({
+  departmentOptions,
+  positionOptions,
+  managerOptions,
+}: EmployeeFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<EmployeeFormInput, any, EmployeeFormOutput>({
     resolver: zodResolver(createEmployeeSchema),
     defaultValues: DEFAULT_VALUES,
@@ -71,7 +76,11 @@ export default function EmployeeForm() {
 
         <Card>
           <CardContent className="pt-6">
-            <EmploymentInformation />
+            <EmploymentInformation
+              departmentOptions={departmentOptions}
+              positionOptions={positionOptions}
+              managerOptions={managerOptions}
+            />
           </CardContent>
         </Card>
 

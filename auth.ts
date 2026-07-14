@@ -3,6 +3,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import User from "./models/user.model";
 import { UserRole } from "./types/global";
+import connectToDatabase from "./database/mongodb";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -49,6 +50,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async jwt({ token }) {
       if (!token.email) return token;
+
+      await connectToDatabase();
 
       const user = await User.findOne({ email: token.email });
 

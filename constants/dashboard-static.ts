@@ -192,7 +192,7 @@ export const quickActions = [
     title: "Add Employee",
     description: "Register a new employee",
     icon: UserPlus,
-    href: "/employees/create",
+    href: "/employees/new",
   },
   {
     id: 2,
