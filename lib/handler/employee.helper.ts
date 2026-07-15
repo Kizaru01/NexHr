@@ -23,7 +23,7 @@ function refId(ref: unknown): string | undefined {
 }
 
 /** Fetches an employee by business `employeeId`, populated for display, or throws NotFoundError. */
-export async function findEmployeeOrThrow(
+export async function findEmployeeDetailOrThrow(
   employeeId: string
 ): Promise<IEmployeeDoc> {
   const employee = await Employee.findOne({ employeeId })
@@ -36,21 +36,6 @@ export async function findEmployeeOrThrow(
   }
 
   return employee;
-}
-
-export async function assertEmployeeIdIsUnique(
-  employeeId: string,
-  session?: ClientSession
-): Promise<void> {
-  const query = Employee.exists({ employeeId });
-
-  if (session) query.session(session);
-
-  const exists = await query;
-
-  if (exists) {
-    throw new ConflictError(`Employee ID "${employeeId}" is already in use`);
-  }
 }
 
 export async function assertEmailIsUnique(

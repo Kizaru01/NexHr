@@ -8,7 +8,7 @@ const objectIdSchema = (field: string) =>
     .regex(/^[a-f\d]{24}$/i, `${field} must be a valid ObjectId`);
 
 export const CreateEmployeeSchema = z.object({
-  employeeId: z.string().trim().min(1, "Employee ID is required."),
+  requestId: z.string().uuid("Invalid employee creation request."),
   firstName: z.string().trim().min(1, "First name is required."),
   middleName: z.string().trim().optional(),
   lastName: z.string().trim().min(1, "Last name is required."),
@@ -79,7 +79,7 @@ export const personalInformationSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
   middleName: z.string().trim().optional(),
   lastName: z.string().trim().min(1, "Last name is required"),
-  email: z.string().trim().email("Invalid email address"),
+  email: z.string().trim().toLowerCase().email("Invalid email address"),
   phone: z.string().trim().optional(),
   birthDate: z.coerce.date().optional(),
   gender: genderEnum,
@@ -101,7 +101,7 @@ export const employmentInformationSchema = z.object({
 
 // ---- Full create payload ----
 export const createEmployeeSchema = z.object({
-  employeeId: z.string().trim().min(1, "Employee ID is required"),
+  requestId: z.string().uuid("Invalid employee creation request."),
   ...personalInformationSchema.shape,
   ...employmentInformationSchema.shape,
   address: addressSchema.optional(),
@@ -110,9 +110,12 @@ export const createEmployeeSchema = z.object({
 });
 
 // ---- Full update payload (employeeId locates the record) ----
-export const updateEmployeeSchema = createEmployeeSchema.partial().extend({
-  employeeId: z.string().trim().min(1, "Employee ID is required"),
-});
+export const updateEmployeeSchema = createEmployeeSchema
+  .omit({ requestId: true })
+  .partial()
+  .extend({
+    employeeId: z.string().trim().min(1, "Employee ID is required"),
+  });
 
 // ---- Section-level updates ----
 export const updatePersonalInformationSchema = personalInformationSchema.extend(

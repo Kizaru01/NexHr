@@ -36,7 +36,7 @@ export interface Salary {
   allowance?: number;
 }
 export interface CreateEmployeeParams {
-  employeeId: string;
+  requestId: string;
   firstName: string;
   middleName?: string;
   lastName: string;
@@ -81,7 +81,7 @@ export interface CreateEmployeeInput extends CreateEmployeeParams {
 }
 
 export interface UpdateEmployeeInput extends Partial<
-  Omit<CreateEmployeeInput, "employeeId">
+  Omit<CreateEmployeeInput, "requestId">
 > {
   employeeId: string;
 }
@@ -149,9 +149,22 @@ export interface EmployeeListItem {
   avatar?: string;
 }
 
+export interface EmployeeListResultItem {
+  id: string;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  position: string;
+  employmentStatus: EmploymentStatus;
+  employmentType: EmploymentType;
+  hireDate: Date;
+}
+
 export interface GetEmployeesResult {
   employees: EmployeeListItem[];
-  total: number;
+  totalEmployees: number;
   page: number;
   pageSize: number;
   totalPages: number;

@@ -20,8 +20,8 @@ import {
   updateAddressSchema,
 } from "@/validations/employee.schema";
 import {
-  findEmployeeOrThrow,
   assertEmailIsUnique,
+  findEmployeeDetailOrThrow,
   toEmployeeDetail,
 } from "../handler/employee.helper";
 import Employee from "@/models/employee.model";
@@ -48,7 +48,8 @@ export async function updateEmployee(
 
     const { employeeId, email, ...rest } = validationResult.params!;
 
-    await findEmployeeOrThrow(employeeId);
+    await findEmployeeDetailOrThrow(employeeId);
+
     if (email) await assertEmailIsUnique(email, employeeId);
 
     const updated = await Employee.findOneAndUpdate(
@@ -63,7 +64,12 @@ export async function updateEmployee(
 
     revalidateEmployee(employeeId);
 
-    return { success: true, data: toEmployeeDetail(updated) };
+    const employeeUpdatedData = toEmployeeDetail(updated);
+
+    return {
+      success: true,
+      data: employeeUpdatedData,
+    };
   } catch (error) {
     return handleError(error) as ErrorResponse;
   }
@@ -82,7 +88,7 @@ export async function updateEmployeeProfile(
 
     const { employeeId, email, ...rest } = validationResult.params!;
 
-    await findEmployeeOrThrow(employeeId);
+    await findEmployeeDetailOrThrow(employeeId);
     await assertEmailIsUnique(email, employeeId);
 
     const updated = await Employee.findOneAndUpdate(
@@ -116,7 +122,7 @@ export async function updateEmploymentInformation(
 
     const { employeeId, ...rest } = validationResult.params!;
 
-    await findEmployeeOrThrow(employeeId);
+    await findEmployeeDetailOrThrow(employeeId);
 
     const updated = await Employee.findOneAndUpdate(
       { employeeId },
@@ -148,7 +154,7 @@ export async function updateEmergencyContact(
 
     const { employeeId, emergencyContact } = validationResult.params!;
 
-    await findEmployeeOrThrow(employeeId);
+    await findEmployeeDetailOrThrow(employeeId);
 
     const updated = await Employee.findOneAndUpdate(
       { employeeId },
@@ -180,7 +186,7 @@ export async function updateAddress(
 
     const { employeeId, address } = validationResult.params!;
 
-    await findEmployeeOrThrow(employeeId);
+    await findEmployeeDetailOrThrow(employeeId);
 
     const updated = await Employee.findOneAndUpdate(
       { employeeId },

@@ -29,7 +29,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              name: user.name,
               email: user.email,
               image: user.image,
               provider: account.provider,

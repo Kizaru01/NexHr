@@ -12,7 +12,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import { formatDate } from "@/utils";
+import { formatDate } from "@/lib/utils";
 import { EmployeeFormValues } from "../Forms/EmployeeForm";
 
 export function PersonalInformation() {
