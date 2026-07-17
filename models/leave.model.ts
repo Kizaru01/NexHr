@@ -12,6 +12,12 @@ export interface ILeave {
   startDate: Date;
   endDate: Date;
   reason?: string;
+  attachment?: {
+    name: string;
+    mimeType: string;
+    size: number;
+    data: string;
+  };
   status: "Pending" | "Approved" | "Rejected" | "Cancelled";
   approvedBy?: Schema.Types.ObjectId;
   approvedAt?: Date;
@@ -46,6 +52,12 @@ const LeaveSchema = new Schema<ILeaveDoc>(
       required: true,
     },
     reason: String,
+    attachment: {
+      name: String,
+      mimeType: String,
+      size: Number,
+      data: String,
+    },
     status: {
       type: String,
       enum: ["Pending", "Approved", "Rejected", "Cancelled"],

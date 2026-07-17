@@ -4,6 +4,7 @@ import { Document, Schema, model, models } from "mongoose";
 export interface IEmployee {
   userId?: Schema.Types.ObjectId;
   employeeId: string;
+  creationRequestId?: string;
 
   // Personal Information
   firstName: string;
@@ -65,6 +66,14 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
       unique: true,
       trim: true,
     },
+    creationRequestId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      immutable: true,
+      trim: true,
+      select: false,
+    },
     firstName: {
       type: String,
       required: true,
@@ -77,6 +86,14 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
     lastName: {
       type: String,
       required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      sparse: true,
+      lowercase: true,
       trim: true,
     },
     phone: { type: String },

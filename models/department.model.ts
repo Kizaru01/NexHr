@@ -1,7 +1,8 @@
 import { model, models, Schema, Document } from "mongoose";
 export interface IDepartment {
   name: string;
-  code: string;
+  nameKey: string;
+  code?: string;
   description?: string;
   isActive: boolean;
 
@@ -14,19 +15,28 @@ const DepartmentSchema = new Schema<IDepartmentDoc>(
     name: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
+    },
+
+    nameKey: {
+      type: String,
+      required: true,
+      unique: true,
+      select: false,
     },
 
     code: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
       uppercase: true,
       trim: true,
     },
 
-    description: String,
+    description: {
+      type: String,
+      trim: true,
+    },
 
     isActive: {
       type: Boolean,
@@ -37,6 +47,13 @@ const DepartmentSchema = new Schema<IDepartmentDoc>(
     timestamps: true,
   }
 );
+
+DepartmentSchema.pre("validate", function normalizeNameKey() {
+  if (this.name) {
+    this.nameKey = this.name.trim().toLocaleLowerCase("en-US");
+  }
+});
+
 const Department =
   models?.Department || model<IDepartmentDoc>("Department", DepartmentSchema);
 export default Department;

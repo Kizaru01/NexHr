@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import z from "zod";
 import { Button } from "../ui/button";
@@ -15,8 +14,9 @@ import {
   SalaryInformation,
   AddressInformation,
   EmergencyContact,
-} from "../Infomartion";
+} from "./index";
 import { createEmployeeSchema } from "@/validations/employee.schema";
+import { useTransition, useState, useRef, useEffect } from "react";
 
 export type EmployeeFormValues = z.infer<typeof createEmployeeSchema>;
 type EmployeeFormInput = z.input<typeof createEmployeeSchema>;
@@ -26,9 +26,13 @@ export type EmployeeSelectOption = {
   label: string;
 };
 
+export type EmployeePositionSelectOption = EmployeeSelectOption & {
+  departmentId: string;
+};
+
 type EmployeeFormProps = {
   departmentOptions: EmployeeSelectOption[];
-  positionOptions: EmployeeSelectOption[];
+  positionOptions: EmployeePositionSelectOption[];
   managerOptions: EmployeeSelectOption[];
 };
 
@@ -37,33 +41,75 @@ const DEFAULT_VALUES: Partial<EmployeeFormValues> = {
   salary: { basic: 0, allowance: 0 },
 };
 
-export default function EmployeeForm({
+const CREATE_EMPLOYEE_REQUEST_STORAGE_KEY =
+  "hrmanagement:create-employee:request-id";
+
+function createRequestId(): string {
+  return globalThis.crypto.randomUUID();
+}
+
+export const EmployeeForm = ({
   departmentOptions,
   positionOptions,
   managerOptions,
-}: EmployeeFormProps) {
+}: EmployeeFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [initialRequestId] = useState(createRequestId);
+  const requestIdRef = useRef(initialRequestId);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<EmployeeFormInput, any, EmployeeFormOutput>({
     resolver: zodResolver(createEmployeeSchema),
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: {
+      ...DEFAULT_VALUES,
+      requestId: initialRequestId,
+    },
   });
 
-  function onSubmit(values: EmployeeFormValues) {
-    startTransition(async () => {
-      const result = await createEmployee(values);
+  useEffect(() => {
+    const savedRequestId = window.sessionStorage.getItem(
+      CREATE_EMPLOYEE_REQUEST_STORAGE_KEY
+    );
 
-      if (!result.success) {
-        toast.error(result.error?.message ?? "Failed to create employee.");
-        return;
-      }
+    if (savedRequestId) {
+      requestIdRef.current = savedRequestId;
+    } else {
+      window.sessionStorage.setItem(
+        CREATE_EMPLOYEE_REQUEST_STORAGE_KEY,
+        requestIdRef.current
+      );
+    }
 
-      toast.success("Employee created successfully.");
-      router.push("/employees");
+    form.setValue("requestId", requestIdRef.current, {
+      shouldDirty: false,
+      shouldValidate: false,
     });
-  }
+  }, [form]);
+
+  const onSubmit = (values: EmployeeFormValues) => {
+    startTransition(async () => {
+      try {
+        const result = await createEmployee(values);
+
+        if (!result.success) {
+          toast.error(result.error?.message ?? "Failed to create employee.");
+          return;
+        }
+
+        window.sessionStorage.removeItem(CREATE_EMPLOYEE_REQUEST_STORAGE_KEY);
+        toast.success("Employee created successfully.");
+        router.push("/employees");
+      } catch {
+        toast.error("Unable to save employee. Please retry.");
+      }
+    });
+  };
+
+  const cancelEmployeeCreation = (): void => {
+    window.sessionStorage.removeItem(CREATE_EMPLOYEE_REQUEST_STORAGE_KEY);
+    router.back();
+  };
 
   return (
     <FormProvider {...form}>
@@ -106,7 +152,7 @@ export default function EmployeeForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={cancelEmployeeCreation}
             disabled={isPending}
           >
             Cancel
@@ -118,4 +164,4 @@ export default function EmployeeForm({
       </form>
     </FormProvider>
   );
-}
+};

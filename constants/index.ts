@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   Users,
@@ -11,67 +12,81 @@ import {
   UserCog,
   Settings,
   ClipboardList,
+  UserRound,
+  Bell,
 } from "lucide-react";
 
-export const sidebarLinks = [
+export type NavigationItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+export type NavigationSection = {
+  title: string;
+  items: readonly NavigationItem[];
+};
+
+export const navigationSections: readonly NavigationSection[] = [
   {
-    title: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
+    title: "Overview",
+    items: [{ title: "Dashboard", href: "/", icon: LayoutDashboard }],
   },
   {
-    title: "Employees",
-    href: "/employees",
-    icon: Users,
+    title: "Management",
+    items: [
+      { title: "Employees", href: "/employees", icon: Users },
+      { title: "Departments", href: "/departments", icon: Building2 },
+      { title: "Positions", href: "/positions", icon: BriefcaseBusiness },
+    ],
   },
   {
-    title: "Departments",
-    href: "/departments",
-    icon: Building2,
+    title: "Workforce",
+    items: [
+      { title: "Attendance", href: "/attendance", icon: ShieldCheck },
+      { title: "Leave Requests", href: "/leave-requests", icon: CalendarCheck },
+    ],
   },
   {
-    title: "Positions",
-    href: "/positions",
-    icon: BriefcaseBusiness,
+    title: "Operations",
+    items: [
+      { title: "Payroll", href: "/payroll", icon: Wallet },
+      { title: "Announcements", href: "/announcements", icon: Megaphone },
+      { title: "Reports", href: "/reports", icon: BarChart3 },
+    ],
   },
   {
-    title: "Attendance",
-    href: "/attendance",
-    icon: ShieldCheck,
+    title: "Administration",
+    items: [
+      { title: "Users & Roles", href: "/users", icon: UserCog },
+      { title: "Settings", href: "/settings", icon: Settings },
+      { title: "Audit Logs", href: "/audit-logs", icon: ClipboardList },
+    ],
+  },
+];
+
+export const sidebarLinks = navigationSections.flatMap((section) => section.items);
+
+export const employeeNavigationSections: readonly NavigationSection[] = [
+  {
+    title: "Overview",
+    items: [{ title: "Dashboard", href: "/employee", icon: LayoutDashboard }],
   },
   {
-    title: "Leave Requests",
-    href: "/leave-requests",
-    icon: CalendarCheck,
+    title: "My work",
+    items: [
+      { title: "My Profile", href: "/employee/profile", icon: UserRound },
+      { title: "Attendance", href: "/employee/attendance", icon: ShieldCheck },
+      { title: "Leave Requests", href: "/employee/leave", icon: CalendarCheck },
+      { title: "Payroll", href: "/employee/payroll", icon: Wallet },
+    ],
   },
   {
-    title: "Payroll",
-    href: "/payroll",
-    icon: Wallet,
+    title: "Stay informed",
+    items: [
+      { title: "Announcements", href: "/employee/announcements", icon: Megaphone },
+      { title: "Notifications", href: "/employee/notifications", icon: Bell },
+      { title: "Settings", href: "/employee/settings", icon: Settings },
+    ],
   },
-  {
-    title: "Announcements",
-    href: "/announcements",
-    icon: Megaphone,
-  },
-  {
-    title: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-  },
-  {
-    title: "Users & Roles",
-    href: "/users",
-    icon: UserCog,
-  },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "Audit Logs",
-    href: "/audit-logs",
-    icon: ClipboardList,
-  },
-] as const;
+];

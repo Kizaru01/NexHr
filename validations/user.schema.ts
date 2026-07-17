@@ -10,7 +10,10 @@ export const emailSchema = z
 export const SignInWithOAuth = z.object({
   provider: z.enum(["google"]),
   providerId: z.string().min(1, "Provider Account is Required"),
-  name: z.string().min(1, "Name is required"),
   email: emailSchema,
   image: z.string().url("Invalid image URL").optional(),
+});
+
+export const registerUserSchema = z.object({
+  email: emailSchema,
 });

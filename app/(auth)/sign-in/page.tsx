@@ -1,11 +1,11 @@
-import AuthForm from "@/components/Forms/AuthForm";
+import SocialAuth from "@/components/Forms/SocialAuth";
 import React from "react";
 
 const SignIn = () => {
   return (
-    <div>
-      <AuthForm />
-    </div>
+    <>
+      <SocialAuth />
+    </>
   );
 };
 

@@ -1,25 +1,25 @@
 import { Schema, models, model, Document } from "mongoose";
 export interface IUser {
-  name: string;
   email: string;
   image?: string;
-
   role?: "admin" | "hr" | "employee";
   provider: string;
   providerId: string;
   isActive: boolean;
   lastLogin?: Date;
+  notification?: {
+    leave: boolean;
+    attendance: boolean;
+    announcements: boolean;
+    payroll: boolean;
+    email: boolean;
+  };
 }
 
 export interface IUserDoc extends IUser, Document {}
 
 const UserSchema = new Schema<IUser>(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     email: {
       type: String,
       required: true,
@@ -45,9 +45,16 @@ const UserSchema = new Schema<IUser>(
 
     isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     lastLogin: Date,
+    notification: {
+      leave: { type: Boolean, default: true },
+      attendance: { type: Boolean, default: true },
+      announcements: { type: Boolean, default: true },
+      payroll: { type: Boolean, default: true },
+      email: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,

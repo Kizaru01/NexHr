@@ -1,5 +1,3 @@
-import SocialAuth from "@/components/Forms/SocialAuth";
-
 export default function RootLayout({
   children,
 }: {
@@ -18,7 +16,6 @@ export default function RootLayout({
           <p>NexHr</p>
         </div>
         {children}
-        <SocialAuth />
       </section>
     </main>
   );

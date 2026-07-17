@@ -1,33 +1,32 @@
 import { model, models, Schema, Document } from "mongoose";
 
 export interface IPosition {
-  title: string;
+  name: string;
+  nameKey: string;
   department: Schema.Types.ObjectId;
   description?: string;
   isActive: boolean;
-  minSalary?: string;
-  maxSalary?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 export interface IPositionDoc extends IPosition, Document {}
 const PositionSchema = new Schema<IPositionDoc>(
   {
-    title: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true },
+    nameKey: { type: String, required: true, select: false },
     department: {
       type: Schema.Types.ObjectId,
       ref: "Department",
       required: true,
     },
-    description: String,
+    description: {
+      type: String,
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
     },
-    minSalary: {
-      type: String,
-    },
-    maxSalary: { type: String },
   },
   {
     timestamps: true,
@@ -36,12 +35,18 @@ const PositionSchema = new Schema<IPositionDoc>(
 PositionSchema.index(
   {
     department: 1,
-    title: 1,
+    nameKey: 1,
   },
   {
     unique: true,
   }
 );
+PositionSchema.pre("validate", function normalizeNameKey() {
+  if (this.name) {
+    this.nameKey = this.name.trim().toLocaleLowerCase("en-US");
+  }
+});
+
 const Position =
   models?.Position || model<IPositionDoc>("Position", PositionSchema);
 export default Position;
