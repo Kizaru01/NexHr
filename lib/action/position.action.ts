@@ -102,7 +102,7 @@ export async function createPosition(
       schema: createPositionSchema,
       roles: ["admin", "hr"],
     });
-    const positionParams = validationResult.params as CreatePositionInput;
+    const positionParams = validationResult.params!;
 
     await assertDepartmentIsActive(positionParams.department);
     await assertPositionNameIsUnique(
@@ -134,8 +134,7 @@ export async function updatePosition(
       schema: updatePositionSchema,
       roles: ["admin", "hr"],
     });
-    const { id, ...positionParams } =
-      validationResult.params as UpdatePositionInput;
+    const { id, ...positionParams } = validationResult.params!;
 
     const position = await Position.findById(id);
     if (!position) throw new NotFoundError("Position");
@@ -181,7 +180,7 @@ export async function updatePosition(
 export async function setPositionStatus(params: {
   id: string;
   isActive: boolean;
-}): Promise<ActionResponse<PositionListItem>> {
+}): Promise<ActionResponse> {
   try {
     const validationResult = await action({
       params,
@@ -198,7 +197,8 @@ export async function setPositionStatus(params: {
     if (!position) throw new NotFoundError("Position");
 
     revalidatePositionViews();
-    return { success: true, data: toPositionListItem(position) };
+
+    return { success: true };
   } catch (error) {
     return handleError(error) as ErrorResponse;
   }
@@ -206,7 +206,7 @@ export async function setPositionStatus(params: {
 
 export async function deletePosition(params: {
   id: string;
-}): Promise<ActionResponse<null>> {
+}): Promise<ActionResponse> {
   try {
     const validationResult = await action({
       params,
@@ -228,7 +228,7 @@ export async function deletePosition(params: {
     await Position.deleteOne({ _id: id });
     revalidatePositionViews();
 
-    return { success: true, data: null };
+    return { success: true };
   } catch (error) {
     return handleError(error) as ErrorResponse;
   }

@@ -5,15 +5,18 @@ import {
   UnauthorizedError,
   ValidationError,
 } from "@/lib/http-errors";
+import Employee from "@/models/employee.model";
 import User, { IUser } from "@/models/user.model";
 import { APIErrorResponse } from "@/types/global";
 import { SignInWithOAuth } from "@/validations/user.schema";
+
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const body = await request.json();
 
   await connectToDatabase();
+
   try {
     const validateData = SignInWithOAuth.safeParse(body);
 
@@ -21,7 +24,6 @@ export async function POST(request: Request) {
       throw new ValidationError(validateData.error.flatten().fieldErrors);
 
     const { email, image, provider, providerId } = validateData.data;
-
     const existingUser = await User.findOne({ email });
 
     if (!existingUser) {
@@ -29,6 +31,21 @@ export async function POST(request: Request) {
     }
     if (!existingUser.isActive) {
       throw new ForbiddenError("This is account is inactive.");
+    }
+
+    const employee = await Employee.findOne({ email });
+
+    if (!employee) {
+      throw new UnauthorizedError("Employee record not found.");
+    }
+
+    if (!employee.userId) {
+      employee.userId = existingUser._id;
+      await employee.save();
+    } else if (!employee.userId.equals(existingUser._id)) {
+      throw new ForbiddenError(
+        "Employee is already linked to another account."
+      );
     }
     const updatedData: Partial<IUser> = {
       lastLogin: new Date(),

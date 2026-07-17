@@ -1,6 +1,7 @@
-import React from "react";
+import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
 
-const Reports = () => {
+const Reports = async () => {
+  await requireHrAdminPage();
   return <div>Reports</div>;
 };
 

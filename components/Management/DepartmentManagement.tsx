@@ -1,98 +1,74 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, Pencil, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import z from "zod";
 
+import FilterToolbar from "@/components/hr/filters/FilterToolbar";
+import {
+  departmentSortOptions,
+  managementStatusOptions,
+} from "@/constants/filter-options";
 import {
   createDepartment,
   deleteDepartment,
   setDepartmentStatus,
   updateDepartment,
 } from "@/lib/action/department.action";
+import type { FilterControl } from "@/types/filters";
 import type { DepartmentListItem } from "@/types/management";
-import { createDepartmentSchema } from "@/validations/department.schema";
+import type { CreateDepartmentInput } from "@/validations/department.schema";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { Field, FieldError, FieldLabel } from "../ui/field";
-import { Input } from "../ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "../ui/sheet";
-import { Textarea } from "../ui/textarea";
-
-type DepartmentFormInput = z.input<typeof createDepartmentSchema>;
-type DepartmentFormValues = z.output<typeof createDepartmentSchema>;
+import DepartmentFormSheet from "./DepartmentFormSheet";
 
 type DepartmentManagementProps = {
   initialDepartments: DepartmentListItem[];
 };
 
-const EMPTY_VALUES: DepartmentFormInput = {
-  name: "",
-  code: "",
-  description: "",
-};
+const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 
-const dateFormatter = new Intl.DateTimeFormat("en", {
-  dateStyle: "medium",
-});
+const departmentFilterControls: readonly FilterControl[] = [
+  {
+    type: "search",
+    key: "search",
+    placeholder: "Search name, code, or description",
+    ariaLabel: "Search departments",
+    className: "md:w-80",
+  },
+  {
+    type: "select",
+    key: "status",
+    label: "Department status",
+    emptyLabel: "All statuses",
+    options: managementStatusOptions,
+  },
+  {
+    type: "select",
+    key: "sort",
+    label: "Sort departments",
+    emptyLabel: "Default sort",
+    options: departmentSortOptions,
+  },
+];
 
-const DepartmentManagement = ({
+export default function DepartmentManagement({
   initialDepartments,
-}: DepartmentManagementProps) => {
+}: DepartmentManagementProps) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
   const [editingDepartment, setEditingDepartment] =
     useState<DepartmentListItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const form = useForm<DepartmentFormInput, undefined, DepartmentFormValues>({
-    resolver: zodResolver(createDepartmentSchema),
-    defaultValues: EMPTY_VALUES,
-  });
-
-  const visibleDepartments = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
-    if (!normalizedQuery) return initialDepartments;
-
-    return initialDepartments.filter((department) =>
-      [department.name, department.code, department.description]
-        .filter(Boolean)
-        .some((value) => value!.toLocaleLowerCase().includes(normalizedQuery))
-    );
-  }, [initialDepartments, query]);
-
-  function resetForm(department?: DepartmentListItem): void {
-    form.reset(
-      department
-        ? {
-            name: department.name,
-            code: department.code ?? "",
-            description: department.description ?? "",
-          }
-        : EMPTY_VALUES
-    );
-  }
 
   function openCreateSheet(): void {
     setEditingDepartment(null);
-    resetForm();
     setIsSheetOpen(true);
   }
 
   function openEditSheet(department: DepartmentListItem): void {
     setEditingDepartment(department);
-    resetForm(department);
     setIsSheetOpen(true);
   }
 
@@ -100,11 +76,10 @@ const DepartmentManagement = ({
     setIsSheetOpen(open);
     if (!open) {
       setEditingDepartment(null);
-      resetForm();
     }
   }
 
-  function onSubmit(values: DepartmentFormValues): void {
+  function saveDepartment(values: CreateDepartmentInput): void {
     startTransition(async () => {
       const result = editingDepartment
         ? await updateDepartment({ id: editingDepartment.id, ...values })
@@ -129,10 +104,7 @@ const DepartmentManagement = ({
     const isActive = !department.isActive;
 
     startTransition(async () => {
-      const result = await setDepartmentStatus({
-        id: department.id,
-        isActive,
-      });
+      const result = await setDepartmentStatus({ id: department.id, isActive });
 
       if (!result.success) {
         toast.error(result.error?.message ?? "Unable to update department.");
@@ -180,28 +152,17 @@ const DepartmentManagement = ({
         </Button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="pl-8"
-          placeholder="Search by name, code, or description"
-          aria-label="Search departments"
-        />
-      </div>
+      <FilterToolbar controls={departmentFilterControls} />
 
       <Card>
         <CardContent className="p-0">
-          {visibleDepartments.length === 0 ? (
+          {initialDepartments.length === 0 ? (
             <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-              {initialDepartments.length === 0
-                ? "No departments yet. Create the first department to make it available to employees."
-                : "No departments match your search."}
+              No departments match the current filters.
             </div>
           ) : (
             <div className="divide-y">
-              {visibleDepartments.map((department) => (
+              {initialDepartments.map((department) => (
                 <div
                   key={department.id}
                   className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
@@ -230,8 +191,7 @@ const DepartmentManagement = ({
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Updated{" "}
-                      {dateFormatter.format(new Date(department.updatedAt))}
+                      Updated {dateFormatter.format(new Date(department.updatedAt))}
                     </p>
                   </div>
 
@@ -272,75 +232,14 @@ const DepartmentManagement = ({
         </CardContent>
       </Card>
 
-      <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {editingDepartment ? "Edit department" : "Create department"}
-            </SheetTitle>
-            <SheetDescription>
-              Department names and optional codes must be unique.
-            </SheetDescription>
-          </SheetHeader>
-
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-1 flex-col gap-5 p-4"
-          >
-            <Field data-invalid={Boolean(form.formState.errors.name)}>
-              <FieldLabel htmlFor="department-name">Name</FieldLabel>
-              <Input
-                id="department-name"
-                autoFocus
-                placeholder="Human Resources"
-                aria-invalid={Boolean(form.formState.errors.name)}
-                {...form.register("name")}
-              />
-              <FieldError errors={[form.formState.errors.name]} />
-            </Field>
-
-            <Field data-invalid={Boolean(form.formState.errors.code)}>
-              <FieldLabel htmlFor="department-code">Code (optional)</FieldLabel>
-              <Input
-                id="department-code"
-                placeholder="HR"
-                aria-invalid={Boolean(form.formState.errors.code)}
-                {...form.register("code")}
-              />
-              <FieldError errors={[form.formState.errors.code]} />
-            </Field>
-
-            <Field data-invalid={Boolean(form.formState.errors.description)}>
-              <FieldLabel htmlFor="department-description">
-                Description (optional)
-              </FieldLabel>
-              <Textarea
-                id="department-description"
-                placeholder="What this department is responsible for"
-                aria-invalid={Boolean(form.formState.errors.description)}
-                {...form.register("description")}
-              />
-              <FieldError errors={[form.formState.errors.description]} />
-            </Field>
-
-            <SheetFooter className="mt-auto px-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSheetOpenChange(false)}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save department"}
-              </Button>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
+      <DepartmentFormSheet
+        key={`${editingDepartment?.id ?? "create"}-${isSheetOpen}`}
+        department={editingDepartment}
+        isOpen={isSheetOpen}
+        isPending={isPending}
+        onOpenChange={handleSheetOpenChange}
+        onSubmit={saveDepartment}
+      />
     </div>
   );
-};
-
-export default DepartmentManagement;
+}

@@ -18,13 +18,14 @@ export async function createUser(
     roles: ["admin", "hr"],
   });
   const { email } = validatedResult.params!;
+  const normalizedEmail = email.toLowerCase();
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) throw new ConflictError("Email already registered");
 
     await User.create({
-      email,
+      email: normalizedEmail,
     });
 
     return {

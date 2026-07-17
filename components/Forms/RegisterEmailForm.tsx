@@ -36,7 +36,6 @@ const EmailRegistration = () => {
   const onSubmit = async (values: RegisterUserFormValues) => {
     const result = await createUser(values);
 
-    console.log(result);
     if (!result.success) {
       toast.error("Failed", {
         description: result.error?.message ?? "Registration failed.",

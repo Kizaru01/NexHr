@@ -1,0 +1,101 @@
+import "server-only";
+
+import connectToDatabase from "@/database/mongodb";
+import Attendance from "@/models/attendance.model";
+import {
+  attendanceSorts,
+  countStatuses,
+  DEFAULT_PAGE_SIZE,
+  findFilteredEmployeeIds,
+  getDateRange,
+  nameOf,
+  safePage,
+  serialiseDate,
+  type ListFilters,
+} from "./hr-dashboard.shared";
+
+export async function getAttendanceDashboard(filters: ListFilters) {
+  await connectToDatabase();
+
+  const page = safePage(filters.page);
+  const { startDate, endDate } = getDateRange(filters.date);
+  const baseQuery: Record<string, unknown> = {
+    date: { $gte: startDate, $lt: endDate },
+  };
+  const employeeIds = await findFilteredEmployeeIds(filters);
+
+  if (employeeIds) {
+    baseQuery.employee = { $in: employeeIds };
+  }
+
+  const recordQuery: Record<string, unknown> = { ...baseQuery };
+
+  if (filters.status) {
+    recordQuery.status = filters.status;
+  }
+
+  const sort =
+    attendanceSorts[filters.sort ?? ""] ?? attendanceSorts["clock-in-desc"];
+  const [records, total, statusRecords] = await Promise.all([
+    Attendance.find(recordQuery)
+      .populate({
+        path: "employee",
+        populate: [
+          { path: "department", select: "name" },
+          { path: "position", select: "name" },
+        ],
+      })
+      .sort(sort)
+      .skip((page - 1) * DEFAULT_PAGE_SIZE)
+      .limit(DEFAULT_PAGE_SIZE)
+      .lean(),
+    Attendance.countDocuments(recordQuery),
+    Attendance.aggregate<{ _id: string; count: number }>([
+      { $match: baseQuery },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+  ]);
+  const statuses = countStatuses(statusRecords);
+
+  return {
+    records: records.flatMap((record) => {
+      if (!record.employee) {
+        return [];
+      }
+
+      const employee = record.employee as unknown as {
+        employeeId: string;
+        firstName: string;
+        middleName?: string;
+        lastName: string;
+        department?: { name?: string };
+        position?: { name?: string };
+      };
+
+      return [
+        {
+          id: record._id.toString(),
+          employeeId: employee.employeeId,
+          employee: nameOf(employee),
+          department: employee.department?.name ?? "Unassigned",
+          position: employee.position?.name ?? "Unassigned",
+          date: serialiseDate(record.date),
+          checkIn: serialiseDate(record.checkInTime),
+          checkOut: serialiseDate(record.checkOutTime),
+          workingHours: record.workingHours ?? 0,
+          overtimeHours: record.overtimeHours ?? 0,
+          status: record.status,
+        },
+      ];
+    }),
+    page,
+    totalPages: Math.max(Math.ceil(total / DEFAULT_PAGE_SIZE), 1),
+    total,
+    stats: {
+      present: statuses.Present ?? 0,
+      late: statuses.Late ?? 0,
+      absent: statuses.Absent ?? 0,
+      leave: statuses["On Leave"] ?? 0,
+    },
+  };
+}

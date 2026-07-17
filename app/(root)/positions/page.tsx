@@ -1,49 +1,21 @@
 import PositionManagement from "@/components/Management/PositionManagement";
-import connectToDatabase from "@/database/mongodb";
 import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
-import Department from "@/models/department.model";
-import Position from "@/models/position.model";
+import { normaliseSearchParams } from "@/lib/search-params";
+import { getPositionDirectory } from "@/queries/management.queries";
+import type { PageSearchParams } from "@/types/filters";
 
-const Positions = async () => {
+type PageProps = { searchParams: Promise<PageSearchParams> };
+
+export default async function PositionsPage({ searchParams }: PageProps) {
   await requireHrAdminPage();
-  await connectToDatabase();
 
-  const [departments, positions] = await Promise.all([
-    Department.find({}).sort({ name: 1 }).select("_id name isActive").lean(),
-    Position.find({})
-      .sort({ name: 1 })
-      .select("_id name department description isActive createdAt updatedAt")
-      .lean(),
-  ]);
-
-  const departmentById = new Map(
-    departments.map((department) => [department._id.toString(), department])
-  );
+  const filters = normaliseSearchParams(await searchParams);
+  const { departments, positions } = await getPositionDirectory(filters);
 
   return (
     <PositionManagement
-      departments={departments.map((department) => ({
-        id: department._id.toString(),
-        name: department.name,
-        isActive: department.isActive,
-      }))}
-      initialPositions={positions.map((position) => {
-        const department = departmentById.get(position.department.toString());
-
-        return {
-          id: position._id.toString(),
-          name: position.name,
-          departmentId: position.department.toString(),
-          departmentName: department?.name ?? "Deleted department",
-          departmentIsActive: department?.isActive ?? false,
-          description: position.description,
-          isActive: position.isActive,
-          createdAt: position.createdAt.toISOString(),
-          updatedAt: position.updatedAt.toISOString(),
-        };
-      })}
+      departments={departments}
+      initialPositions={positions}
     />
   );
-};
-
-export default Positions;
+}

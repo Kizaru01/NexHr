@@ -1,30 +1,16 @@
 import DepartmentManagement from "@/components/Management/DepartmentManagement";
-import connectToDatabase from "@/database/mongodb";
 import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
-import Department from "@/models/department.model";
+import { normaliseSearchParams } from "@/lib/search-params";
+import { getDepartmentDirectory } from "@/queries/management.queries";
+import type { PageSearchParams } from "@/types/filters";
 
-const Departments = async () => {
+type PageProps = { searchParams: Promise<PageSearchParams> };
+
+export default async function DepartmentsPage({ searchParams }: PageProps) {
   await requireHrAdminPage();
-  await connectToDatabase();
 
-  const departments = await Department.find({})
-    .sort({ name: 1 })
-    .select("_id name code description isActive createdAt updatedAt")
-    .lean();
+  const filters = normaliseSearchParams(await searchParams);
+  const departments = await getDepartmentDirectory(filters);
 
-  return (
-    <DepartmentManagement
-      initialDepartments={departments.map((department) => ({
-        id: department._id.toString(),
-        name: department.name,
-        code: department.code,
-        description: department.description,
-        isActive: department.isActive,
-        createdAt: department.createdAt.toISOString(),
-        updatedAt: department.updatedAt.toISOString(),
-      }))}
-    />
-  );
-};
-
-export default Departments;
+  return <DepartmentManagement initialDepartments={departments} />;
+}

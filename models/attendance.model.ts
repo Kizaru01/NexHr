@@ -5,6 +5,7 @@ export interface IAttendance {
   date: Date;
   checkInTime?: Date;
   checkOutTime?: Date;
+  breakDuration?: number;
   status:
     | "Present"
     | "Absent"
@@ -31,6 +32,7 @@ const AttendanceSchema = new Schema<IAttendanceDoc>(
     },
     checkInTime: Date,
     checkOutTime: Date,
+    breakDuration: { type: Number, min: 0 },
     status: {
       type: String,
       enum: [

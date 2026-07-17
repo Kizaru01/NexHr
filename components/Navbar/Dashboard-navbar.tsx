@@ -1,12 +1,11 @@
 import { Bell, CalendarDays, ChevronDown, Mail, Search } from "lucide-react";
 import { Button } from "../ui/button";
-import Mobile from "./Mobile";
 import Link from "next/link";
 import { Theme } from "../Theme/Theme";
 
 const Navbar = () => {
   return (
-    <header className="pt-4">
+    <header>
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col">
           <Link href="/" className="cursor-pointer">
@@ -54,7 +53,6 @@ const Navbar = () => {
               <Theme />
             </div>
           </div>
-          <Mobile />
         </div>
       </div>
       <div className="flex items-center justify-between">

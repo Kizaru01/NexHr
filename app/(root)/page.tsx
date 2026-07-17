@@ -1,13 +1,20 @@
-import AttendanceOverviewChart from "@/components/Dashboard/AttendanceOverviewChart";
-import EmployeeOverviewChart from "@/components/Dashboard/Employee-overview-chart";
+import AttendanceOverviewChart from "@/components/Chart/AttendanceOverviewChart";
+import EmployeeOverviewChart from "@/components/Chart/Employee-overview-chart";
 import RecentAnnouncements from "@/components/Dashboard/RecentAnnouncements";
 import RecentLeaveList from "@/components/Dashboard/RecentLeaveList";
 import StatCard from "@/components/Card/Stats-card";
 import DashboardNavbar from "@/components/Navbar/Dashboard-navbar";
 import QuickAction from "@/components/QuickAction";
 import { dashboardStats } from "@/constants/dashboard-static";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 const Home = async () => {
+  const session = await auth();
+  if (session?.user?.role === "employee") {
+    redirect("/employee");
+  }
+
   return (
     <>
       <DashboardNavbar />
@@ -16,7 +23,7 @@ const Home = async () => {
           return <StatCard key={stat.title} {...stat} />;
         })}
       </div>
-      <div className="rounded-xl border px-4 pb-2 mt-4">
+      <div className="rounded-xl border px-4 pb-2 mt-4 w-full">
         <p className="text-3xl p-2">Overview</p>
         <div className="grid gap-6 lg:grid-cols-2">
           <EmployeeOverviewChart />

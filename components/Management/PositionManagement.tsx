@@ -1,20 +1,11 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Archive,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import z from "zod";
 
+import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import {
   createPosition,
   deletePosition,
@@ -22,100 +13,43 @@ import {
   updatePosition,
 } from "@/lib/action/position.action";
 import type { DepartmentOption, PositionListItem } from "@/types/management";
-import { createPositionSchema } from "@/validations/position.schema";
+import type { CreatePositionInput } from "@/validations/position.schema";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { Field, FieldError, FieldLabel } from "../ui/field";
-import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "../ui/sheet";
-import { Textarea } from "../ui/textarea";
-
-type PositionFormInput = z.input<typeof createPositionSchema>;
-type PositionFormValues = z.output<typeof createPositionSchema>;
+import PositionFormSheet from "./PositionFormSheet";
+import { createPositionFilterControls } from "./position-filter-controls";
 
 type PositionManagementProps = {
   departments: DepartmentOption[];
   initialPositions: PositionListItem[];
 };
 
-const EMPTY_VALUES: PositionFormInput = {
-  name: "",
-  department: "",
-  description: "",
-};
-
-const dateFormatter = new Intl.DateTimeFormat("en", {
-  dateStyle: "medium",
-});
+const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 
 export default function PositionManagement({
   departments,
   initialPositions,
 }: PositionManagementProps) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
   const [editingPosition, setEditingPosition] =
     useState<PositionListItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const form = useForm<PositionFormInput, undefined, PositionFormValues>({
-    resolver: zodResolver(createPositionSchema),
-    defaultValues: EMPTY_VALUES,
-  });
-
+  const positionFilterControls = useMemo(
+    () => createPositionFilterControls(departments),
+    [departments]
+  );
   const activeDepartmentCount = departments.filter(
     (department) => department.isActive
   ).length;
-  const availableDepartments = departments.filter(
-    (department) =>
-      department.isActive || department.id === editingPosition?.departmentId
-  );
-  const visiblePositions = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
-    if (!normalizedQuery) return initialPositions;
-
-    return initialPositions.filter((position) =>
-      [position.name, position.departmentName, position.description]
-        .filter(Boolean)
-        .some((value) => value!.toLocaleLowerCase().includes(normalizedQuery))
-    );
-  }, [initialPositions, query]);
-
-  function resetForm(position?: PositionListItem): void {
-    form.reset(
-      position
-        ? {
-            name: position.name,
-            department: position.departmentId,
-            description: position.description ?? "",
-          }
-        : EMPTY_VALUES
-    );
-  }
 
   function openCreateSheet(): void {
     setEditingPosition(null);
-    resetForm();
     setIsSheetOpen(true);
   }
 
   function openEditSheet(position: PositionListItem): void {
     setEditingPosition(position);
-    resetForm(position);
     setIsSheetOpen(true);
   }
 
@@ -123,11 +57,10 @@ export default function PositionManagement({
     setIsSheetOpen(open);
     if (!open) {
       setEditingPosition(null);
-      resetForm();
     }
   }
 
-  function onSubmit(values: PositionFormValues): void {
+  function savePosition(values: CreatePositionInput): void {
     startTransition(async () => {
       const result = editingPosition
         ? await updatePosition({ id: editingPosition.id, ...values })
@@ -192,7 +125,8 @@ export default function PositionManagement({
         <div>
           <h1 className="text-2xl font-bold">Positions</h1>
           <p className="text-sm text-muted-foreground">
-            Manage department-specific positions available during employee creation.
+            Manage department-specific positions available during employee
+            creation.
           </p>
         </div>
         <Button
@@ -209,35 +143,24 @@ export default function PositionManagement({
         </p>
       )}
 
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="pl-8"
-          placeholder="Search by position, department, or description"
-          aria-label="Search positions"
-        />
-      </div>
+      <FilterToolbar controls={positionFilterControls} />
 
       <Card>
         <CardContent className="p-0">
-          {visiblePositions.length === 0 ? (
+          {initialPositions.length === 0 ? (
             <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-              {initialPositions.length === 0
-                ? "No positions yet. Create a position after adding a department."
-                : "No positions match your search."}
+              No positions match the current filters.
             </div>
           ) : (
             <div className="divide-y">
-              {visiblePositions.map((position) => (
+              {initialPositions.map((position) => (
                 <div
                   key={position.id}
                   className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-medium">{position.name}</h2>
+                      <h2 className="font-medium">{position.name.toUpperCase()}</h2>
                       <span
                         className={
                           position.isActive
@@ -303,104 +226,15 @@ export default function PositionManagement({
         </CardContent>
       </Card>
 
-      <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {editingPosition ? "Edit position" : "Create position"}
-            </SheetTitle>
-            <SheetDescription>
-              Position names must be unique within their department.
-            </SheetDescription>
-          </SheetHeader>
-
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-1 flex-col gap-5 p-4"
-          >
-            <Field data-invalid={Boolean(form.formState.errors.name)}>
-              <FieldLabel htmlFor="position-name">Name</FieldLabel>
-              <Input
-                id="position-name"
-                autoFocus
-                placeholder="Software Engineer"
-                aria-invalid={Boolean(form.formState.errors.name)}
-                {...form.register("name")}
-              />
-              <FieldError errors={[form.formState.errors.name]} />
-            </Field>
-
-            <Controller
-              name="department"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="position-department">
-                    Department
-                  </FieldLabel>
-                  <Select
-                    name={field.name}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger
-                      id="position-department"
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableDepartments.map((department) => (
-                        <SelectItem
-                          key={department.id}
-                          value={department.id}
-                          disabled={
-                            !department.isActive &&
-                            department.id !== editingPosition?.departmentId
-                          }
-                        >
-                          {department.name}
-                          {!department.isActive ? " (archived)" : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <Field data-invalid={Boolean(form.formState.errors.description)}>
-              <FieldLabel htmlFor="position-description">
-                Description (optional)
-              </FieldLabel>
-              <Textarea
-                id="position-description"
-                placeholder="Responsibilities and expectations for this position"
-                aria-invalid={Boolean(form.formState.errors.description)}
-                {...form.register("description")}
-              />
-              <FieldError errors={[form.formState.errors.description]} />
-            </Field>
-
-            <SheetFooter className="mt-auto px-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSheetOpenChange(false)}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save position"}
-              </Button>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
+      <PositionFormSheet
+        key={`${editingPosition?.id ?? "create"}-${isSheetOpen}`}
+        departments={departments}
+        isOpen={isSheetOpen}
+        isPending={isPending}
+        onOpenChange={handleSheetOpenChange}
+        onSubmit={savePosition}
+        position={editingPosition}
+      />
     </div>
   );
 }

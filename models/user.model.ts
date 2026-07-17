@@ -7,6 +7,13 @@ export interface IUser {
   providerId: string;
   isActive: boolean;
   lastLogin?: Date;
+  notification?: {
+    leave: boolean;
+    attendance: boolean;
+    announcements: boolean;
+    payroll: boolean;
+    email: boolean;
+  };
 }
 
 export interface IUserDoc extends IUser, Document {}
@@ -41,6 +48,13 @@ const UserSchema = new Schema<IUser>(
       default: true,
     },
     lastLogin: Date,
+    notification: {
+      leave: { type: Boolean, default: true },
+      attendance: { type: Boolean, default: true },
+      announcements: { type: Boolean, default: true },
+      payroll: { type: Boolean, default: true },
+      email: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,

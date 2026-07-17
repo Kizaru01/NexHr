@@ -27,8 +27,21 @@ import {
 import Employee from "@/models/employee.model";
 import action from "../handler/action-helper";
 import handleError from "../handler/error";
+import { ForbiddenError } from "../http-errors";
 
 const EMPLOYEES_PATH = "/employees";
+
+function assertEmployeeOwnsProfile(
+  session: { user: { id?: string; role?: string } },
+  employee: { userId?: { toString(): string } }
+): void {
+  if (
+    session.user.role === "employee" &&
+    employee.userId?.toString() !== session.user.id
+  ) {
+    throw new ForbiddenError("You can only update your own employee profile.");
+  }
+}
 
 function revalidateEmployee(employeeId: string): void {
   revalidatePath(EMPLOYEES_PATH);
@@ -88,7 +101,8 @@ export async function updateEmployeeProfile(
 
     const { employeeId, email, ...rest } = validationResult.params!;
 
-    await findEmployeeDetailOrThrow(employeeId);
+    const employee = await findEmployeeDetailOrThrow(employeeId);
+    assertEmployeeOwnsProfile(validationResult.session, employee);
     await assertEmailIsUnique(email, employeeId);
 
     const updated = await Employee.findOneAndUpdate(
@@ -154,7 +168,8 @@ export async function updateEmergencyContact(
 
     const { employeeId, emergencyContact } = validationResult.params!;
 
-    await findEmployeeDetailOrThrow(employeeId);
+    const employee = await findEmployeeDetailOrThrow(employeeId);
+    assertEmployeeOwnsProfile(validationResult.session, employee);
 
     const updated = await Employee.findOneAndUpdate(
       { employeeId },
@@ -186,7 +201,8 @@ export async function updateAddress(
 
     const { employeeId, address } = validationResult.params!;
 
-    await findEmployeeDetailOrThrow(employeeId);
+    const employee = await findEmployeeDetailOrThrow(employeeId);
+    assertEmployeeOwnsProfile(validationResult.session, employee);
 
     const updated = await Employee.findOneAndUpdate(
       { employeeId },
