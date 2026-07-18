@@ -6,7 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import z from "zod";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { createEmployee } from "@/lib/action/employee.action";
+import { createEmployee } from "@/lib/action/employee/employee.action";
 import { toast } from "sonner";
 import {
   PersonalInformation,

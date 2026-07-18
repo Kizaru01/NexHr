@@ -23,11 +23,11 @@ import {
   assertEmailIsUnique,
   findEmployeeDetailOrThrow,
   toEmployeeDetail,
-} from "../handler/employee.helper";
+} from "../../handler/employee.helper";
 import Employee from "@/models/employee.model";
-import action from "../handler/action-helper";
-import handleError from "../handler/error";
-import { ForbiddenError } from "../http-errors";
+import action from "../../handler/action-helper";
+import handleError from "../../handler/error";
+import { ForbiddenError } from "../../http-errors";
 
 const EMPLOYEES_PATH = "/employees";
 

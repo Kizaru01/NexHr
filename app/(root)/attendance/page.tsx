@@ -84,10 +84,10 @@ export default async function AttendancePage({ searchParams }: PageProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Present today" value={stats.present} icon={UserCheck} />
-        <StatCard label="Late employees" value={stats.late} icon={Clock3} />
-        <StatCard label="Absent employees" value={stats.absent} icon={UserX} />
-        <StatCard label="On leave today" value={stats.leave} icon={CalendarDays} />
+        <StatCard label="Present today" dashboardValue={stats.present} icon={UserCheck} />
+        <StatCard label="Late employees" dashboardValue={stats.late} icon={Clock3} />
+        <StatCard label="Absent employees" dashboardValue={stats.absent} icon={UserX} />
+        <StatCard label="On leave today" dashboardValue={stats.leave} icon={CalendarDays} />
       </div>
 
       <Card className="gap-0">

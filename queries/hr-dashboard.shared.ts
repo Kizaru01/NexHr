@@ -34,6 +34,15 @@ export const leaveSorts: Record<string, SortDefinition> = {
   "start-date-desc": { startDate: -1 },
 };
 
+export const payrollSorts: Record<string, SortDefinition> = {
+  "generated-desc": { generatedAt: -1 },
+  "generated-asc": { generatedAt: 1 },
+  "period-desc": { year: -1, month: -1 },
+  "period-asc": { year: 1, month: 1 },
+  "net-pay-desc": { netSalary: -1 },
+  "net-pay-asc": { netSalary: 1 },
+};
+
 export function safePage(value?: string): number {
   return Math.max(Number(value) || 1, 1);
 }
