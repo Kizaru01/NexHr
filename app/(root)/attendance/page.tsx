@@ -40,10 +40,8 @@ export default async function AttendancePage({ searchParams }: PageProps) {
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(await searchParams);
-  const [{ records, stats, page, totalPages, total }, options] = await Promise.all([
-    getAttendanceDashboard(filters),
-    getEmployeeFilters(),
-  ]);
+  const [{ records, stats, page, totalPages, total }, options] =
+    await Promise.all([getAttendanceDashboard(filters), getEmployeeFilters()]);
   const filterControls: readonly FilterControl[] = [
     {
       type: "search",
@@ -84,10 +82,26 @@ export default async function AttendancePage({ searchParams }: PageProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Present today" dashboardValue={stats.present} icon={UserCheck} />
-        <StatCard label="Late employees" dashboardValue={stats.late} icon={Clock3} />
-        <StatCard label="Absent employees" dashboardValue={stats.absent} icon={UserX} />
-        <StatCard label="On leave today" dashboardValue={stats.leave} icon={CalendarDays} />
+        <StatCard
+          label="Present today"
+          dashboardValue={stats.present}
+          icon={UserCheck}
+        />
+        <StatCard
+          label="Late employees"
+          dashboardValue={stats.late}
+          icon={Clock3}
+        />
+        <StatCard
+          label="Absent employees"
+          dashboardValue={stats.absent}
+          icon={UserX}
+        />
+        <StatCard
+          label="On leave today"
+          dashboardValue={stats.leave}
+          icon={CalendarDays}
+        />
       </div>
 
       <Card className="gap-0">
@@ -144,7 +158,9 @@ export default async function AttendancePage({ searchParams }: PageProps) {
                   <td className="px-4 py-3">{record.department}</td>
                   <td className="px-4 py-3">{record.position}</td>
                   <td className="px-4 py-3">
-                    {record.date ? new Date(record.date).toLocaleDateString() : "—"}
+                    {record.date
+                      ? new Date(record.date).toLocaleDateString()
+                      : "—"}
                   </td>
                   <td className="px-4 py-3">{formatTime(record.checkIn)}</td>
                   <td className="px-4 py-3">{formatTime(record.checkOut)}</td>
