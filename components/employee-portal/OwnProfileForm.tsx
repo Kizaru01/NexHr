@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { updateOwnEmployeeProfile } from "@/lib/action/employee-portal.action";
+import { updateOwnEmployeeProfile } from "@/lib/action/employee/employee-portal.action";
 import {
   ownEmployeeProfileFormSchema,
   type OwnEmployeeProfileInput,
@@ -86,7 +86,9 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
       lastName: values.lastName,
       email: values.email,
       phone: optional(values.phone),
-      birthDate: values.birthDate ? new Date(`${values.birthDate}T00:00:00`) : undefined,
+      birthDate: values.birthDate
+        ? new Date(`${values.birthDate}T00:00:00`)
+        : undefined,
       gender: values.gender || undefined,
       address: {
         street: optional(values.address.street),
@@ -112,28 +114,54 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
-        <CardHeader><CardTitle>Personal information</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Personal information</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          {(["firstName", "middleName", "lastName", "email", "phone", "birthDate"] as const).map(
-            (field) => (
-              <Field key={field} data-invalid={Boolean(form.formState.errors[field])}>
-                <FieldLabel htmlFor={field}>{field.replace(/([A-Z])/g, " $1")}</FieldLabel>
-                <Input
-                  id={field}
-                  type={field === "birthDate" ? "date" : field === "email" ? "email" : "text"}
-                  {...form.register(field)}
-                />
-                <FieldError errors={[form.formState.errors[field]]} />
-              </Field>
-            )
-          )}
+          {(
+            [
+              "firstName",
+              "middleName",
+              "lastName",
+              "email",
+              "phone",
+              "birthDate",
+            ] as const
+          ).map((field) => (
+            <Field
+              key={field}
+              data-invalid={Boolean(form.formState.errors[field])}
+            >
+              <FieldLabel htmlFor={field}>
+                {field.replace(/([A-Z])/g, " $1")}
+              </FieldLabel>
+              <Input
+                id={field}
+                type={
+                  field === "birthDate"
+                    ? "date"
+                    : field === "email"
+                      ? "email"
+                      : "text"
+                }
+                {...form.register(field)}
+              />
+              <FieldError errors={[form.formState.errors[field]]} />
+            </Field>
+          ))}
           <Field data-invalid={Boolean(form.formState.errors.gender)}>
             <FieldLabel htmlFor="gender">Gender</FieldLabel>
             <Select
               value={gender}
-              onValueChange={(value) => form.setValue("gender", value as ProfileFormValues["gender"], { shouldDirty: true })}
+              onValueChange={(value) =>
+                form.setValue("gender", value as ProfileFormValues["gender"], {
+                  shouldDirty: true,
+                })
+              }
             >
-              <SelectTrigger id="gender"><SelectValue placeholder="Prefer not to say" /></SelectTrigger>
+              <SelectTrigger id="gender">
+                <SelectValue placeholder="Prefer not to say" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Male">Male</SelectItem>
                 <SelectItem value="Female">Female</SelectItem>
@@ -145,12 +173,24 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Address</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Address</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          {(["street", "barangay", "city", "province", "postalCode"] as const).map((field) => (
-            <Field key={field} data-invalid={Boolean(form.formState.errors.address?.[field])}>
-              <FieldLabel htmlFor={`address-${field}`}>{field.replace(/([A-Z])/g, " $1")}</FieldLabel>
-              <Input id={`address-${field}`} {...form.register(`address.${field}`)} />
+          {(
+            ["street", "barangay", "city", "province", "postalCode"] as const
+          ).map((field) => (
+            <Field
+              key={field}
+              data-invalid={Boolean(form.formState.errors.address?.[field])}
+            >
+              <FieldLabel htmlFor={`address-${field}`}>
+                {field.replace(/([A-Z])/g, " $1")}
+              </FieldLabel>
+              <Input
+                id={`address-${field}`}
+                {...form.register(`address.${field}`)}
+              />
               <FieldError errors={[form.formState.errors.address?.[field]]} />
             </Field>
           ))}
@@ -158,21 +198,40 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Emergency contact</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Emergency contact</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           {(["name", "relationship", "phone"] as const).map((field) => (
-            <Field key={field} data-invalid={Boolean(form.formState.errors.emergencyContact?.[field])}>
+            <Field
+              key={field}
+              data-invalid={Boolean(
+                form.formState.errors.emergencyContact?.[field]
+              )}
+            >
               <FieldLabel htmlFor={`emergency-${field}`}>{field}</FieldLabel>
-              <Input id={`emergency-${field}`} {...form.register(`emergencyContact.${field}`)} />
-              <FieldError errors={[form.formState.errors.emergencyContact?.[field]]} />
+              <Input
+                id={`emergency-${field}`}
+                {...form.register(`emergencyContact.${field}`)}
+              />
+              <FieldError
+                errors={[form.formState.errors.emergencyContact?.[field]]}
+              />
             </Field>
           ))}
         </CardContent>
       </Card>
 
       <div className="sticky bottom-3 z-10 flex justify-end rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur">
-        <Button type="submit" disabled={!form.formState.isDirty || form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
+        <Button
+          type="submit"
+          disabled={!form.formState.isDirty || form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Save />
+          )}
           Save changes
         </Button>
       </div>

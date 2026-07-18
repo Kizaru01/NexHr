@@ -9,7 +9,7 @@ import z from "zod";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { updateOwnProfileImage } from "@/lib/action/employee-portal.action";
+import { updateOwnProfileImage } from "@/lib/action/employee/employee-portal.action";
 import { profileImageSchema } from "@/validations/employee-portal.schema";
 
 const supportedImageTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -51,22 +51,31 @@ export default function ProfileImageForm({
       return;
     }
     if (file.size > maxImageSize) {
-      form.setError("avatar", { message: "Profile image must be 2 MB or smaller." });
+      form.setError("avatar", {
+        message: "Profile image must be 2 MB or smaller.",
+      });
       return;
     }
 
     try {
       const dataUrl = await readFile(file);
-      form.setValue("avatar", dataUrl, { shouldDirty: true, shouldValidate: true });
+      form.setValue("avatar", dataUrl, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to read image.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to read image."
+      );
     }
   }
 
   async function onSubmit(values: ImageValues) {
     const response = await updateOwnProfileImage(values);
     if (!response.success) {
-      toast.error(response.error?.message ?? "Unable to update your profile image.");
+      toast.error(
+        response.error?.message ?? "Unable to update your profile image."
+      );
       return;
     }
 
@@ -76,7 +85,10 @@ export default function ProfileImageForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-4">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex items-center gap-4"
+    >
       <Avatar className="size-16" size="lg">
         {image ? <AvatarImage src={image} alt={`${name} profile`} /> : null}
         <AvatarFallback>{initials || "ME"}</AvatarFallback>
@@ -91,13 +103,23 @@ export default function ProfileImageForm({
             onChange={(event) => onFileChange(event.target.files?.[0])}
           />
         </label>
-        <p className="text-xs text-muted-foreground">JPG, PNG, or WebP up to 2 MB.</p>
+        <p className="text-xs text-muted-foreground">
+          JPG, PNG, or WebP up to 2 MB.
+        </p>
         {form.formState.errors.avatar ? (
-          <p className="text-xs text-destructive">{form.formState.errors.avatar.message}</p>
+          <p className="text-xs text-destructive">
+            {form.formState.errors.avatar.message}
+          </p>
         ) : null}
         {form.formState.isDirty ? (
-          <Button type="submit" size="sm" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : null}
+          <Button
+            type="submit"
+            size="sm"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? (
+              <Loader2 className="animate-spin" />
+            ) : null}
             Save photo
           </Button>
         ) : null}

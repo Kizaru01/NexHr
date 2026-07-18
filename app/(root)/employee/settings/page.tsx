@@ -22,9 +22,9 @@ export default async function EmployeeSettingsPage() {
     employee.userId
   );
   if (!profile) notFound();
-  const enabledNotifications = Object.values(
-    profile.notificationPreferences
-  ).filter(Boolean).length;
+  const enabledNotifications = Object.values(profile.notification).filter(
+    Boolean
+  ).length;
 
   return (
     <section className="mx-auto max-w-5xl space-y-6">
@@ -41,7 +41,7 @@ export default async function EmployeeSettingsPage() {
         />
         <StatCard
           label="Email delivery"
-          value={profile.notificationPreferences.email ? "Enabled" : "Disabled"}
+          value={profile.notification.email ? "Enabled" : "Disabled"}
           icon={MailCheck}
         />
         <StatCard
@@ -62,9 +62,7 @@ export default async function EmployeeSettingsPage() {
             <ProfileImageForm avatar={profile.avatar} name={profile.fullName} />
           </CardContent>
         </Card>
-        <NotificationPreferencesForm
-          preferences={profile.notificationPreferences}
-        />
+        <NotificationPreferencesForm preferences={profile.notification} />
       </div>
     </section>
   );

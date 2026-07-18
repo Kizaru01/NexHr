@@ -54,6 +54,30 @@ export const leaveSortOptions: readonly FilterOption[] = [
   { label: "Start date (latest)", value: "start-date-desc" },
 ];
 
+export const payrollSortOptions: readonly FilterOption[] = [
+  { label: "Most recently generated", value: "generated-desc" },
+  { label: "Oldest generated", value: "generated-asc" },
+  { label: "Pay period (latest)", value: "period-desc" },
+  { label: "Pay period (earliest)", value: "period-asc" },
+  { label: "Net pay (highest)", value: "net-pay-desc" },
+  { label: "Net pay (lowest)", value: "net-pay-asc" },
+];
+
+export const payrollMonthOptions: readonly FilterOption[] = [
+  { label: "January", value: "1" },
+  { label: "February", value: "2" },
+  { label: "March", value: "3" },
+  { label: "April", value: "4" },
+  { label: "May", value: "5" },
+  { label: "June", value: "6" },
+  { label: "July", value: "7" },
+  { label: "August", value: "8" },
+  { label: "September", value: "9" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+];
+
 export const managementStatusOptions: readonly FilterOption[] = [
   { label: "Active", value: "active" },
   { label: "Archived", value: "archived" },

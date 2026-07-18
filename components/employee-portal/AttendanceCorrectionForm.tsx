@@ -10,7 +10,7 @@ import z from "zod";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { submitAttendanceCorrection } from "@/lib/action/employee-portal.action";
+import { submitAttendanceCorrection } from "@/lib/action/employee/employee-portal.action";
 import { attendanceCorrectionSchema } from "@/validations/employee-portal.schema";
 
 type CorrectionValues = z.infer<typeof attendanceCorrectionSchema>;
@@ -31,7 +31,9 @@ export default function AttendanceCorrectionForm({
   async function onSubmit(values: CorrectionValues) {
     const response = await submitAttendanceCorrection(values);
     if (!response.success) {
-      toast.error(response.error?.message ?? "Unable to submit your correction request.");
+      toast.error(
+        response.error?.message ?? "Unable to submit your correction request."
+      );
       return;
     }
 
@@ -51,7 +53,9 @@ export default function AttendanceCorrectionForm({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <Field data-invalid={Boolean(form.formState.errors.reason)}>
-        <FieldLabel htmlFor="correction-reason">Reason for correction</FieldLabel>
+        <FieldLabel htmlFor="correction-reason">
+          Reason for correction
+        </FieldLabel>
         <Textarea
           id="correction-reason"
           placeholder="Explain what needs to be corrected and include the accurate time."
@@ -60,7 +64,11 @@ export default function AttendanceCorrectionForm({
         <FieldError errors={[form.formState.errors.reason]} />
       </Field>
       <Button type="submit" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
+        {form.formState.isSubmitting ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <Send />
+        )}
         Submit correction request
       </Button>
     </form>

@@ -7,4 +7,10 @@ export {
   getEmployeeProfile,
 } from "./employee-directory.queries";
 export { getLeaveDashboard } from "./leave-dashboard.queries";
+export {
+  getPayrollDashboard,
+  getPayrollDetail,
+  getPayrollExport,
+  getPayrollGenerationEmployees,
+} from "./payroll-dashboard.queries";
 export type { ListFilters, SelectOption } from "./hr-dashboard.shared";
