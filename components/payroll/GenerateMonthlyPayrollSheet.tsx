@@ -1,24 +1,36 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarDays } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import z from "zod";
 
 import { generateMonthlyPayroll } from "@/lib/action/payroll.action";
-import {
-  payrollPeriodSchema,
-  type GenerateMonthlyPayrollInput,
-} from "@/validations/payroll.schema";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-
-type MonthlyPayrollFormValues = z.input<typeof payrollPeriodSchema>;
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import type {
+  MonthlyPayrollFormValues,
+  MonthlyPayrollNumberFieldProps,
+} from "@/types/payroll";
+import type { GenerateMonthlyPayrollInput } from "@/validations/payroll.schema";
+import { payrollPeriodSchema } from "@/validations/payroll.schema";
 
 function defaultValues(): MonthlyPayrollFormValues {
   const today = new Date();
@@ -26,7 +38,7 @@ function defaultValues(): MonthlyPayrollFormValues {
   return { month: today.getMonth() + 1, year: today.getFullYear() };
 }
 
-export default function GenerateMonthlyPayrollSheet() {
+export default function GenerateMonthlyPayrollSheet(): React.JSX.Element {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -51,7 +63,9 @@ export default function GenerateMonthlyPayrollSheet() {
       const result = await generateMonthlyPayroll(values);
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to generate monthly payroll.");
+        toast.error(
+          result.error?.message ?? "Unable to generate monthly payroll."
+        );
         return;
       }
 
@@ -73,20 +87,47 @@ export default function GenerateMonthlyPayrollSheet() {
           <SheetHeader>
             <SheetTitle>Generate monthly payroll</SheetTitle>
             <SheetDescription>
-              This creates base salary and allowance payrolls for all active employees.
+              This creates base salary and allowance payrolls for all active
+              employees.
             </SheetDescription>
           </SheetHeader>
-          <form onSubmit={form.handleSubmit(submit)} className="flex flex-1 flex-col gap-5 p-4">
+          <form
+            onSubmit={form.handleSubmit(submit)}
+            className="flex flex-1 flex-col gap-5 p-4"
+          >
             <div className="grid gap-4 sm:grid-cols-2">
-              <NumberField form={form} name="month" label="Pay month" min={1} max={12} />
-              <NumberField form={form} name="year" label="Pay year" min={2000} max={2100} />
+              <NumberField
+                form={form}
+                name="month"
+                label="Pay month"
+                min={1}
+                max={12}
+              />
+              <NumberField
+                form={form}
+                name="year"
+                label="Pay year"
+                min={2000}
+                max={2100}
+              />
             </div>
             <FieldDescription>
-              Existing payroll records for the selected period stay unchanged. Use individual generation instead when a new payroll needs overtime, bonuses, deductions, or tax.
+              Existing payroll records for the selected period stay unchanged.
+              Use individual generation instead when a new payroll needs
+              overtime, bonuses, deductions, or tax.
             </FieldDescription>
             <SheetFooter className="mt-auto px-0">
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>Cancel</Button>
-              <Button type="submit" disabled={isPending}>{isPending ? "Generating..." : "Generate monthly payroll"}</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Generating..." : "Generate monthly payroll"}
+              </Button>
             </SheetFooter>
           </form>
         </SheetContent>
@@ -95,13 +136,26 @@ export default function GenerateMonthlyPayrollSheet() {
   );
 }
 
-function NumberField({ form, name, label, min, max }: { form: ReturnType<typeof useForm<MonthlyPayrollFormValues, undefined, GenerateMonthlyPayrollInput>>; name: "month" | "year"; label: string; min: number; max: number; }) {
+function NumberField({
+  form,
+  name,
+  label,
+  min,
+  max,
+}: MonthlyPayrollNumberFieldProps): React.JSX.Element {
   const error = form.formState.errors[name];
 
   return (
     <Field data-invalid={Boolean(error)}>
       <FieldLabel htmlFor={`monthly-payroll-${name}`}>{label}</FieldLabel>
-      <Input id={`monthly-payroll-${name}`} type="number" min={min} max={max} aria-invalid={Boolean(error)} {...form.register(name, { valueAsNumber: true })} />
+      <Input
+        id={`monthly-payroll-${name}`}
+        type="number"
+        min={min}
+        max={max}
+        aria-invalid={Boolean(error)}
+        {...form.register(name, { valueAsNumber: true })}
+      />
       <FieldError errors={[error]} />
     </Field>
   );

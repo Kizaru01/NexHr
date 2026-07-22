@@ -6,7 +6,10 @@ import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
 import type { ActionResponse, ErrorResponse } from "@/types/global";
-import type { DepartmentListItem } from "@/types/management";
+import type {
+  DepartmentListItem,
+  DepartmentListSource,
+} from "@/types/management";
 import {
   createDepartmentSchema,
   deleteDepartmentSchema,
@@ -17,7 +20,11 @@ import {
 } from "@/validations/department.schema";
 import action from "../handler/action-helper";
 import handleError from "../handler/error";
-import { ConflictError, NotFoundError } from "../http-errors";
+import {
+  ConflictError,
+  NotFoundError,
+  isDuplicateKeyError,
+} from "../http-errors";
 
 const DEPARTMENTS_PATH = "/departments";
 const POSITIONS_PATH = "/positions";
@@ -28,15 +35,6 @@ function revalidateDepartmentViews(): void {
   revalidatePath(POSITIONS_PATH);
   revalidatePath(NEW_EMPLOYEE_PATH);
   revalidatePath("/employees");
-}
-
-function isDuplicateKeyError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === 11000
-  );
 }
 
 function normalizeName(name: string): string {
@@ -73,23 +71,27 @@ async function assertDepartmentCodeIsUnique(
   }
 }
 
-function toDepartmentListItem(department: {
-  _id: { toString(): string };
-  name: string;
-  code?: string;
-  description?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}): DepartmentListItem {
+function toDepartmentListItem(
+  department: DepartmentListSource
+): DepartmentListItem {
+  const {
+    _id,
+    code,
+    createdAt,
+    description,
+    isActive,
+    name,
+    updatedAt,
+  } = department;
+
   return {
-    id: department._id.toString(),
-    name: department.name,
-    code: department.code,
-    description: department.description,
-    isActive: department.isActive,
-    createdAt: department.createdAt.toISOString(),
-    updatedAt: department.updatedAt.toISOString(),
+    id: _id.toString(),
+    name,
+    code,
+    description,
+    isActive,
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 }
 
@@ -103,9 +105,10 @@ export async function createDepartment(
       roles: ["admin", "hr"],
     });
     const departmentParams = validationResult.params!;
+    const { code, name } = departmentParams;
 
-    await assertDepartmentNameIsUnique(departmentParams.name);
-    await assertDepartmentCodeIsUnique(departmentParams.code);
+    await assertDepartmentNameIsUnique(name);
+    await assertDepartmentCodeIsUnique(code);
     await Department.create(departmentParams);
 
     revalidateDepartmentViews();
@@ -132,16 +135,17 @@ export async function updateDepartment(
       roles: ["admin", "hr"],
     });
     const { id, ...departmentParams } = validationResult.params!;
+    const { code, description, name } = departmentParams;
 
     const department = await Department.findById(id);
     if (!department) throw new NotFoundError("Department");
 
-    await assertDepartmentNameIsUnique(departmentParams.name, id);
-    await assertDepartmentCodeIsUnique(departmentParams.code, id);
+    await assertDepartmentNameIsUnique(name, id);
+    await assertDepartmentCodeIsUnique(code, id);
 
-    department.name = departmentParams.name;
-    department.code = departmentParams.code;
-    department.description = departmentParams.description;
+    department.name = name;
+    department.code = code;
+    department.description = description;
     await department.save();
 
     revalidateDepartmentViews();

@@ -1,22 +1,23 @@
 "use client";
 
-import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import {
   createPosition,
   deletePosition,
   setPositionStatus,
   updatePosition,
 } from "@/lib/action/position.action";
-import type { DepartmentOption, PositionListItem } from "@/types/management";
-import type { CreatePositionInput } from "@/validations/position.schema";
+import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import PositionFormSheet from "./PositionFormSheet";
+import type { DepartmentOption, PositionListItem } from "@/types/management";
+import type { CreatePositionInput } from "@/validations/position.schema";
 import { createPositionFilterControls } from "./position-filter-controls";
 
 type PositionManagementProps = {
@@ -29,7 +30,7 @@ const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 export default function PositionManagement({
   departments,
   initialPositions,
-}: PositionManagementProps) {
+}: PositionManagementProps): React.JSX.Element {
   const router = useRouter();
   const [editingPosition, setEditingPosition] =
     useState<PositionListItem | null>(null);

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import connectToDatabase from "@/database/mongodb";
 import { ForbiddenError } from "@/lib/http-errors";
-import Employee from "@/models/employee.model";
+import Employee, { type IEmployeeDoc } from "@/models/employee.model";
 
 export type EmployeePortalContext = {
   userId: string;
@@ -14,7 +14,9 @@ export type EmployeePortalContext = {
   employeeCode: string;
 };
 
-export async function getEmployeeForUserId(userId: string) {
+export async function getEmployeeForUserId(
+  userId: string
+): Promise<IEmployeeDoc | null> {
   return Employee.findOne({ userId }).select("_id employeeId");
 }
 

@@ -20,7 +20,7 @@ import { registerUserSchema } from "@/validations/user.schema";
 
 type RegisterUserFormValues = z.infer<typeof registerUserSchema>;
 
-const EmailRegistration = () => {
+const EmailRegistration = (): React.JSX.Element => {
   const router = useRouter();
   const {
     register,

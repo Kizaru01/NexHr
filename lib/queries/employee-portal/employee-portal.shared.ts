@@ -5,20 +5,15 @@ import {
   leaveDurationInDays,
   leaveEntitlements,
   type LeaveType,
-} from "@/lib/employee-portal/policy";
+} from "@/lib/queries/policy";
+import type {
+  EmployeePortalFilters,
+  LeaveBalance,
+} from "@/types/employee-portal";
 
 export const EMPLOYEE_PORTAL_PAGE_SIZE = 10;
 
-export type EmployeePortalFilters = Record<string, string | undefined>;
-
-export type LeaveBalance = {
-  leaveType: LeaveType;
-  entitlement: number | null;
-  used: number;
-  pending: number;
-  remaining: number | null;
-  available: number | null;
-};
+export type { EmployeePortalFilters, LeaveBalance } from "@/types/employee-portal";
 
 export function serialiseDate(value?: Date | null): string | null {
   return value?.toISOString() ?? null;
@@ -28,7 +23,10 @@ export function safePage(value?: string): number {
   return Math.max(Number(value) || 1, 1);
 }
 
-export function getDateBounds(year: number, month: number): {
+export function getDateBounds(
+  year: number,
+  month: number
+): {
   start: Date;
   end: Date;
 } {
@@ -50,28 +48,37 @@ export function getSelectedDateRange(filters: EmployeePortalFilters): {
   start?: Date;
   end?: Date;
 } {
-  const start = filters.startDate ? new Date(`${filters.startDate}T00:00:00`) : undefined;
-  const end = filters.endDate ? new Date(`${filters.endDate}T00:00:00`) : undefined;
+  const start = filters.startDate
+    ? new Date(`${filters.startDate}T00:00:00`)
+    : undefined;
+  const end = filters.endDate
+    ? new Date(`${filters.endDate}T00:00:00`)
+    : undefined;
 
   return {
     start: start && !Number.isNaN(start.getTime()) ? start : undefined,
-    end: end && !Number.isNaN(end.getTime())
-      ? new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1)
-      : undefined,
+    end:
+      end && !Number.isNaN(end.getTime())
+        ? new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1)
+        : undefined,
   };
 }
 
-export function nameOf(employee: {
+export function nameOf({
+  firstName,
+  middleName,
+  lastName,
+}: {
   firstName: string;
   middleName?: string;
   lastName: string;
 }): string {
-  return [employee.firstName, employee.middleName, employee.lastName]
-    .filter(Boolean)
-    .join(" ");
+  return [firstName, middleName, lastName].filter(Boolean).join(" ");
 }
 
-export async function getLeaveBalances(employeeId: string): Promise<LeaveBalance[]> {
+export async function getLeaveBalances(
+  employeeId: string
+): Promise<LeaveBalance[]> {
   const requests = await Leave.find({
     employee: employeeId,
     status: { $in: ["Pending", "Approved"] },
@@ -85,13 +92,14 @@ export async function getLeaveBalances(employeeId: string): Promise<LeaveBalance
   }
 
   for (const request of requests) {
-    const leaveType = request.leaveType as LeaveType;
+    const { endDate, leaveType: requestLeaveType, startDate, status } = request;
+    const leaveType = requestLeaveType as LeaveType;
     const total = totals.get(leaveType);
     if (!total) continue;
 
-    const duration = leaveDurationInDays(request.startDate, request.endDate);
-    if (request.status === "Approved") total.used += duration;
-    if (request.status === "Pending") total.pending += duration;
+    const duration = leaveDurationInDays(startDate, endDate);
+    if (status === "Approved") total.used += duration;
+    if (status === "Pending") total.pending += duration;
   }
 
   return (Object.keys(leaveEntitlements) as LeaveType[]).map((leaveType) => {
@@ -103,7 +111,8 @@ export async function getLeaveBalances(employeeId: string): Promise<LeaveBalance
       entitlement,
       used: total.used,
       pending: total.pending,
-      remaining: entitlement === null ? null : Math.max(entitlement - total.used, 0),
+      remaining:
+        entitlement === null ? null : Math.max(entitlement - total.used, 0),
       available:
         entitlement === null
           ? null
@@ -116,7 +125,9 @@ export function balanceFor(
   balances: readonly LeaveBalance[],
   leaveType: LeaveType
 ): LeaveBalance {
-  const balance = balances.find((item) => item.leaveType === leaveType);
+  const balance = balances.find(
+    ({ leaveType: itemLeaveType }) => itemLeaveType === leaveType
+  );
   if (!balance) throw new Error(`Missing ${leaveType} leave balance.`);
   return balance;
 }

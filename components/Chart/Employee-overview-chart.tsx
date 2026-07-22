@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { employeeOverview } from "@/constants/dashboard-static";
 
-const EmployeeOverviewChart = () => {
+const EmployeeOverviewChart = (): React.JSX.Element => {
   return (
     <Card className="h-full">
       <CardHeader>

@@ -25,7 +25,7 @@ const RootLayout = async ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) => {
+}>): Promise<React.JSX.Element> => {
   const session = await auth();
   return (
     <html

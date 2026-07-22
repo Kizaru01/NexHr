@@ -18,7 +18,7 @@ import StatusBadge from "@/components/hr/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
-import { getOwnAttendanceDetail } from "@/queries/employee-portal.attendance";
+import { getOwnAttendanceDetail } from "@/lib/queries/employee-portal/employee-portal.attendance";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -41,13 +41,10 @@ function formatTime(value: string | null): string {
     : "Not recorded";
 }
 
-export default async function AttendanceDetailPage({ params }: PageProps) {
-  const employee = await requireEmployeePage();
+export default async function AttendanceDetailPage({ params }: PageProps): Promise<React.JSX.Element> {
+  const { employeeDatabaseId } = await requireEmployeePage();
   const { id } = await params;
-  const attendance = await getOwnAttendanceDetail(
-    employee.employeeDatabaseId,
-    id
-  );
+  const attendance = await getOwnAttendanceDetail(employeeDatabaseId, id);
   if (!attendance) notFound();
 
   return (

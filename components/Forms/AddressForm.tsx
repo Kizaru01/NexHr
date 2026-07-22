@@ -5,10 +5,9 @@ import { useFormContext } from "react-hook-form";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-import z from "zod";
 import { EmployeeFormValues } from "../Forms/EmployeeForm";
 
-export function AddressInformation() {
+export function AddressInformation(): React.JSX.Element {
   const {
     register,
     formState: { errors },

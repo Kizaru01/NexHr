@@ -1,10 +1,21 @@
 import {
+  CalendarPlus,
+  CircleCheck,
+  FileBarChart,
+  FileLock,
+  Megaphone,
+  Plane,
+  User,
+  UserPlus,
+  Wallet,
+} from "lucide-react";
+
+import type {
   AttendanceOverviewData,
   DashboardStat,
   EmployeeOverviewData,
   LeaveRequest,
 } from "@/types/dashboard";
-import { CircleCheck, FileLock, Plane, User } from "lucide-react";
 
 export const employeeGrowth = [
   { month: "Jan", employees: 82 },
@@ -14,20 +25,6 @@ export const employeeGrowth = [
   { month: "May", employees: 116 },
   { month: "Jun", employees: 128 },
 ];
-
-// export const dashboardStats = {
-//   totalEmployees: 128,
-//   presentToday: 118,
-//   onLeave: 6,
-//   payrollThisMonth: 2450000,
-// };
-
-// export const attendanceOverview = [
-//   { name: "Present", value: 118 },
-//   { name: "Late", value: 5 },
-//   { name: "Absent", value: 3 },
-//   { name: "On Leave", value: 6 },
-// ];
 
 export const dashboardStats: DashboardStat[] = [
   {
@@ -178,14 +175,6 @@ export const recentLeaveRequests: LeaveRequest[] = [
     status: LeaveStatus.APPROVED,
   },
 ];
-import {
-  CalendarPlus,
-  FileBarChart,
-  Megaphone,
-  UserPlus,
-  Wallet,
-} from "lucide-react";
-
 export const quickActions = [
   {
     id: 1,

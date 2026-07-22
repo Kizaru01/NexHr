@@ -19,14 +19,12 @@ import { normaliseSearchParams } from "@/lib/search-params";
 import {
   getOwnAttendance,
   getOwnAttendanceSummary,
-} from "@/queries/employee-portal.attendance";
+} from "@/lib/queries/employee-portal/employee-portal.attendance";
 import type { PageSearchParams } from "@/types/filters";
+import { formatDisplayDate } from "@/lib/utils";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
 
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "—";
-}
 function formatTime(value: string | null): string {
   return value
     ? new Intl.DateTimeFormat("en", {
@@ -38,12 +36,12 @@ function formatTime(value: string | null): string {
 
 export default async function EmployeeAttendancePage({
   searchParams,
-}: PageProps) {
-  const employee = await requireEmployeePage();
+}: PageProps): Promise<React.JSX.Element> {
+  const { employeeDatabaseId } = await requireEmployeePage();
   const filters = normaliseSearchParams(await searchParams);
   const [attendance, summary] = await Promise.all([
-    getOwnAttendance(employee.employeeDatabaseId, filters),
-    getOwnAttendanceSummary(employee.employeeDatabaseId),
+    getOwnAttendance(employeeDatabaseId, filters),
+    getOwnAttendanceSummary(employeeDatabaseId),
   ]);
 
   return (
@@ -111,7 +109,7 @@ export default async function EmployeeAttendancePage({
                         className="hover:text-primary hover:underline"
                         href={`/employee/attendance/${record.id}`}
                       >
-                        {formatDate(record.date)}
+                        {formatDisplayDate(record.date)}
                       </Link>
                     </td>
                     <td className="px-4 py-3">{formatTime(record.checkIn)}</td>

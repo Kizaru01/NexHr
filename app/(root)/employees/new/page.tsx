@@ -4,7 +4,7 @@ import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
 
-const NewEmployee = async () => {
+const NewEmployee = async (): Promise<React.JSX.Element> => {
   await connectToDatabase();
 
   const [departments, managers] = await Promise.all([

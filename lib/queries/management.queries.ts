@@ -6,13 +6,11 @@ import connectToDatabase from "@/database/mongodb";
 import Department from "@/models/department.model";
 import Position from "@/models/position.model";
 import type { FilterValues } from "@/types/filters";
+import type { SortDefinition } from "@/types/hr-dashboard";
 import type {
   DepartmentListItem,
-  DepartmentOption,
-  PositionListItem,
+  PositionDirectoryResult,
 } from "@/types/management";
-
-type SortDefinition = Record<string, 1 | -1>;
 
 const departmentSorts: Record<string, SortDefinition> = {
   "created-desc": { createdAt: -1 },
@@ -84,14 +82,15 @@ export async function getDepartmentDirectory(filters: FilterValues): Promise<
   }));
 }
 
-export async function getPositionDirectory(filters: FilterValues): Promise<{
-  departments: DepartmentOption[];
-  positions: PositionListItem[];
-}> {
+export async function getPositionDirectory(
+  filters: FilterValues
+): Promise<PositionDirectoryResult> {
+  const { department, search, sort: sortFilter, status } = filters;
+
   await connectToDatabase();
 
-  const searchExpression = getSearchExpression(filters.search);
-  const isActive = getManagementStatus(filters.status);
+  const searchExpression = getSearchExpression(search);
+  const isActive = getManagementStatus(status);
   const [departments, matchingDepartmentIds] = await Promise.all([
     Department.find({})
       .select("_id name isActive")
@@ -103,9 +102,9 @@ export async function getPositionDirectory(filters: FilterValues): Promise<{
   ]);
   const query: Record<string, unknown> = {};
 
-  if (filters.department) {
-    query.department = Types.ObjectId.isValid(filters.department)
-      ? filters.department
+  if (department) {
+    query.department = Types.ObjectId.isValid(department)
+      ? department
       : { $in: [] };
   }
 
@@ -121,7 +120,7 @@ export async function getPositionDirectory(filters: FilterValues): Promise<{
     ];
   }
 
-  const sort = positionSorts[filters.sort ?? ""] ?? positionSorts["name-asc"];
+  const sort = positionSorts[sortFilter ?? ""] ?? positionSorts["name-asc"];
   const positions = await Position.find(query)
     .select("_id name department description isActive createdAt updatedAt")
     .sort(sort)

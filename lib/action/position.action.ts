@@ -7,7 +7,10 @@ import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
 import type { ActionResponse, ErrorResponse } from "@/types/global";
-import type { PositionListItem } from "@/types/management";
+import type {
+  PositionListItem,
+  PositionListSource,
+} from "@/types/management";
 import {
   createPositionSchema,
   deletePositionSchema,
@@ -18,7 +21,11 @@ import {
 } from "@/validations/position.schema";
 import action from "../handler/action-helper";
 import handleError from "../handler/error";
-import { ConflictError, NotFoundError } from "../http-errors";
+import {
+  ConflictError,
+  NotFoundError,
+  isDuplicateKeyError,
+} from "../http-errors";
 
 const POSITIONS_PATH = "/positions";
 const NEW_EMPLOYEE_PATH = "/employees/new";
@@ -27,15 +34,6 @@ function revalidatePositionViews(): void {
   revalidatePath(POSITIONS_PATH);
   revalidatePath(NEW_EMPLOYEE_PATH);
   revalidatePath("/employees");
-}
-
-function isDuplicateKeyError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === 11000
-  );
 }
 
 function normalizeName(name: string): string {
@@ -71,25 +69,27 @@ async function assertPositionNameIsUnique(
   }
 }
 
-function toPositionListItem(position: {
-  _id: { toString(): string };
-  name: string;
-  department: { toString(): string };
-  description?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}): PositionListItem {
+function toPositionListItem(position: PositionListSource): PositionListItem {
+  const {
+    _id,
+    createdAt,
+    department,
+    description,
+    isActive,
+    name,
+    updatedAt,
+  } = position;
+
   return {
-    id: position._id.toString(),
-    name: position.name,
-    departmentId: position.department.toString(),
+    id: _id.toString(),
+    name,
+    departmentId: department.toString(),
     departmentName: "",
     departmentIsActive: true,
-    description: position.description,
-    isActive: position.isActive,
-    createdAt: position.createdAt.toISOString(),
-    updatedAt: position.updatedAt.toISOString(),
+    description,
+    isActive,
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 }
 
@@ -103,17 +103,16 @@ export async function createPosition(
       roles: ["admin", "hr"],
     });
     const positionParams = validationResult.params!;
+    const { department, name } = positionParams;
 
-    await assertDepartmentIsActive(positionParams.department);
-    await assertPositionNameIsUnique(
-      positionParams.name,
-      positionParams.department
-    );
+    await assertDepartmentIsActive(department);
+    await assertPositionNameIsUnique(name, department);
 
     const position = await Position.create(positionParams);
+    const listPosition = toPositionListItem(position);
     revalidatePositionViews();
 
-    return { success: true, data: toPositionListItem(position) };
+    return { success: true, data: listPosition };
   } catch (error) {
     return handleError(
       isDuplicateKeyError(error)
@@ -135,15 +134,17 @@ export async function updatePosition(
       roles: ["admin", "hr"],
     });
     const { id, ...positionParams } = validationResult.params!;
+    const { department, description, name } = positionParams;
 
     const position = await Position.findById(id);
+
     if (!position) throw new NotFoundError("Position");
 
     const departmentChanged =
-      position.department.toString() !== positionParams.department;
+      position.department.toString() !== department;
 
     if (departmentChanged) {
-      await assertDepartmentIsActive(positionParams.department);
+      await assertDepartmentIsActive(department);
 
       const hasEmployees = await Employee.exists({ position: id });
       if (hasEmployees) {
@@ -153,19 +154,17 @@ export async function updatePosition(
       }
     }
 
-    await assertPositionNameIsUnique(
-      positionParams.name,
-      positionParams.department,
-      id
-    );
+    await assertPositionNameIsUnique(name, department, id);
 
-    position.name = positionParams.name;
-    position.department = new Types.ObjectId(positionParams.department);
-    position.description = positionParams.description;
+    position.name = name;
+    position.department = new Types.ObjectId(department);
+    position.description = description;
     await position.save();
 
+    const listPosition = toPositionListItem(position);
+
     revalidatePositionViews();
-    return { success: true, data: toPositionListItem(position) };
+    return { success: true, data: listPosition };
   } catch (error) {
     return handleError(
       isDuplicateKeyError(error)

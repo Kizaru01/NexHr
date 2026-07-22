@@ -1,13 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarPlus, Loader2, Paperclip } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
+import {
+  createOwnLeaveRequest,
+  updateOwnPendingLeaveRequest,
+} from "@/lib/action/employee/employee-leave.action";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -27,11 +32,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  createOwnLeaveRequest,
-  updateOwnPendingLeaveRequest,
-} from "@/lib/action/employee/employee-leave.action";
-import type { LeaveBalance } from "@/queries/employee-portal.shared";
+import type {
+  LeaveBalance,
+  LeaveRecordForForm,
+} from "@/types/employee-portal";
 import { leaveRequestFormSchema } from "@/validations/employee-portal.schema";
 
 type LeaveFormValues = z.infer<typeof leaveRequestFormSchema>;
@@ -41,12 +45,9 @@ type Attachment = {
   size: number;
   data: string;
 };
-export type LeaveRecordForForm = {
-  id: string;
-  leaveType: LeaveFormValues["leaveType"];
-  startDate: string | null;
-  endDate: string | null;
-  reason: string;
+type LeaveRequestSheetProps = {
+  balances: readonly LeaveBalance[];
+  record?: LeaveRecordForForm;
 };
 
 const leaveTypes: LeaveFormValues["leaveType"][] = [
@@ -105,10 +106,7 @@ function readAttachment(file: File): Promise<Attachment> {
 export default function LeaveRequestSheet({
   balances,
   record,
-}: {
-  balances: readonly LeaveBalance[];
-  record?: LeaveRecordForForm;
-}) {
+}: LeaveRequestSheetProps): React.JSX.Element {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [attachment, setAttachment] = useState<Attachment>();
@@ -118,10 +116,15 @@ export default function LeaveRequestSheet({
   });
   const startDate = useWatch({ control: form.control, name: "startDate" });
   const endDate = useWatch({ control: form.control, name: "endDate" });
+  const selectedLeaveType = useWatch({
+    control: form.control,
+    name: "leaveType",
+  });
   const estimatedDays = daysBetween(startDate, endDate);
   const isEdit = Boolean(record);
+  const { errors, isSubmitting } = form.formState;
 
-  async function onAttachmentChange(file?: File) {
+  async function onAttachmentChange(file?: File): Promise<void> {
     if (!file) return;
     if (
       !supportedFiles.includes(file.type as (typeof supportedFiles)[number]) ||
@@ -142,7 +145,7 @@ export default function LeaveRequestSheet({
     }
   }
 
-  async function onSubmit(values: LeaveFormValues) {
+  async function onSubmit(values: LeaveFormValues): Promise<void> {
     const payload = {
       ...values,
       startDate: new Date(`${values.startDate}T00:00:00`),
@@ -205,10 +208,10 @@ export default function LeaveRequestSheet({
                 </div>
               ))}
           </div>
-          <Field data-invalid={Boolean(form.formState.errors.leaveType)}>
+          <Field data-invalid={Boolean(errors.leaveType)}>
             <FieldLabel>Leave type</FieldLabel>
             <Select
-              value={form.watch("leaveType")}
+              value={selectedLeaveType}
               onValueChange={(value) =>
                 form.setValue(
                   "leaveType",
@@ -228,10 +231,10 @@ export default function LeaveRequestSheet({
                 ))}
               </SelectContent>
             </Select>
-            <FieldError errors={[form.formState.errors.leaveType]} />
+            <FieldError errors={[errors.leaveType]} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field data-invalid={Boolean(form.formState.errors.startDate)}>
+            <Field data-invalid={Boolean(errors.startDate)}>
               <FieldLabel htmlFor="leave-start">Start date</FieldLabel>
               <Input
                 id="leave-start"
@@ -239,9 +242,9 @@ export default function LeaveRequestSheet({
                 min={new Date().toISOString().slice(0, 10)}
                 {...form.register("startDate")}
               />
-              <FieldError errors={[form.formState.errors.startDate]} />
+              <FieldError errors={[errors.startDate]} />
             </Field>
-            <Field data-invalid={Boolean(form.formState.errors.endDate)}>
+            <Field data-invalid={Boolean(errors.endDate)}>
               <FieldLabel htmlFor="leave-end">End date</FieldLabel>
               <Input
                 id="leave-end"
@@ -249,7 +252,7 @@ export default function LeaveRequestSheet({
                 min={startDate || new Date().toISOString().slice(0, 10)}
                 {...form.register("endDate")}
               />
-              <FieldError errors={[form.formState.errors.endDate]} />
+              <FieldError errors={[errors.endDate]} />
             </Field>
           </div>
           <p className="rounded-lg border p-3 text-sm">
@@ -258,14 +261,14 @@ export default function LeaveRequestSheet({
               ? `${estimatedDays} day${estimatedDays === 1 ? "" : "s"}`
               : "Select valid dates"}
           </p>
-          <Field data-invalid={Boolean(form.formState.errors.reason)}>
+          <Field data-invalid={Boolean(errors.reason)}>
             <FieldLabel htmlFor="leave-reason">Reason</FieldLabel>
             <Textarea
               id="leave-reason"
               placeholder="Share enough context for your approver."
               {...form.register("reason")}
             />
-            <FieldError errors={[form.formState.errors.reason]} />
+            <FieldError errors={[errors.reason]} />
           </Field>
           <Field>
             <FieldLabel htmlFor="leave-attachment">
@@ -285,9 +288,9 @@ export default function LeaveRequestSheet({
           <Button
             className="w-full"
             type="submit"
-            disabled={form.formState.isSubmitting}
+            disabled={isSubmitting}
           >
-            {form.formState.isSubmitting ? (
+            {isSubmitting ? (
               <Loader2 className="animate-spin" />
             ) : null}
             {isEdit ? "Save changes" : "Submit request"}

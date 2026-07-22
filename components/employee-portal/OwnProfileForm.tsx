@@ -1,12 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
+import { updateOwnEmployeeProfile } from "@/lib/action/employee/employee-portal.action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -18,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { updateOwnEmployeeProfile } from "@/lib/action/employee/employee-portal.action";
+import type { OwnProfileFormProfile } from "@/types/employee-portal";
 import {
   ownEmployeeProfileFormSchema,
   type OwnEmployeeProfileInput,
@@ -27,23 +29,7 @@ import {
 type ProfileFormValues = z.infer<typeof ownEmployeeProfileFormSchema>;
 
 type ProfileFormProps = {
-  profile: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    birthDate: string | null;
-    gender?: "Male" | "Female";
-    address?: {
-      street?: string;
-      barangay?: string;
-      city?: string;
-      province?: string;
-      postalCode?: string;
-    };
-    emergencyContact?: { name?: string; relationship?: string; phone?: string };
-  };
+  profile: OwnProfileFormProfile;
 };
 
 function optional(value?: string): string | undefined {
@@ -51,53 +37,78 @@ function optional(value?: string): string | undefined {
   return trimmed || undefined;
 }
 
-export default function OwnProfileForm({ profile }: ProfileFormProps) {
+export default function OwnProfileForm({
+  profile,
+}: ProfileFormProps): React.JSX.Element {
   const router = useRouter();
+  const {
+    address = {},
+    birthDate,
+    email,
+    emergencyContact = {},
+    firstName,
+    gender: profileGender,
+    lastName,
+    middleName,
+    phone,
+  } = profile;
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(ownEmployeeProfileFormSchema),
     defaultValues: {
-      firstName: profile.firstName,
-      middleName: profile.middleName ?? "",
-      lastName: profile.lastName,
-      email: profile.email,
-      phone: profile.phone ?? "",
-      birthDate: profile.birthDate?.slice(0, 10) ?? "",
-      gender: profile.gender ?? "",
+      firstName,
+      middleName: middleName ?? "",
+      lastName,
+      email,
+      phone: phone ?? "",
+      birthDate: birthDate?.slice(0, 10) ?? "",
+      gender: profileGender ?? "",
       address: {
-        street: profile.address?.street ?? "",
-        barangay: profile.address?.barangay ?? "",
-        city: profile.address?.city ?? "",
-        province: profile.address?.province ?? "",
-        postalCode: profile.address?.postalCode ?? "",
+        street: address.street ?? "",
+        barangay: address.barangay ?? "",
+        city: address.city ?? "",
+        province: address.province ?? "",
+        postalCode: address.postalCode ?? "",
       },
       emergencyContact: {
-        name: profile.emergencyContact?.name ?? "",
-        relationship: profile.emergencyContact?.relationship ?? "",
-        phone: profile.emergencyContact?.phone ?? "",
+        name: emergencyContact.name ?? "",
+        relationship: emergencyContact.relationship ?? "",
+        phone: emergencyContact.phone ?? "",
       },
     },
   });
+  const { errors, isDirty, isSubmitting } = form.formState;
   const gender = useWatch({ control: form.control, name: "gender" });
 
-  async function onSubmit(values: ProfileFormValues) {
+  async function onSubmit(values: ProfileFormValues): Promise<void> {
+    const {
+      address: formAddress,
+      birthDate: formBirthDate,
+      email: formEmail,
+      emergencyContact: formEmergencyContact,
+      firstName: formFirstName,
+      gender: formGender,
+      lastName: formLastName,
+      middleName: formMiddleName,
+      phone: formPhone,
+    } = values;
     const payload: OwnEmployeeProfileInput = {
-      firstName: values.firstName,
-      middleName: optional(values.middleName),
-      lastName: values.lastName,
-      email: values.email,
-      phone: optional(values.phone),
-      birthDate: values.birthDate
-        ? new Date(`${values.birthDate}T00:00:00`)
+      firstName: formFirstName,
+      middleName: optional(formMiddleName),
+      lastName: formLastName,
+      email: formEmail,
+      phone: optional(formPhone),
+      birthDate: formBirthDate
+        ? new Date(`${formBirthDate}T00:00:00`)
         : undefined,
-      gender: values.gender || undefined,
+      gender: formGender || undefined,
       address: {
-        street: optional(values.address.street),
-        barangay: optional(values.address.barangay),
-        city: optional(values.address.city),
-        province: optional(values.address.province),
-        postalCode: optional(values.address.postalCode),
+        street: optional(formAddress.street),
+        barangay: optional(formAddress.barangay),
+        city: optional(formAddress.city),
+        province: optional(formAddress.province),
+        postalCode: optional(formAddress.postalCode),
       },
-      emergencyContact: values.emergencyContact,
+      emergencyContact: formEmergencyContact,
     };
     const response = await updateOwnEmployeeProfile(payload);
 
@@ -130,7 +141,7 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
           ).map((field) => (
             <Field
               key={field}
-              data-invalid={Boolean(form.formState.errors[field])}
+              data-invalid={Boolean(errors[field])}
             >
               <FieldLabel htmlFor={field}>
                 {field.replace(/([A-Z])/g, " $1")}
@@ -146,10 +157,10 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
                 }
                 {...form.register(field)}
               />
-              <FieldError errors={[form.formState.errors[field]]} />
+              <FieldError errors={[errors[field]]} />
             </Field>
           ))}
-          <Field data-invalid={Boolean(form.formState.errors.gender)}>
+          <Field data-invalid={Boolean(errors.gender)}>
             <FieldLabel htmlFor="gender">Gender</FieldLabel>
             <Select
               value={gender}
@@ -167,7 +178,7 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
                 <SelectItem value="Female">Female</SelectItem>
               </SelectContent>
             </Select>
-            <FieldError errors={[form.formState.errors.gender]} />
+            <FieldError errors={[errors.gender]} />
           </Field>
         </CardContent>
       </Card>
@@ -182,7 +193,7 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
           ).map((field) => (
             <Field
               key={field}
-              data-invalid={Boolean(form.formState.errors.address?.[field])}
+              data-invalid={Boolean(errors.address?.[field])}
             >
               <FieldLabel htmlFor={`address-${field}`}>
                 {field.replace(/([A-Z])/g, " $1")}
@@ -191,7 +202,7 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
                 id={`address-${field}`}
                 {...form.register(`address.${field}`)}
               />
-              <FieldError errors={[form.formState.errors.address?.[field]]} />
+              <FieldError errors={[errors.address?.[field]]} />
             </Field>
           ))}
         </CardContent>
@@ -205,18 +216,14 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
           {(["name", "relationship", "phone"] as const).map((field) => (
             <Field
               key={field}
-              data-invalid={Boolean(
-                form.formState.errors.emergencyContact?.[field]
-              )}
+              data-invalid={Boolean(errors.emergencyContact?.[field])}
             >
               <FieldLabel htmlFor={`emergency-${field}`}>{field}</FieldLabel>
               <Input
                 id={`emergency-${field}`}
                 {...form.register(`emergencyContact.${field}`)}
               />
-              <FieldError
-                errors={[form.formState.errors.emergencyContact?.[field]]}
-              />
+              <FieldError errors={[errors.emergencyContact?.[field]]} />
             </Field>
           ))}
         </CardContent>
@@ -225,9 +232,9 @@ export default function OwnProfileForm({ profile }: ProfileFormProps) {
       <div className="sticky bottom-3 z-10 flex justify-end rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur">
         <Button
           type="submit"
-          disabled={!form.formState.isDirty || form.formState.isSubmitting}
+          disabled={!isDirty || isSubmitting}
         >
-          {form.formState.isSubmitting ? (
+          {isSubmitting ? (
             <Loader2 className="animate-spin" />
           ) : (
             <Save />

@@ -1,12 +1,12 @@
-import { Address } from "@/types/global";
 import { Document, Schema, model, models } from "mongoose";
+
+import type { Address } from "@/types/global";
 
 export interface IEmployee {
   userId?: Schema.Types.ObjectId;
   employeeId: string;
   creationRequestId?: string;
 
-  // Personal Information
   firstName: string;
   middleName?: string;
   lastName: string;
@@ -21,7 +21,6 @@ export interface IEmployee {
     relationship?: string;
     phone?: string;
   };
-  // Employment Information
   department: Schema.Types.ObjectId;
   position: Schema.Types.ObjectId;
   hireDate: Date;

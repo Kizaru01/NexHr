@@ -4,6 +4,11 @@ import { Types } from "mongoose";
 
 import Attendance from "@/models/attendance.model";
 import AttendanceCorrection from "@/models/attendance-correction.model";
+import type {
+  EmployeeAttendanceDetail,
+  EmployeeAttendanceResult,
+  EmployeeAttendanceSummary,
+} from "@/types/employee-portal";
 import {
   EMPLOYEE_PORTAL_PAGE_SIZE,
   getDateBounds,
@@ -26,8 +31,9 @@ const attendanceStatuses = [
 export async function getOwnAttendance(
   employeeId: string,
   filters: EmployeePortalFilters
-) {
-  const page = safePage(filters.page);
+): Promise<EmployeeAttendanceResult> {
+  const { page: pageFilter, search, status } = filters;
+  const page = safePage(pageFilter);
   const { start, end } = getSelectedDateRange(filters);
   const query: Record<string, unknown> = { employee: employeeId };
 
@@ -38,12 +44,13 @@ export async function getOwnAttendance(
     };
   }
 
-  if (filters.status && attendanceStatuses.includes(filters.status as never)) {
-    query.status = filters.status;
+  if (status && attendanceStatuses.includes(status as never)) {
+    query.status = status;
   }
 
-  if (filters.search?.trim()) {
-    query.remarks = { $regex: filters.search.trim(), $options: "i" };
+  const searchTerm = search?.trim();
+  if (searchTerm) {
+    query.remarks = { $regex: searchTerm, $options: "i" };
   }
 
   const [records, total] = await Promise.all([
@@ -74,7 +81,9 @@ export async function getOwnAttendance(
   };
 }
 
-export async function getOwnAttendanceSummary(employeeId: string) {
+export async function getOwnAttendanceSummary(
+  employeeId: string
+): Promise<EmployeeAttendanceSummary> {
   const now = new Date();
   const month = getDateBounds(now.getFullYear(), now.getMonth());
   const records = await Attendance.find({
@@ -103,7 +112,10 @@ export async function getOwnAttendanceSummary(employeeId: string) {
   };
 }
 
-export async function getOwnAttendanceDetail(employeeId: string, attendanceId: string) {
+export async function getOwnAttendanceDetail(
+  employeeId: string,
+  attendanceId: string
+): Promise<EmployeeAttendanceDetail | null> {
   if (!Types.ObjectId.isValid(attendanceId)) return null;
 
   const [attendance, correction] = await Promise.all([

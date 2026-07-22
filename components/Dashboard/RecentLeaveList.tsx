@@ -13,7 +13,7 @@ const statusVariant = {
   Rejected: "bg-red-100 text-red-700 border-red-300 hover:bg-red-100",
 };
 
-const RecentLeaveList = () => {
+const RecentLeaveList = (): React.JSX.Element => {
   return (
     <Card>
       <CardHeader>

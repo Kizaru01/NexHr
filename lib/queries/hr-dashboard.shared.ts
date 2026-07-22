@@ -4,10 +4,10 @@ import { Types } from "mongoose";
 
 import Employee from "@/models/employee.model";
 import type { FilterValues } from "@/types/filters";
+import type { SortDefinition } from "@/types/hr-dashboard";
 
 export type ListFilters = FilterValues;
-export type SelectOption = { value: string; label: string };
-export type SortDefinition = Record<string, 1 | -1>;
+export type { SelectOption, SortDefinition } from "@/types/hr-dashboard";
 
 export const DEFAULT_PAGE_SIZE = 10;
 
@@ -51,14 +51,16 @@ export function serialiseDate(value?: Date | null): string | null {
   return value?.toISOString() ?? null;
 }
 
-export function nameOf(employee: {
+export function nameOf({
+  firstName,
+  middleName,
+  lastName,
+}: {
   firstName: string;
   middleName?: string;
   lastName: string;
 }): string {
-  return [employee.firstName, employee.middleName, employee.lastName]
-    .filter(Boolean)
-    .join(" ");
+  return [firstName, middleName, lastName].filter(Boolean).join(" ");
 }
 
 export function setObjectIdFilter(
@@ -92,8 +94,8 @@ export function getDateRange(value?: string): {
 export function countStatuses(
   records: Array<{ _id: string; count: number }>
 ): Record<string, number> {
-  return records.reduce<Record<string, number>>((counts, record) => {
-    counts[record._id] = record.count;
+  return records.reduce<Record<string, number>>((counts, { _id, count }) => {
+    counts[_id] = count;
     return counts;
   }, {});
 }
@@ -101,10 +103,11 @@ export function countStatuses(
 export async function findFilteredEmployeeIds(
   filters: ListFilters
 ): Promise<Types.ObjectId[] | undefined> {
+  const { department, search } = filters;
   const employeeQuery: Record<string, unknown> = {};
-  const searchTerm = filters.search?.trim();
+  const searchTerm = search?.trim();
 
-  setObjectIdFilter(employeeQuery, "department", filters.department);
+  setObjectIdFilter(employeeQuery, "department", department);
 
   if (searchTerm) {
     employeeQuery.$or = ["firstName", "lastName", "email", "employeeId"].map(

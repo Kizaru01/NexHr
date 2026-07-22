@@ -6,7 +6,7 @@ type LeftSideBarProps = {
   user?: { image?: string | null; name?: string | null; role?: UserRole };
 };
 
-const LeftSideBar = ({ user }: LeftSideBarProps) => (
+const LeftSideBar = ({ user }: LeftSideBarProps): React.JSX.Element => (
   <DesktopSidebar>
     <ApplicationNavigation user={user} variant="desktop" />
   </DesktopSidebar>

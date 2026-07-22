@@ -14,7 +14,8 @@ import StatusBadge from "@/components/hr/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
-import { getEmployeeDashboard } from "@/queries/employee-portal.dashboard";
+import { getEmployeeDashboard } from "@/lib/queries/employee-portal/employee-portal.dashboard";
+import { formatDisplayDate } from "@/lib/utils";
 
 function formatTime(value: string | null): string {
   return value
@@ -25,13 +26,24 @@ function formatTime(value: string | null): string {
     : "—";
 }
 
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "—";
-}
-
-export default async function EmployeeDashboardPage() {
-  const employee = await requireEmployeePage();
-  const dashboard = await getEmployeeDashboard(employee.employeeDatabaseId);
+export default async function EmployeeDashboardPage(): Promise<
+  React.JSX.Element
+> {
+  const { employeeDatabaseId } = await requireEmployeePage();
+  const {
+    announcements,
+    holidays,
+    recentLeaves,
+    stats,
+    todayAttendance,
+  } = await getEmployeeDashboard(employeeDatabaseId);
+  const {
+    attendanceToday,
+    monthlyAttendance,
+    overtimeHours,
+    pendingLeaves,
+    remainingLeave,
+  } = stats;
 
   return (
     <section className="space-y-6">
@@ -49,27 +61,27 @@ export default async function EmployeeDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard
           label="Attendance today"
-          value={dashboard.stats.attendanceToday}
+          value={attendanceToday}
           icon={CalendarCheck2}
         />
         <StatCard
           label="Remaining leave"
-          value={`${dashboard.stats.remainingLeave} days`}
+          value={`${remainingLeave} days`}
           icon={Umbrella}
         />
         <StatCard
           label="This month"
-          value={dashboard.stats.monthlyAttendance}
+          value={monthlyAttendance}
           icon={ClipboardList}
         />
         <StatCard
           label="Overtime hours"
-          value={`${dashboard.stats.overtimeHours}h`}
+          value={`${overtimeHours}h`}
           icon={Timer}
         />
         <StatCard
           label="Pending requests"
-          dashboardValue={dashboard.stats.pendingLeaves}
+          dashboardValue={pendingLeaves}
           icon={Clock3}
         />
       </div>
@@ -80,32 +92,32 @@ export default async function EmployeeDashboardPage() {
             <CardTitle>Today&apos;s attendance</CardTitle>
           </CardHeader>
           <CardContent>
-            {dashboard.todayAttendance ? (
+            {todayAttendance ? (
               <div className="space-y-5">
-                <StatusBadge status={dashboard.todayAttendance.status} />
+                <StatusBadge status={todayAttendance.status} />
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Clock in</p>
                     <p className="mt-1 font-semibold">
-                      {formatTime(dashboard.todayAttendance.checkIn)}
+                      {formatTime(todayAttendance.checkIn)}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Clock out</p>
                     <p className="mt-1 font-semibold">
-                      {formatTime(dashboard.todayAttendance.checkOut)}
+                      {formatTime(todayAttendance.checkOut)}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Working time</p>
                     <p className="mt-1 font-semibold">
-                      {dashboard.todayAttendance.workingHours}h
+                      {todayAttendance.workingHours}h
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Break duration</p>
                     <p className="mt-1 font-semibold">
-                      {dashboard.todayAttendance.breakDuration}m
+                      {todayAttendance.breakDuration}m
                     </p>
                   </div>
                 </div>
@@ -127,8 +139,8 @@ export default async function EmployeeDashboardPage() {
             <CardTitle>Recent leave requests</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {dashboard.recentLeaves.length ? (
-              dashboard.recentLeaves.map((leave) => (
+            {recentLeaves.length ? (
+              recentLeaves.map((leave) => (
                 <div
                   key={leave.id}
                   className="flex items-start justify-between gap-3 border-b pb-4 last:border-0 last:pb-0"
@@ -136,8 +148,8 @@ export default async function EmployeeDashboardPage() {
                   <div>
                     <p className="font-medium">{leave.leaveType} leave</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {formatDate(leave.startDate)} –{" "}
-                      {formatDate(leave.endDate)}
+                      {formatDisplayDate(leave.startDate)} –{" "}
+                      {formatDisplayDate(leave.endDate)}
                     </p>
                   </div>
                   <StatusBadge status={leave.status} />
@@ -160,15 +172,15 @@ export default async function EmployeeDashboardPage() {
             <CardTitle>Upcoming holidays</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {dashboard.holidays.length ? (
-              dashboard.holidays.map((holiday) => (
+            {holidays.length ? (
+              holidays.map((holiday) => (
                 <div
                   key={holiday.id}
                   className="border-b pb-4 last:border-0 last:pb-0"
                 >
                   <p className="font-medium">{holiday.name}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {formatDate(holiday.date)}
+                    {formatDisplayDate(holiday.date)}
                     {holiday.description ? ` · ${holiday.description}` : ""}
                   </p>
                 </div>
@@ -188,8 +200,8 @@ export default async function EmployeeDashboardPage() {
           <CardTitle>Recent announcements</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {dashboard.announcements.length ? (
-            dashboard.announcements.map((announcement) => (
+          {announcements.length ? (
+            announcements.map((announcement) => (
               <div key={announcement.id} className="rounded-lg border p-4">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium text-primary">
@@ -202,7 +214,7 @@ export default async function EmployeeDashboardPage() {
                   {announcement.description}
                 </p>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  {formatDate(announcement.publishedAt)}
+                  {formatDisplayDate(announcement.publishedAt)}
                 </p>
               </div>
             ))

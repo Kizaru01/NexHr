@@ -1,4 +1,9 @@
-import { BanknoteArrowDown, Download, ReceiptText, WalletCards } from "lucide-react";
+import {
+  BanknoteArrowDown,
+  Download,
+  ReceiptText,
+  WalletCards,
+} from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -26,7 +31,7 @@ import {
   getEmployeeFilters,
   getPayrollDashboard,
   getPayrollGenerationEmployees,
-} from "@/queries/hr-dashboard.queries";
+} from "@/lib/queries/hr-dashboard.queries";
 import type { FilterControl, PageSearchParams } from "@/types/filters";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
@@ -51,7 +56,7 @@ function formatDate(value: string | null): string {
     : "—";
 }
 
-export default async function PayrollPage({ searchParams }: PageProps) {
+export default async function PayrollPage({ searchParams }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
   const filters = normaliseSearchParams(await searchParams);
   const exportParameters = new URLSearchParams(
@@ -59,11 +64,12 @@ export default async function PayrollPage({ searchParams }: PageProps) {
       ([key, value]) => key !== "page" && Boolean(value)
     ) as Array<[string, string]>
   );
-  const [{ records, stats, page, totalPages, total }, options, employees] = await Promise.all([
-    getPayrollDashboard(filters),
-    getEmployeeFilters(),
-    getPayrollGenerationEmployees(),
-  ]);
+  const [{ records, stats, page, totalPages, total }, options, employees] =
+    await Promise.all([
+      getPayrollDashboard(filters),
+      getEmployeeFilters(),
+      getPayrollGenerationEmployees(),
+    ]);
   const filterControls: readonly FilterControl[] = [
     {
       type: "search",
@@ -105,9 +111,21 @@ export default async function PayrollPage({ searchParams }: PageProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Generated payrolls" value={String(stats.processed)} icon={ReceiptText} />
-        <StatCard label="Total net pay" value={currency.format(stats.totalNetPay)} icon={WalletCards} />
-        <StatCard label="Average net pay" value={currency.format(stats.averageNetPay)} icon={BanknoteArrowDown} />
+        <StatCard
+          label="Generated payrolls"
+          value={String(stats.processed)}
+          icon={ReceiptText}
+        />
+        <StatCard
+          label="Total net pay"
+          value={currency.format(stats.totalNetPay)}
+          icon={WalletCards}
+        />
+        <StatCard
+          label="Average net pay"
+          value={currency.format(stats.averageNetPay)}
+          icon={BanknoteArrowDown}
+        />
       </div>
 
       <Card className="gap-0">
@@ -142,26 +160,54 @@ export default async function PayrollPage({ searchParams }: PageProps) {
           <table className="w-full min-w-275 text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                {["Employee", "Department", "Position", "Pay period", "Gross pay", "Deductions", "Tax", "Net pay", "Generated", ""].map((heading) => (
-                  <th key={heading} className="px-4 py-3 font-medium">{heading}</th>
+                {[
+                  "Employee",
+                  "Department",
+                  "Position",
+                  "Pay period",
+                  "Gross pay",
+                  "Deductions",
+                  "Tax",
+                  "Net pay",
+                  "Generated",
+                  "",
+                ].map((heading) => (
+                  <th key={heading} className="px-4 py-3 font-medium">
+                    {heading}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {records.map((record) => (
-                <tr key={record.id} className="border-t transition-colors hover:bg-muted/40">
+                <tr
+                  key={record.id}
+                  className="border-t transition-colors hover:bg-muted/40"
+                >
                   <td className="px-4 py-3 font-semibold">
                     {record.employee}
-                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{record.employeeId}</span>
+                    <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                      {record.employeeId}
+                    </span>
                   </td>
                   <td className="px-4 py-3">{record.department}</td>
                   <td className="px-4 py-3">{record.position}</td>
-                  <td className="px-4 py-3 font-medium">{payrollPeriod(record.month, record.year)}</td>
-                  <td className="px-4 py-3">{currency.format(record.grossPay)}</td>
-                  <td className="px-4 py-3">{currency.format(record.deductions)}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {payrollPeriod(record.month, record.year)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {currency.format(record.grossPay)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {currency.format(record.deductions)}
+                  </td>
                   <td className="px-4 py-3">{currency.format(record.tax)}</td>
-                  <td className="px-4 py-3 font-semibold">{currency.format(record.netSalary)}</td>
-                  <td className="px-4 py-3">{formatDate(record.generatedAt)}</td>
+                  <td className="px-4 py-3 font-semibold">
+                    {currency.format(record.netSalary)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {formatDate(record.generatedAt)}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/payroll/${record.id}`}>View</Link>

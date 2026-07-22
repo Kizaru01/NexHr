@@ -17,7 +17,7 @@ const statusOptions = [
   "Weekend",
 ].map((status) => ({ value: status, label: status }));
 
-export default function EmployeeAttendanceFilters() {
+export default function EmployeeAttendanceFilters(): React.JSX.Element {
   const { clearFilters, getFilterValue, isPending, scheduleSearchUpdate, updateFilters } =
     useUrlFilters();
   const hasFilters = ["search", "startDate", "endDate", "status"].some((key) =>

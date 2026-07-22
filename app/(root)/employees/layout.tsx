@@ -4,7 +4,7 @@ export default async function EmployeesLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): Promise<React.ReactNode> {
   await requireHrAdminPage();
   return children;
 }

@@ -1,15 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BellRing, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
+import { updateNotificationPreferences } from "@/lib/action/employee/employee-portal.action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { updateNotificationPreferences } from "@/lib/action/employee/employee-portal.action";
 import { notificationPreferencesSchema } from "@/validations/employee-portal.schema";
 
 type PreferenceValues = z.infer<typeof notificationPreferencesSchema>;
@@ -50,14 +51,15 @@ export default function NotificationPreferencesForm({
   preferences,
 }: {
   preferences: PreferenceValues;
-}) {
+}): React.JSX.Element {
   const router = useRouter();
   const form = useForm<PreferenceValues>({
     resolver: zodResolver(notificationPreferencesSchema),
     defaultValues: preferences,
   });
+  const { isDirty, isSubmitting } = form.formState;
 
-  async function onSubmit(values: PreferenceValues) {
+  async function onSubmit(values: PreferenceValues): Promise<void> {
     const response = await updateNotificationPreferences(values);
     if (!response.success) {
       toast.error(
@@ -101,9 +103,9 @@ export default function NotificationPreferencesForm({
           <div className="flex justify-end pt-3">
             <Button
               type="submit"
-              disabled={!form.formState.isDirty || form.formState.isSubmitting}
+              disabled={!isDirty || isSubmitting}
             >
-              {form.formState.isSubmitting ? (
+              {isSubmitting ? (
                 <Loader2 className="animate-spin" />
               ) : null}
               Save preferences

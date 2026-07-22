@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
-import { getEmployeeProfile } from "@/queries/hr-dashboard.queries";
+import { getEmployeeProfile } from "@/lib/queries/hr-dashboard.queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatusBadge from "@/components/hr/StatusBadge";
@@ -54,7 +54,7 @@ function Detail({
     </div>
   );
 }
-export default async function EmployeeProfilePage({ params }: PageProps) {
+export default async function EmployeeProfilePage({ params }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
   const { id } = await params;

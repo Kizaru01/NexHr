@@ -117,6 +117,10 @@ export const cancelLeaveRequestSchema = z.object({
   leaveId: objectIdSchema("Leave request"),
 });
 
+export const markNotificationReadSchema = z.object({
+  notificationId: objectIdSchema("Notification"),
+});
+
 export const attendanceCorrectionSchema = z.object({
   attendanceId: objectIdSchema("Attendance"),
   reason: z

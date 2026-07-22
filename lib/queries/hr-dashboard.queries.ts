@@ -8,6 +8,10 @@ export {
 } from "./employee-directory.queries";
 export { getLeaveDashboard } from "./leave-dashboard.queries";
 export {
+  getAnnouncementDashboard,
+  getAnnouncementForEditing,
+} from "./announcement-dashboard.queries";
+export {
   getPayrollDashboard,
   getPayrollDetail,
   getPayrollExport,

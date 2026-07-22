@@ -23,23 +23,18 @@ import { normaliseSearchParams } from "@/lib/search-params";
 import {
   getEmployeeFilters,
   getLeaveDashboard,
-} from "@/queries/hr-dashboard.queries";
+} from "@/lib/queries/hr-dashboard.queries";
 import type { FilterControl, PageSearchParams } from "@/types/filters";
+import { formatDisplayDate } from "@/lib/utils";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
 
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "—";
-}
-
-export default async function LeaveRequestsPage({ searchParams }: PageProps) {
+export default async function LeaveRequestsPage({ searchParams }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(await searchParams);
-  const [{ records, stats, page, totalPages, total }, options] = await Promise.all([
-    getLeaveDashboard(filters),
-    getEmployeeFilters(),
-  ]);
+  const [{ records, stats, page, totalPages, total }, options] =
+    await Promise.all([getLeaveDashboard(filters), getEmployeeFilters()]);
   const filterControls: readonly FilterControl[] = [
     {
       type: "search",
@@ -136,8 +131,12 @@ export default async function LeaveRequestsPage({ searchParams }: PageProps) {
                   <td className="px-4 py-3 font-semibold">{record.employee}</td>
                   <td className="px-4 py-3">{record.department}</td>
                   <td className="px-4 py-3">{record.type}</td>
-                  <td className="px-4 py-3">{formatDate(record.startDate)}</td>
-                  <td className="px-4 py-3">{formatDate(record.endDate)}</td>
+                  <td className="px-4 py-3">
+                    {formatDisplayDate(record.startDate)}
+                  </td>
+                  <td className="px-4 py-3">
+                    {formatDisplayDate(record.endDate)}
+                  </td>
                   <td
                     className="max-w-56 truncate px-4 py-3"
                     title={record.reason}
@@ -148,7 +147,9 @@ export default async function LeaveRequestsPage({ searchParams }: PageProps) {
                   <td className="px-4 py-3">
                     <StatusBadge status={record.status} />
                   </td>
-                  <td className="px-4 py-3">{formatDate(record.submittedAt)}</td>
+                  <td className="px-4 py-3">
+                    {formatDisplayDate(record.submittedAt)}
+                  </td>
                 </tr>
               ))}
             </tbody>

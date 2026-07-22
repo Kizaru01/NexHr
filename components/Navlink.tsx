@@ -12,11 +12,12 @@ interface NavLinksProps {
   role?: UserRole;
 }
 
-const NavLinks = ({ variant, role }: NavLinksProps) => {
+const NavLinks = ({ variant, role }: NavLinksProps): React.JSX.Element => {
   const pathname = usePathname();
   const { closeMobileDrawer, isSidebarExpanded } = useNavigation();
   const isCompact = variant === "desktop" && !isSidebarExpanded;
-  const sections = role === "employee" ? employeeNavigationSections : navigationSections;
+  const sections =
+    role === "employee" ? employeeNavigationSections : navigationSections;
 
   return (
     <div className="space-y-5">
@@ -32,10 +33,17 @@ const NavLinks = ({ variant, role }: NavLinksProps) => {
           </p>
           <div className="space-y-1">
             {section.items.map((item) => {
+              const normalizePath = (value: string) =>
+                value === "/" ? "/" : value.replace(/\/$/, "");
+              const normalizedPathname = normalizePath(pathname);
+              const normalizedHref = normalizePath(item.href);
               const isActive =
-                item.href === "/"
-                  ? pathname === item.href
-                  : pathname.startsWith(item.href);
+                normalizedHref === "/"
+                  ? normalizedPathname === "/"
+                  : normalizedHref === "/employee"
+                    ? normalizedPathname === "/employee"
+                    : normalizedPathname === normalizedHref ||
+                      normalizedPathname.startsWith(`${normalizedHref}/`);
               const Icon = item.icon;
 
               return (
@@ -46,7 +54,7 @@ const NavLinks = ({ variant, role }: NavLinksProps) => {
                   aria-label={isCompact ? item.title : undefined}
                   onClick={variant === "mobile" ? closeMobileDrawer : undefined}
                   className={cn(
-                    "group flex min-h-10 items-center rounded-lg py-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                    "group flex min-h-10 items-center rounded-lg py-2.5 gap-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                     isCompact
                       ? "justify-center px-2 xl:justify-start xl:px-3"
                       : "gap-3 px-3",

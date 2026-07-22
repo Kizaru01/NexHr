@@ -10,7 +10,7 @@ export default function DesktopSidebar({
   children,
 }: {
   children: ReactNode;
-}) {
+}): React.JSX.Element {
   const { isSidebarExpanded } = useNavigation();
 
   return (

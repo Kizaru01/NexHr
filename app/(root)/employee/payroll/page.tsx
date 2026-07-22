@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
-import { getOwnPayroll } from "@/queries/employee-portal.payroll";
+import { getOwnPayroll } from "@/lib/queries/employee-portal/employee-portal.payroll";
 
 const currency = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -31,9 +31,12 @@ function payrollPeriod(month: number, year: number): string {
   });
 }
 
-export default async function EmployeePayrollPage() {
-  const employee = await requireEmployeePage();
-  const payroll = await getOwnPayroll(employee.employeeDatabaseId);
+export default async function EmployeePayrollPage(): Promise<
+  React.JSX.Element
+> {
+  const { employeeDatabaseId } = await requireEmployeePage();
+  const { currentSalary, latest, payrolls } =
+    await getOwnPayroll(employeeDatabaseId);
 
   return (
     <section className="space-y-6">
@@ -46,27 +49,27 @@ export default async function EmployeePayrollPage() {
         <StatCard
           label="Current salary"
           value={
-            payroll.currentSalary === null
+            currentSalary === null
               ? "Not available"
-              : currency.format(payroll.currentSalary)
+              : currency.format(currentSalary)
           }
           icon={BadgeDollarSign}
         />
         <StatCard
           label="Latest net pay"
-          value={payroll.latest ? currency.format(payroll.latest.netPay) : "—"}
+          value={latest ? currency.format(latest.netPay) : "—"}
           icon={WalletCards}
         />
         <StatCard
           label="Latest deductions"
           value={
-            payroll.latest ? currency.format(payroll.latest.deductions) : "—"
+            latest ? currency.format(latest.deductions) : "—"
           }
           icon={ReceiptText}
         />
         <StatCard
           label="Latest taxes"
-          value={payroll.latest ? currency.format(payroll.latest.taxes) : "—"}
+          value={latest ? currency.format(latest.taxes) : "—"}
           icon={Landmark}
         />
       </div>
@@ -77,7 +80,7 @@ export default async function EmployeePayrollPage() {
             Only your generated payroll records are available here.
           </CardDescription>
         </CardHeader>
-        {payroll.payrolls.length ? (
+        {payrolls.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-220 text-sm">
               <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
@@ -100,30 +103,40 @@ export default async function EmployeePayrollPage() {
                 </tr>
               </thead>
               <tbody>
-                {payroll.payrolls.map((record) => {
+                {payrolls.map((record) => {
+                  const {
+                    allowance,
+                    basicSalary,
+                    bonus,
+                    deductions,
+                    id,
+                    month,
+                    netPay,
+                    overtimePay,
+                    taxes,
+                    year,
+                  } = record;
                   const earnings =
-                    record.basicSalary +
-                    record.allowance +
-                    record.overtimePay +
-                    record.bonus;
+                    basicSalary + allowance + overtimePay + bonus;
+
                   return (
-                    <tr key={record.id} className="border-t hover:bg-muted/40">
+                    <tr key={id} className="border-t hover:bg-muted/40">
                       <td className="px-4 py-3 font-medium">
-                        {payrollPeriod(record.month, record.year)}
+                        {payrollPeriod(month, year)}
                       </td>
                       <td className="px-4 py-3">{currency.format(earnings)}</td>
                       <td className="px-4 py-3">
-                        {currency.format(record.deductions)}
+                        {currency.format(deductions)}
                       </td>
                       <td className="px-4 py-3">
-                        {currency.format(record.taxes)}
+                        {currency.format(taxes)}
                       </td>
                       <td className="px-4 py-3 font-semibold">
-                        {currency.format(record.netPay)}
+                        {currency.format(netPay)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Button variant="outline" size="sm" asChild>
-                          <a href={`/employee/payroll/${record.id}`} download>
+                          <a href={`/employee/payroll/${id}`} download>
                             <Download /> Payslip
                           </a>
                         </Button>

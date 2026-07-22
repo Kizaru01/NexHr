@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import {
+import Employee from "@/models/employee.model";
+import type {
   ActionResponse,
   EmployeeDetail,
   ErrorResponse,
@@ -13,18 +14,17 @@ import {
   UpdatePersonalInformationParams,
 } from "@/types/global";
 import {
-  updateEmployeeSchema,
-  updatePersonalInformationSchema,
-  updateEmploymentInformationSchema,
-  updateEmergencyContactSchema,
   updateAddressSchema,
+  updateEmergencyContactSchema,
+  updateEmployeeSchema,
+  updateEmploymentInformationSchema,
+  updatePersonalInformationSchema,
 } from "@/validations/employee.schema";
 import {
   assertEmailIsUnique,
   findEmployeeDetailOrThrow,
   toEmployeeDetail,
 } from "../../handler/employee.helper";
-import Employee from "@/models/employee.model";
 import action from "../../handler/action-helper";
 import handleError from "../../handler/error";
 import { ForbiddenError } from "../../http-errors";
@@ -48,7 +48,6 @@ function revalidateEmployee(employeeId: string): void {
   revalidatePath(`${EMPLOYEES_PATH}/${employeeId}`);
 }
 
-/** Full-record update — accepts a partial payload, employeeId is required to locate the record. */
 export async function updateEmployee(
   params: UpdateEmployeeInput
 ): Promise<ActionResponse<EmployeeDetail>> {
@@ -88,7 +87,6 @@ export async function updateEmployee(
   }
 }
 
-/** Updates personal-information fields only (name, contact info, avatar, etc). */
 export async function updateEmployeeProfile(
   params: UpdatePersonalInformationParams
 ): Promise<ActionResponse<EmployeeDetail>> {
@@ -123,7 +121,6 @@ export async function updateEmployeeProfile(
   }
 }
 
-/** Updates employment-related fields (department, position, status, manager, etc). */
 export async function updateEmploymentInformation(
   params: UpdateEmploymentInformationParams
 ): Promise<ActionResponse<EmployeeDetail>> {

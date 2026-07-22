@@ -30,7 +30,7 @@ export default function UrlFilterSelect({
   emptyLabel,
   defaultValue,
   className,
-}: UrlFilterSelectProps) {
+}: UrlFilterSelectProps): React.JSX.Element {
   const { getFilterValue, updateFilters } = useUrlFilters();
   const currentValue = getFilterValue(field);
   const selectedValue = currentValue || defaultValue || EMPTY_FILTER_VALUE;

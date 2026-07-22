@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { attendanceOverview } from "@/constants/dashboard-static";
 
-export default function AttendanceOverviewChart() {
+export default function AttendanceOverviewChart(): React.JSX.Element {
   return (
     <Card className="h-full">
       <CardHeader>

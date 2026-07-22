@@ -10,7 +10,7 @@ import {
 
 import { useNavigation } from "./NavigationProvider";
 
-export default function MobileDrawer({ children }: { children: ReactNode }) {
+export default function MobileDrawer({ children }: { children: ReactNode }): React.JSX.Element {
   const { isMobileDrawerOpen, setMobileDrawerOpen } = useNavigation();
 
   return (

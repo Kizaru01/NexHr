@@ -1,9 +1,11 @@
 "use server";
 
+import type { Session } from "next-auth";
+import { ZodError, type ZodSchema } from "zod";
+
 import { auth } from "@/auth";
 import connectToDatabase from "@/database/mongodb";
-
-import { ZodError, ZodSchema } from "zod";
+import type { UserRole } from "@/types/global";
 
 import {
   ForbiddenError,
@@ -11,19 +13,22 @@ import {
   ValidationError,
 } from "../http-errors";
 
-type UserRole = "admin" | "hr" | "employee";
-
 type ActionOptions<T> = {
   params?: T;
   schema?: ZodSchema<T>;
   roles?: UserRole[];
 };
 
+type ActionResult<T> = {
+  params: T | undefined;
+  session: Session;
+};
+
 export default async function action<T>({
   params,
   schema,
   roles,
-}: ActionOptions<T>) {
+}: ActionOptions<T>): Promise<ActionResult<T>> {
   let validatedParams = params;
 
   if (schema && params) {

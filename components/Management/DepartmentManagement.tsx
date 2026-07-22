@@ -1,27 +1,28 @@
 "use client";
 
-import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import FilterToolbar from "@/components/hr/filters/FilterToolbar";
-import {
-  departmentSortOptions,
-  managementStatusOptions,
-} from "@/constants/filter-options";
 import {
   createDepartment,
   deleteDepartment,
   setDepartmentStatus,
   updateDepartment,
 } from "@/lib/action/department.action";
-import type { FilterControl } from "@/types/filters";
-import type { DepartmentListItem } from "@/types/management";
-import type { CreateDepartmentInput } from "@/validations/department.schema";
+import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import DepartmentFormSheet from "./DepartmentFormSheet";
+import type { FilterControl } from "@/types/filters";
+import type { DepartmentListItem } from "@/types/management";
+import type { CreateDepartmentInput } from "@/validations/department.schema";
+import {
+  departmentSortOptions,
+  managementStatusOptions,
+} from "@/constants/filter-options";
 
 type DepartmentManagementProps = {
   initialDepartments: DepartmentListItem[];
@@ -55,7 +56,7 @@ const departmentFilterControls: readonly FilterControl[] = [
 
 export default function DepartmentManagement({
   initialDepartments,
-}: DepartmentManagementProps) {
+}: DepartmentManagementProps): React.JSX.Element {
   const router = useRouter();
   const [editingDepartment, setEditingDepartment] =
     useState<DepartmentListItem | null>(null);

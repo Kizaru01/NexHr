@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { getPayrollExport } from "@/queries/hr-dashboard.queries";
+import { getPayrollExport } from "@/lib/queries/hr-dashboard.queries";
 import type { FilterValues } from "@/types/filters";
 
 function toCsvValue(value: string | number): string {
@@ -10,7 +10,7 @@ function toCsvValue(value: string | number): string {
   return `"${normalized.replaceAll('"', '""')}"`;
 }
 
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<NextResponse> {
   const session = await auth();
 
   if (
@@ -38,19 +38,33 @@ export async function GET(request: Request) {
       "Net Pay",
       "Generated At",
     ],
-    ...records.map((record) => [
-      record.employee,
-      record.employeeId,
-      record.department,
-      record.position,
-      record.month,
-      record.year,
-      record.grossPay,
-      record.deductions,
-      record.tax,
-      record.netSalary,
-      record.generatedAt ?? "",
-    ]),
+    ...records.map(
+      ({
+        deductions,
+        department,
+        employee,
+        employeeId,
+        generatedAt,
+        grossPay,
+        month,
+        netSalary,
+        position,
+        tax,
+        year,
+      }) => [
+        employee,
+        employeeId,
+        department,
+        position,
+        month,
+        year,
+        grossPay,
+        deductions,
+        tax,
+        netSalary,
+        generatedAt ?? "",
+      ]
+    ),
   ];
   const csv = `\uFEFF${rows.map((row) => row.map(toCsvValue).join(",")).join("\r\n")}`;
 

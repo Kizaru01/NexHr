@@ -8,6 +8,6 @@ export default function EmployeePortalError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}): React.JSX.Element {
   return <PortalError error={error} reset={reset} />;
 }

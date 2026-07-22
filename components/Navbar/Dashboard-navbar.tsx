@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { Theme } from "../Theme/Theme";
 
-const Navbar = () => {
+const Navbar = (): React.JSX.Element => {
   return (
     <header>
       <div className="flex items-start justify-between gap-2">

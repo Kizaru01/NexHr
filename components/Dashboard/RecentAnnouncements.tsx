@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import Image from "next/image";
 import Link from "next/link";
-const RecentAnnouncements = () => {
+const RecentAnnouncements = (): React.JSX.Element => {
   return (
     <Card>
       <CardHeader>

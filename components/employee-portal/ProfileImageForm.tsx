@@ -1,15 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Camera, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
+import { updateOwnProfileImage } from "@/lib/action/employee/employee-portal.action";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { updateOwnProfileImage } from "@/lib/action/employee/employee-portal.action";
 import { profileImageSchema } from "@/validations/employee-portal.schema";
 
 const supportedImageTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -31,12 +32,13 @@ export default function ProfileImageForm({
 }: {
   avatar?: string;
   name: string;
-}) {
+}): React.JSX.Element {
   const router = useRouter();
   const form = useForm<ImageValues>({
     resolver: zodResolver(profileImageSchema),
     defaultValues: { avatar: avatar ?? "" },
   });
+  const { errors, isDirty, isSubmitting } = form.formState;
   const image = useWatch({ control: form.control, name: "avatar" });
   const initials = name
     .split(" ")
@@ -44,7 +46,7 @@ export default function ProfileImageForm({
     .join("")
     .slice(0, 2);
 
-  async function onFileChange(file?: File) {
+  async function onFileChange(file?: File): Promise<void> {
     if (!file) return;
     if (!supportedImageTypes.includes(file.type)) {
       form.setError("avatar", { message: "Use a JPG, PNG, or WebP image." });
@@ -70,7 +72,7 @@ export default function ProfileImageForm({
     }
   }
 
-  async function onSubmit(values: ImageValues) {
+  async function onSubmit(values: ImageValues): Promise<void> {
     const response = await updateOwnProfileImage(values);
     if (!response.success) {
       toast.error(
@@ -106,18 +108,14 @@ export default function ProfileImageForm({
         <p className="text-xs text-muted-foreground">
           JPG, PNG, or WebP up to 2 MB.
         </p>
-        {form.formState.errors.avatar ? (
+        {errors.avatar ? (
           <p className="text-xs text-destructive">
-            {form.formState.errors.avatar.message}
+            {errors.avatar.message}
           </p>
         ) : null}
-        {form.formState.isDirty ? (
-          <Button
-            type="submit"
-            size="sm"
-            disabled={form.formState.isSubmitting}
-          >
-            {form.formState.isSubmitting ? (
+        {isDirty ? (
+          <Button type="submit" size="sm" disabled={isSubmitting}>
+            {isSubmitting ? (
               <Loader2 className="animate-spin" />
             ) : null}
             Save photo

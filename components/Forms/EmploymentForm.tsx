@@ -30,7 +30,7 @@ export const EmploymentInformation = ({
   departmentOptions,
   positionOptions,
   managerOptions,
-}: EmploymentInformationProps) => {
+}: EmploymentInformationProps): React.JSX.Element => {
   const { control, getValues, setValue } = useFormContext<EmployeeFormValues>();
   const selectedDepartment = useWatch({ control, name: "department" });
   const filteredPositionOptions = useMemo(
@@ -55,9 +55,11 @@ export const EmploymentInformation = ({
                 {...field}
                 type="date"
                 value={field.value ? formatDate(field.value) : ""}
-                onChange={(e) =>
+                onChange={(event) =>
                   field.onChange(
-                    e.target.value ? new Date(e.target.value) : undefined
+                    event.target.value
+                      ? new Date(event.target.value)
+                      : undefined
                   )
                 }
               />

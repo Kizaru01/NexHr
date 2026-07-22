@@ -2,7 +2,7 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): React.JSX.Element {
   return (
     <main className="flex min-h-screen items-center justify-center  px-4 py-10 ">
       <section className="min-w-full rounded-[10px] border px-4 py-10 shadow-md sm:min-w-[520] sm:px-8">

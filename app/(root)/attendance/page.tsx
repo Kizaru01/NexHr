@@ -22,7 +22,7 @@ import { normaliseSearchParams } from "@/lib/search-params";
 import {
   getAttendanceDashboard,
   getEmployeeFilters,
-} from "@/queries/hr-dashboard.queries";
+} from "@/lib/queries/hr-dashboard.queries";
 import type { FilterControl, PageSearchParams } from "@/types/filters";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
@@ -36,7 +36,7 @@ function formatTime(value: string | null): string {
     : "—";
 }
 
-export default async function AttendancePage({ searchParams }: PageProps) {
+export default async function AttendancePage({ searchParams }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(await searchParams);

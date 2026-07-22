@@ -4,6 +4,7 @@ import Announcement from "@/models/announcement.model";
 import Attendance from "@/models/attendance.model";
 import Holiday from "@/models/holiday.model";
 import Leave from "@/models/leave.model";
+import type { EmployeeDashboardResult } from "@/types/employee-portal";
 import {
   getDateBounds,
   getLeaveBalances,
@@ -11,7 +12,9 @@ import {
   serialiseDate,
 } from "./employee-portal.shared";
 
-export async function getEmployeeDashboard(employeeId: string) {
+export async function getEmployeeDashboard(
+  employeeId: string
+): Promise<EmployeeDashboardResult> {
   const now = new Date();
   const month = getDateBounds(now.getFullYear(), now.getMonth());
   const today = getTodayBounds();
@@ -30,7 +33,7 @@ export async function getEmployeeDashboard(employeeId: string) {
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
-      Announcement.find({ isPublished: true })
+      Announcement.find({ isPublished: true, isArchived: { $ne: true } })
         .select("title category priority description publishedAt")
         .sort({ publishedAt: -1 })
         .limit(4)

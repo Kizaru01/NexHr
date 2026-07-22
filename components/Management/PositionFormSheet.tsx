@@ -4,11 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 
-import type { DepartmentOption, PositionListItem } from "@/types/management";
-import {
-  createPositionSchema,
-  type CreatePositionInput,
-} from "@/validations/position.schema";
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
@@ -28,6 +23,11 @@ import {
   SheetTitle,
 } from "../ui/sheet";
 import { Textarea } from "../ui/textarea";
+import type { DepartmentOption, PositionListItem } from "@/types/management";
+import {
+  createPositionSchema,
+  type CreatePositionInput,
+} from "@/validations/position.schema";
 
 type PositionFormInput = z.input<typeof createPositionSchema>;
 
@@ -53,7 +53,7 @@ export default function PositionFormSheet({
   onOpenChange,
   onSubmit,
   position,
-}: PositionFormSheetProps) {
+}: PositionFormSheetProps): React.JSX.Element {
   const form = useForm<PositionFormInput, undefined, CreatePositionInput>({
     resolver: zodResolver(createPositionSchema),
     defaultValues: position
@@ -68,6 +68,7 @@ export default function PositionFormSheet({
     (department) =>
       department.isActive || department.id === position?.departmentId
   );
+  const { errors } = form.formState;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -83,16 +84,16 @@ export default function PositionFormSheet({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-1 flex-col gap-5 p-4"
         >
-          <Field data-invalid={Boolean(form.formState.errors.name)}>
+          <Field data-invalid={Boolean(errors.name)}>
             <FieldLabel htmlFor="position-name">Name</FieldLabel>
             <Input
               id="position-name"
               autoFocus
               placeholder="Software Engineer"
-              aria-invalid={Boolean(form.formState.errors.name)}
+              aria-invalid={Boolean(errors.name)}
               {...form.register("name")}
             />
-            <FieldError errors={[form.formState.errors.name]} />
+            <FieldError errors={[errors.name]} />
           </Field>
 
           <Controller
@@ -135,17 +136,17 @@ export default function PositionFormSheet({
             )}
           />
 
-          <Field data-invalid={Boolean(form.formState.errors.description)}>
+          <Field data-invalid={Boolean(errors.description)}>
             <FieldLabel htmlFor="position-description">
               Description (optional)
             </FieldLabel>
             <Textarea
               id="position-description"
               placeholder="Responsibilities and expectations for this position"
-              aria-invalid={Boolean(form.formState.errors.description)}
+              aria-invalid={Boolean(errors.description)}
               {...form.register("description")}
             />
-            <FieldError errors={[form.formState.errors.description]} />
+            <FieldError errors={[errors.description]} />
           </Field>
 
           <SheetFooter className="mt-auto px-0">
