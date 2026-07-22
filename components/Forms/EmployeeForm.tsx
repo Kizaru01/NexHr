@@ -92,7 +92,9 @@ export const EmployeeForm = ({
         const result = await createEmployee(values);
 
         if (!result.success) {
-          toast.error(result.error?.message ?? "Failed to create employee.");
+          toast.error("Failed to create employee", {
+            description: result.error.message,
+          });
           return;
         }
 

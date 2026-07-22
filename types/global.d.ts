@@ -1,15 +1,19 @@
 import type { NextResponse } from "next/server";
 
-export type ActionResponse<T = null> = {
-  success: boolean;
-  data?: T;
-  error?: {
+export type SuccessResponse<T = null> = {
+  success: true;
+  data: T;
+};
+
+export type ErrorResponse = {
+  success: false;
+  error: {
     message: string;
     details?: Record<string, string[]>;
   };
 };
-export type SuccessResponse<T = null> = ActionResponse<T> & { success: true };
-export type ErrorResponse = ActionResponse<undefined> & { success: false };
+
+export type ActionResponse<T = null> = SuccessResponse<T> | ErrorResponse;
 
 export type APIErrorResponse = NextResponse<ErrorResponse>;
 export type APIResponse<T = null> = NextResponse<

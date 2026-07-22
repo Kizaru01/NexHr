@@ -11,7 +11,7 @@ import Attendance from "@/models/attendance.model";
 import AttendanceCorrection from "@/models/attendance-correction.model";
 import Employee from "@/models/employee.model";
 import User from "@/models/user.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import {
   attendanceCorrectionSchema,
   notificationPreferencesSchema,
@@ -30,7 +30,7 @@ function revalidateEmployeePortal(path?: string): void {
 
 export async function updateOwnEmployeeProfile(
   params: OwnEmployeeProfileInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -50,15 +50,15 @@ export async function updateOwnEmployeeProfile(
     );
 
     revalidateEmployeePortal();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function updateOwnProfileImage(params: {
   avatar: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -75,15 +75,15 @@ export async function updateOwnProfileImage(params: {
     });
 
     revalidateEmployeePortal();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function updateNotificationPreferences(
   params: NotificationPreferencesInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -97,16 +97,16 @@ export async function updateNotificationPreferences(
     });
 
     revalidateEmployeePortal();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function submitAttendanceCorrection(params: {
   attendanceId: string;
   reason: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -142,8 +142,8 @@ export async function submitAttendanceCorrection(params: {
     });
 
     revalidateEmployeePortal(`/employee/attendance/${attendanceId}`);
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

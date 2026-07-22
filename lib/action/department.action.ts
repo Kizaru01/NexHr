@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import type {
   DepartmentListItem,
   DepartmentListSource,
@@ -97,7 +97,7 @@ function toDepartmentListItem(
 
 export async function createDepartment(
   params: CreateDepartmentInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const validationResult = await action({
       params,
@@ -113,7 +113,7 @@ export async function createDepartment(
 
     revalidateDepartmentViews();
 
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
     return handleError(
       isDuplicateKeyError(error)
@@ -121,7 +121,7 @@ export async function createDepartment(
             "A department with that name or code already exists."
           )
         : error
-    ) as ErrorResponse;
+    );
   }
 }
 
@@ -157,7 +157,7 @@ export async function updateDepartment(
             "A department with that name or code already exists."
           )
         : error
-    ) as ErrorResponse;
+    );
   }
 }
 
@@ -183,7 +183,7 @@ export async function setDepartmentStatus(params: {
     revalidateDepartmentViews();
     return { success: true, data: toDepartmentListItem(department) };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -217,6 +217,6 @@ export async function deleteDepartment(params: {
 
     return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

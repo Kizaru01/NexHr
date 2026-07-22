@@ -30,7 +30,9 @@ export default function ArchiveAnnouncementButton({
       const result = await archiveAnnouncement({ id: announcementId });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to archive announcement.");
+        toast.error("Unable to archive announcement", {
+          description: result.error.message,
+        });
         return;
       }
 

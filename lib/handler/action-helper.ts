@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import type { Session } from "next-auth";
 import { ZodError, type ZodSchema } from "zod";

@@ -26,7 +26,9 @@ export default function NotificationList({
       const result = await markOwnNotificationRead({ notificationId });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to update notification.");
+        toast.error("Unable to update notification", {
+          description: result.error.message,
+        });
         return;
       }
 

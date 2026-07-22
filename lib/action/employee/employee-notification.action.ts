@@ -6,12 +6,12 @@ import action from "@/lib/handler/action-helper";
 import handleError from "@/lib/handler/error";
 import { NotFoundError } from "@/lib/http-errors";
 import Notification from "@/models/notification.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import { markNotificationReadSchema } from "@/validations/employee-portal.schema";
 
 export async function markOwnNotificationRead(params: {
   notificationId: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -36,8 +36,8 @@ export async function markOwnNotificationRead(params: {
 
     revalidatePath("/employee");
     revalidatePath("/employee/notifications");
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

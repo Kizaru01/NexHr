@@ -33,9 +33,9 @@ export default function AttendanceCorrectionForm({
   async function onSubmit(values: CorrectionValues): Promise<void> {
     const response = await submitAttendanceCorrection(values);
     if (!response.success) {
-      toast.error(
-        response.error?.message ?? "Unable to submit your correction request."
-      );
+      toast.error("Unable to submit your correction request", {
+        description: response.error.message,
+      });
       return;
     }
 

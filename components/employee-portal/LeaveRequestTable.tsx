@@ -35,9 +35,9 @@ export default function LeaveRequestTable({
     startTransition(async () => {
       const response = await cancelOwnPendingLeaveRequest({ leaveId });
       if (!response.success) {
-        toast.error(
-          response.error?.message ?? "Unable to cancel leave request."
-        );
+        toast.error("Unable to cancel leave request", {
+          description: response.error.message,
+        });
         return;
       }
 

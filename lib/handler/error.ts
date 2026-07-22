@@ -3,44 +3,35 @@ import { ZodError } from "zod";
 
 import { RequestError, ValidationError } from "../http-errors";
 import logger from "../logger";
+import type { ErrorResponse } from "@/types/global";
 
 export type ResponseType = "api" | "server";
-
-type ErrorContent = {
-  success: false;
-  error: {
-    message: string;
-    details?: Record<string, string[]>;
-  };
-};
-
-type ServerErrorResponse = ErrorContent & { status: number };
 
 function formatResponse(
   responseType: "api",
   status: number,
   message: string,
   errors?: Record<string, string[]> | undefined
-): NextResponse<ErrorContent>;
+): NextResponse<ErrorResponse>;
 function formatResponse(
   responseType: "server",
   status: number,
   message: string,
   errors?: Record<string, string[]> | undefined
-): ServerErrorResponse;
+): ErrorResponse;
 function formatResponse(
   responseType: ResponseType,
   status: number,
   message: string,
   errors?: Record<string, string[]> | undefined
-): NextResponse<ErrorContent> | ServerErrorResponse;
+): NextResponse<ErrorResponse> | ErrorResponse;
 function formatResponse(
   responseType: ResponseType,
   status: number,
   message: string,
   errors?: Record<string, string[]> | undefined
 ) {
-  const responseContent: ErrorContent = {
+  const responseContent: ErrorResponse = {
     success: false,
     error: {
       message,
@@ -50,17 +41,17 @@ function formatResponse(
 
   return responseType === "api"
     ? NextResponse.json(responseContent, { status })
-    : { status, ...responseContent };
+    : responseContent;
 }
 
 function handleError(
   error: unknown,
   responseType: "api"
-): NextResponse<ErrorContent>;
+): NextResponse<ErrorResponse>;
 function handleError(
   error: unknown,
   responseType?: "server"
-): ServerErrorResponse;
+): ErrorResponse;
 function handleError(error: unknown, responseType: ResponseType = "server") {
   if (error instanceof RequestError) {
     logger.error(

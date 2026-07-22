@@ -9,7 +9,6 @@ import {
 } from "@/lib/http-errors";
 import Employee from "@/models/employee.model";
 import User, { IUser } from "@/models/user.model";
-import type { APIErrorResponse } from "@/types/global";
 import { SignInWithOAuth } from "@/validations/user.schema";
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -65,6 +64,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       { status: 200 }
     );
   } catch (error) {
-    return handleError(error, "api") as APIErrorResponse;
+    return handleError(error, "api");
   }
 }

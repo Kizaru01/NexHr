@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import Announcement from "@/models/announcement.model";
 import Notification from "@/models/notification.model";
 import User from "@/models/user.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import {
   createAnnouncementSchema,
   archiveAnnouncementSchema,
@@ -82,7 +82,7 @@ export async function createAnnouncement(
 
     return { success: true, data: { id: announcementId } };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -130,13 +130,13 @@ export async function updateAnnouncement(
     revalidateAnnouncementViews();
     return { success: true, data: { id: announcementId } };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function archiveAnnouncement(params: {
   id: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const result = await action({
       params,
@@ -158,15 +158,15 @@ export async function archiveAnnouncement(params: {
     await announcement.save();
 
     revalidateAnnouncementViews();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function deleteAnnouncement(params: {
   id: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const result = await action({
       params,
@@ -189,8 +189,8 @@ export async function deleteAnnouncement(params: {
     await Announcement.deleteOne({ _id });
 
     revalidateAnnouncementViews();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

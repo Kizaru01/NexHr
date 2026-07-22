@@ -63,14 +63,15 @@ export default function GenerateMonthlyPayrollSheet(): React.JSX.Element {
       const result = await generateMonthlyPayroll(values);
 
       if (!result.success) {
-        toast.error(
-          result.error?.message ?? "Unable to generate monthly payroll."
-        );
+        toast.error("Unable to generate monthly payroll", {
+          description: result.error.message,
+        });
         return;
       }
 
+      const { data } = result;
       toast.success(
-        `Generated ${result.data?.created ?? 0} payrolls; skipped ${result.data?.skipped ?? 0} existing records.`
+        `Generated ${data.created} payrolls; skipped ${data.skipped} existing records.`
       );
       handleOpenChange(false);
       router.refresh();

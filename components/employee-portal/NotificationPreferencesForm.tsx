@@ -62,9 +62,9 @@ export default function NotificationPreferencesForm({
   async function onSubmit(values: PreferenceValues): Promise<void> {
     const response = await updateNotificationPreferences(values);
     if (!response.success) {
-      toast.error(
-        response.error?.message ?? "Unable to save notification preferences."
-      );
+      toast.error("Unable to save notification preferences", {
+        description: response.error.message,
+      });
       return;
     }
 
