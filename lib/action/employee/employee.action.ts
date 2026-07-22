@@ -1,8 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import mongoose from "mongoose";
 
-import {
+import Department from "@/models/department.model";
+import Employee from "@/models/employee.model";
+import Position from "@/models/position.model";
+import type {
   ActionResponse,
   CreateEmployeeInput,
   DeleteEmployeeParams,
@@ -21,16 +25,16 @@ import {
 import action from "../../handler/action-helper";
 import {
   assertEmailIsUnique,
-  toEmployeeDetail,
   findEmployeeDetailOrThrow,
+  toEmployeeDetail,
 } from "../../handler/employee.helper";
 import handleError from "../../handler/error";
-import Employee from "@/models/employee.model";
-import mongoose from "mongoose";
-import Department from "@/models/department.model";
-import Position from "@/models/position.model";
 import { getNextEmployeeId } from "../../handler/employee-id.helper";
-import { ConflictError, NotFoundError } from "../../http-errors";
+import {
+  ConflictError,
+  NotFoundError,
+  isDuplicateKeyError,
+} from "../../http-errors";
 
 const EMPLOYEES_PATH = "/employees";
 const MAX_TRANSACTION_ATTEMPTS = 8;
@@ -51,14 +55,7 @@ function hasErrorLabel(error: unknown, label: string): boolean {
 function isTransientTransactionError(error: unknown): boolean {
   return hasErrorLabel(error, "TransientTransactionError");
 }
-function isDuplicateKeyError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === 11000
-  );
-}
+
 async function commitTransactionWithRetry(
   session: mongoose.ClientSession
 ): Promise<void> {
@@ -82,6 +79,7 @@ async function commitTransactionWithRetry(
 
   throw lastError;
 }
+
 async function waitBeforeTransactionRetry(attempt: number): Promise<void> {
   const backoffMs = Math.min(25 * 2 ** (attempt - 1), 400);
   const jitterMs = Math.floor(Math.random() * 25);
@@ -90,6 +88,7 @@ async function waitBeforeTransactionRetry(attempt: number): Promise<void> {
     setTimeout(resolve, backoffMs + jitterMs);
   });
 }
+
 async function findEmployeeByCreationRequestId(
   requestId: string,
   session: mongoose.ClientSession
@@ -102,6 +101,7 @@ async function findEmployeeByCreationRequestId(
       { path: "manager", options: { session } },
     ]);
 }
+
 async function findCommittedEmployeeByCreationRequestId(requestId: string) {
   return Employee.findOne({ creationRequestId: requestId }).populate([
     { path: "department" },
@@ -109,6 +109,7 @@ async function findCommittedEmployeeByCreationRequestId(requestId: string) {
     { path: "manager" },
   ]);
 }
+
 async function createEmployeeInTransaction(
   employeeParams: CreateEmployeeInput
 ): Promise<EmployeeDetail> {
@@ -212,6 +213,7 @@ async function createEmployeeInTransaction(
 
   throw lastError ?? new Error("Employee creation transaction failed.");
 }
+
 export async function createEmployee(
   params: CreateEmployeeInput
 ): Promise<ActionResponse> {
@@ -263,6 +265,7 @@ export async function createEmployee(
     return handleError(error) as ErrorResponse;
   }
 }
+
 export async function deleteEmployee(
   params: DeleteEmployeeParams
 ): Promise<ActionResponse> {
@@ -286,6 +289,7 @@ export async function deleteEmployee(
     return handleError(error) as ErrorResponse;
   }
 }
+
 export async function getEmployeeById(
   params: GetEmployeeByIdParams
 ): Promise<ActionResponse<EmployeeDetail>> {
@@ -306,6 +310,7 @@ export async function getEmployeeById(
     return handleError(error) as ErrorResponse;
   }
 }
+
 export async function getEmployees(
   params: GetEmployeesParams = {}
 ): Promise<ActionResponse<{ employees: EmployeeListItem[]; isNext: boolean }>> {

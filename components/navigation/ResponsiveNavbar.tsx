@@ -13,7 +13,7 @@ function getCurrentPageTitle(pathname: string): string {
   return currentPage?.title ?? "NexHR";
 }
 
-export default function ResponsiveNavbar() {
+export default function ResponsiveNavbar(): React.JSX.Element {
   const pathname = usePathname();
   const pageTitle = getCurrentPageTitle(pathname);
 

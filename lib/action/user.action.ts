@@ -1,16 +1,18 @@
 "use server";
 
-import { ActionResponse, ErrorResponse } from "@/types/global";
-import action from "../handler/action-helper";
 import User from "@/models/user.model";
-import { ConflictError } from "../http-errors";
-import handleError from "../handler/error";
+import type { ActionResponse, ErrorResponse } from "@/types/global";
 import { registerUserSchema } from "@/validations/user.schema";
-interface createUserParams {
+import action from "../handler/action-helper";
+import handleError from "../handler/error";
+import { ConflictError } from "../http-errors";
+
+interface CreateUserParams {
   email: string;
 }
+
 export async function createUser(
-  params: createUserParams
+  params: CreateUserParams
 ): Promise<ActionResponse> {
   const validatedResult = await action({
     params,
@@ -19,6 +21,7 @@ export async function createUser(
   });
   const { email } = validatedResult.params!;
   const normalizedEmail = email.toLowerCase();
+
   try {
     const existingUser = await User.findOne({ email: normalizedEmail });
 

@@ -1,4 +1,4 @@
-import { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export interface DashboardStat {
   title: string;
@@ -29,3 +29,10 @@ export interface LeaveRequest {
   endDate: string;
   status: "Approved" | "Pending" | "Rejected";
 }
+
+export type StatCardProps = {
+  label: string;
+  value?: string | number;
+  dashboardValue?: number;
+  icon: LucideIcon;
+};

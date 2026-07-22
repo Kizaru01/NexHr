@@ -1,16 +1,18 @@
+import { redirect } from "next/navigation";
+
+import { auth } from "@/auth";
+import StatCard from "@/components/Card/Stats-card";
 import AttendanceOverviewChart from "@/components/Chart/AttendanceOverviewChart";
 import EmployeeOverviewChart from "@/components/Chart/Employee-overview-chart";
 import RecentAnnouncements from "@/components/Dashboard/RecentAnnouncements";
 import RecentLeaveList from "@/components/Dashboard/RecentLeaveList";
-import StatCard from "@/components/Card/Stats-card";
 import DashboardNavbar from "@/components/Navbar/Dashboard-navbar";
 import QuickAction from "@/components/QuickAction";
 import { dashboardStats } from "@/constants/dashboard-static";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 
-const Home = async () => {
+const Home = async (): Promise<React.JSX.Element> => {
   const session = await auth();
+  console.log("Employee Page");
   if (session?.user?.role === "employee") {
     redirect("/employee");
   }
@@ -30,24 +32,20 @@ const Home = async () => {
           <AttendanceOverviewChart />
         </div>
       </div>
-      <>
-        {/* XL Layout */}
-        <div className="grid gap-6 md:grid-cols-2 2xl:hidden pt-4 max-md:px-6">
-          <div className="space-y-6">
-            <RecentLeaveList />
-            <RecentAnnouncements />
-          </div>
-
-          <QuickAction />
-        </div>
-
-        {/* 2XL Layout */}
-        <div className="hidden gap-6 2xl:grid 2xl:grid-cols-3 pt-4">
+      <div className="grid gap-6 md:grid-cols-2 2xl:hidden pt-4 max-md:px-6">
+        <div className="space-y-6">
           <RecentLeaveList />
           <RecentAnnouncements />
-          <QuickAction />
         </div>
-      </>
+
+        <QuickAction />
+      </div>
+
+      <div className="hidden gap-6 2xl:grid 2xl:grid-cols-3 pt-4">
+        <RecentLeaveList />
+        <RecentAnnouncements />
+        <QuickAction />
+      </div>
     </>
   );
 };

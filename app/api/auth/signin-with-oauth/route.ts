@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 import connectToDatabase from "@/database/mongodb";
 import handleError from "@/lib/handler/error";
 import {
@@ -7,12 +9,10 @@ import {
 } from "@/lib/http-errors";
 import Employee from "@/models/employee.model";
 import User, { IUser } from "@/models/user.model";
-import { APIErrorResponse } from "@/types/global";
+import type { APIErrorResponse } from "@/types/global";
 import { SignInWithOAuth } from "@/validations/user.schema";
 
-import { NextResponse } from "next/server";
-
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   const body = await request.json();
 
   await connectToDatabase();

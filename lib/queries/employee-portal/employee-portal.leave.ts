@@ -3,6 +3,7 @@ import "server-only";
 import { Types } from "mongoose";
 
 import Leave from "@/models/leave.model";
+import type { EmployeeLeaveResult } from "@/types/employee-portal";
 import {
   EMPLOYEE_PORTAL_PAGE_SIZE,
   getLeaveBalances,
@@ -24,18 +25,25 @@ const leaveTypes = [
 export async function getOwnLeaveRequests(
   employeeId: string,
   filters: EmployeePortalFilters
-) {
-  const page = safePage(filters.page);
+): Promise<EmployeeLeaveResult> {
+  const {
+    page: pageFilter,
+    search,
+    status,
+    type,
+  } = filters;
+  const page = safePage(pageFilter);
   const query: Record<string, unknown> = { employee: employeeId };
 
-  if (filters.status && leaveStatuses.includes(filters.status as never)) {
-    query.status = filters.status;
+  if (status && leaveStatuses.includes(status as never)) {
+    query.status = status;
   }
-  if (filters.type && leaveTypes.includes(filters.type as never)) {
-    query.leaveType = filters.type;
+  if (type && leaveTypes.includes(type as never)) {
+    query.leaveType = type;
   }
-  if (filters.search?.trim()) {
-    query.reason = { $regex: filters.search.trim(), $options: "i" };
+  const searchTerm = search?.trim();
+  if (searchTerm) {
+    query.reason = { $regex: searchTerm, $options: "i" };
   }
 
   const [entries, total, balances, statusCounts] = await Promise.all([
@@ -54,7 +62,9 @@ export async function getOwnLeaveRequests(
     ]),
   ]);
 
-  const counts = Object.fromEntries(statusCounts.map((item) => [item._id, item.count]));
+  const counts = Object.fromEntries(
+    statusCounts.map(({ _id, count }) => [_id, count])
+  );
 
   return {
     records: entries.map((entry) => ({

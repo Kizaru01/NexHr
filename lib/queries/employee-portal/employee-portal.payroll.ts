@@ -2,9 +2,12 @@ import "server-only";
 
 import Employee from "@/models/employee.model";
 import Payroll from "@/models/payroll.model";
+import type { EmployeePayrollResult } from "@/types/employee-portal";
 import { serialiseDate } from "./employee-portal.shared";
 
-export async function getOwnPayroll(employeeId: string) {
+export async function getOwnPayroll(
+  employeeId: string
+): Promise<EmployeePayrollResult> {
   const [employee, payrolls] = await Promise.all([
     Employee.findById(employeeId).select("salary").lean(),
     Payroll.find({ employee: employeeId })

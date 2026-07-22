@@ -8,19 +8,19 @@ import ProfileImageForm from "@/components/employee-portal/ProfileImageForm";
 import StatusBadge from "@/components/hr/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
-import { getOwnEmployeeProfile } from "@/queries/employee-portal.profile";
+import { getOwnEmployeeProfile } from "@/lib/queries/employee-portal/employee-portal.profile";
+import { formatDisplayDate } from "@/lib/utils";
 
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "Not provided";
-}
-
-export default async function EmployeeProfilePage() {
-  const employee = await requireEmployeePage();
+export default async function EmployeeProfilePage(): Promise<
+  React.JSX.Element
+> {
+  const { employeeDatabaseId, userId } = await requireEmployeePage();
   const profile = await getOwnEmployeeProfile(
-    employee.employeeDatabaseId,
-    employee.userId
+    employeeDatabaseId,
+    userId
   );
   if (!profile) notFound();
+  const { address, emergencyContact } = profile;
 
   return (
     <section className="mx-auto max-w-6xl space-y-6">
@@ -59,7 +59,10 @@ export default async function EmployeeProfilePage() {
                 { label: "Department", value: profile.department },
                 { label: "Position", value: profile.position },
                 { label: "Manager", value: profile.manager },
-                { label: "Hire date", value: formatDate(profile.hireDate) },
+                {
+                  label: "Hire date",
+                  value: formatDisplayDate(profile.hireDate, "Not provided"),
+                },
                 { label: "Employment type", value: profile.type },
                 {
                   label: "Employment status",
@@ -100,10 +103,10 @@ export default async function EmployeeProfilePage() {
           <CardContent>
             <DetailList
               details={[
-                { label: "Street", value: profile.address?.street },
-                { label: "Barangay", value: profile.address?.barangay },
-                { label: "City", value: profile.address?.city },
-                { label: "Province", value: profile.address?.province },
+                { label: "Street", value: address?.street },
+                { label: "Barangay", value: address?.barangay },
+                { label: "City", value: address?.city },
+                { label: "Province", value: address?.province },
               ]}
             />
           </CardContent>
@@ -117,12 +120,12 @@ export default async function EmployeeProfilePage() {
           <CardContent>
             <DetailList
               details={[
-                { label: "Name", value: profile.emergencyContact?.name },
+                { label: "Name", value: emergencyContact?.name },
                 {
                   label: "Relationship",
-                  value: profile.emergencyContact?.relationship,
+                  value: emergencyContact?.relationship,
                 },
-                { label: "Phone", value: profile.emergencyContact?.phone },
+                { label: "Phone", value: emergencyContact?.phone },
               ]}
             />
           </CardContent>

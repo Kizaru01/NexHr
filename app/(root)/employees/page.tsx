@@ -23,7 +23,7 @@ import { normaliseSearchParams } from "@/lib/search-params";
 import {
   getEmployeeDirectory,
   getEmployeeFilters,
-} from "@/queries/hr-dashboard.queries";
+} from "@/lib/queries/hr-dashboard.queries";
 import type { FilterControl, PageSearchParams } from "@/types/filters";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
@@ -36,7 +36,7 @@ function formatDate(date: string | null): string {
     : "—";
 }
 
-export default async function EmployeesPage({ searchParams }: PageProps) {
+export default async function EmployeesPage({ searchParams }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(await searchParams);

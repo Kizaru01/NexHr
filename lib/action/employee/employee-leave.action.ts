@@ -3,12 +3,16 @@
 import { revalidatePath } from "next/cache";
 
 import action from "@/lib/handler/action-helper";
-import { balanceFor, getLeaveBalances } from "@/queries/employee-portal.shared";
-import { leaveDurationInDays, type LeaveType } from "@/lib/employee-portal/policy";
+import {
+  balanceFor,
+  getLeaveBalances,
+} from "@/lib/queries/employee-portal/employee-portal.shared";
+import { leaveDurationInDays, type LeaveType } from "@/lib/queries/policy";
 import { requireEmployeeRecord } from "@/lib/handler/require-employee";
 import handleError from "@/lib/handler/error";
 import { ConflictError, NotFoundError } from "@/lib/http-errors";
 import Leave from "@/models/leave.model";
+import type { LeaveAvailabilityParams } from "@/types/employee-portal";
 import type { ActionResponse, ErrorResponse } from "@/types/global";
 import {
   cancelLeaveRequestSchema,
@@ -23,18 +27,14 @@ async function validateLeaveAvailability({
   values,
   excludeLeaveId,
   existingDuration,
-}: {
-  employeeId: string;
-  values: LeaveRequestInput;
-  excludeLeaveId?: string;
-  existingDuration?: number;
-}): Promise<void> {
+}: LeaveAvailabilityParams): Promise<void> {
+  const { endDate, leaveType, startDate } = values;
   const overlap = await Leave.exists({
     employee: employeeId,
     status: { $in: ["Pending", "Approved"] },
     ...(excludeLeaveId ? { _id: { $ne: excludeLeaveId } } : {}),
-    startDate: { $lte: values.endDate },
-    endDate: { $gte: values.startDate },
+    startDate: { $lte: endDate },
+    endDate: { $gte: startDate },
   });
 
   if (overlap) {
@@ -43,9 +43,9 @@ async function validateLeaveAvailability({
     );
   }
 
-  const requestedDays = leaveDurationInDays(values.startDate, values.endDate);
+  const requestedDays = leaveDurationInDays(startDate, endDate);
   const balances = await getLeaveBalances(employeeId);
-  const balance = balanceFor(balances, values.leaveType as LeaveType);
+  const balance = balanceFor(balances, leaveType as LeaveType);
   const availableDays =
     balance.available === null
       ? null
@@ -53,7 +53,7 @@ async function validateLeaveAvailability({
 
   if (availableDays !== null && requestedDays > availableDays) {
     throw new ConflictError(
-      `Only ${availableDays} ${values.leaveType.toLowerCase()} leave day(s) are available.`
+      `Only ${availableDays} ${leaveType.toLowerCase()} leave day(s) are available.`
     );
   }
 }
@@ -72,15 +72,17 @@ export async function createOwnLeaveRequest(
       schema: leaveRequestSchema,
       roles: ["employee"],
     });
-    const employee = await requireEmployeeRecord(validated.session.user.id);
+    const { params: validatedParams, session } = validated;
+    const employee = await requireEmployeeRecord(session.user.id);
+    const { employeeDatabaseId } = employee;
 
     await validateLeaveAvailability({
-      employeeId: employee.employeeDatabaseId,
-      values: validated.params!,
+      employeeId: employeeDatabaseId,
+      values: validatedParams!,
     });
     await Leave.create({
-      employee: employee.employeeDatabaseId,
-      ...validated.params,
+      employee: employeeDatabaseId,
+      ...validatedParams,
       status: "Pending",
     });
 
@@ -100,10 +102,13 @@ export async function updateOwnPendingLeaveRequest(
       schema: updateLeaveRequestSchema,
       roles: ["employee"],
     });
-    const employee = await requireEmployeeRecord(validated.session.user.id);
+    const { params: validatedParams, session } = validated;
+    const employee = await requireEmployeeRecord(session.user.id);
+    const { employeeDatabaseId } = employee;
+    const { attachment, leaveId, ...values } = validatedParams!;
     const currentRequest = await Leave.findOne({
-      _id: validated.params!.leaveId,
-      employee: employee.employeeDatabaseId,
+      _id: leaveId,
+      employee: employeeDatabaseId,
       status: "Pending",
     }).select("startDate endDate");
 
@@ -115,10 +120,8 @@ export async function updateOwnPendingLeaveRequest(
       currentRequest.startDate,
       currentRequest.endDate
     );
-    const { leaveId, attachment, ...values } = validated.params!;
-
     await validateLeaveAvailability({
-      employeeId: employee.employeeDatabaseId,
+      employeeId: employeeDatabaseId,
       values,
       excludeLeaveId: leaveId,
       existingDuration,
@@ -143,11 +146,14 @@ export async function cancelOwnPendingLeaveRequest(params: {
       schema: cancelLeaveRequestSchema,
       roles: ["employee"],
     });
-    const employee = await requireEmployeeRecord(validated.session.user.id);
+    const { params: validatedParams, session } = validated;
+    const employee = await requireEmployeeRecord(session.user.id);
+    const { employeeDatabaseId } = employee;
+    const { leaveId } = validatedParams!;
     const request = await Leave.findOneAndUpdate(
       {
-        _id: validated.params!.leaveId,
-        employee: employee.employeeDatabaseId,
+        _id: leaveId,
+        employee: employeeDatabaseId,
         status: "Pending",
       },
       { $set: { status: "Cancelled" } },

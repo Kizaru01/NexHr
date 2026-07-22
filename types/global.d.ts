@@ -1,4 +1,6 @@
-type ActionResponse<T = null> = {
+import type { NextResponse } from "next/server";
+
+export type ActionResponse<T = null> = {
   success: boolean;
   data?: T;
   error?: {
@@ -6,13 +8,13 @@ type ActionResponse<T = null> = {
     details?: Record<string, string[]>;
   };
 };
-// TAPOS ETO NAMAN FOR GLOBAL RESPONSE TYPE USUALLY SERVER ACTIONS
-type SuccessResponse<T = null> = ActionResponse<T> & { success: true };
-type ErrorResponse = ActionResponse<undefined> & { success: false };
+export type SuccessResponse<T = null> = ActionResponse<T> & { success: true };
+export type ErrorResponse = ActionResponse<undefined> & { success: false };
 
-// API ERROR RESPONSE TAYA INI GUYZ
-type APIErrorResponse = NextResponse<ErrorResponse>;
-type APIResponse<T = null> = NextResponse<SuccessResponse<T> | ErrorResponse>;
+export type APIErrorResponse = NextResponse<ErrorResponse>;
+export type APIResponse<T = null> = NextResponse<
+  SuccessResponse<T> | ErrorResponse
+>;
 
 export type UserRole = "admin" | "hr" | "employee";
 export type Gender = "Male" | "Female";
@@ -56,14 +58,6 @@ export interface Address {
   postalCode?: string;
 }
 
-import type { Address, CreateEmployeeParams } from "@/types/global";
-
-/**
- * NOTE: `CreateEmployeeParams` in `types/global.d.ts` doesn't include
- * `email`/`address`/etc, even though `IEmployee` (the Mongoose model)
- * requires `email`. Rather than editing your existing global type, we
- * extend it here. This keeps the original architecture untouched.
- */
 export interface EmergencyContactInfo {
   name?: string;
   relationship?: string;

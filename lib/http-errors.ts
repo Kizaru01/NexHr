@@ -62,3 +62,18 @@ export class ConflictError extends RequestError {
     this.name = "ConflictError";
   }
 }
+
+export class DuplicateError extends ConflictError {
+  constructor(message: string = "Resource already exists") {
+    super(message);
+    this.name = "DuplicateError";
+  }
+}
+export function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === 11000
+  );
+}

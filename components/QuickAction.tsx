@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { quickActions } from "@/constants/dashboard-static";
 
-export default function QuickActions() {
+export default function QuickActions(): React.JSX.Element {
   return (
     <Card>
       <CardHeader>

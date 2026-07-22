@@ -19,7 +19,7 @@ type FilterToolbarProps = {
 export default function FilterToolbar({
   controls,
   className,
-}: FilterToolbarProps) {
+}: FilterToolbarProps): React.JSX.Element {
   const {
     clearFilters,
     getFilterValue,
@@ -46,10 +46,7 @@ export default function FilterToolbar({
           return (
             <label
               key={control.key}
-              className={cn(
-                "relative w-full md:w-72",
-                control.className
-              )}
+              className={cn("relative w-full md:w-72", control.className)}
             >
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input

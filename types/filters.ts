@@ -32,3 +32,13 @@ export type PageSearchParams = Record<
   string,
   string | string[] | undefined
 >;
+
+export type FilterUpdates = Record<string, string | null | undefined>;
+
+export type UseUrlFiltersResult = {
+  clearFilters: (keys: readonly string[]) => void;
+  getFilterValue: (key: string) => string;
+  isPending: boolean;
+  scheduleSearchUpdate: (key: string, value: string) => void;
+  updateFilters: (updates: FilterUpdates) => void;
+};

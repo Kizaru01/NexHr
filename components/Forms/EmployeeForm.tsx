@@ -52,14 +52,13 @@ export const EmployeeForm = ({
   departmentOptions,
   positionOptions,
   managerOptions,
-}: EmployeeFormProps) => {
+}: EmployeeFormProps): React.JSX.Element => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [initialRequestId] = useState(createRequestId);
   const requestIdRef = useRef(initialRequestId);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const form = useForm<EmployeeFormInput, any, EmployeeFormOutput>({
+  const form = useForm<EmployeeFormInput, undefined, EmployeeFormOutput>({
     resolver: zodResolver(createEmployeeSchema),
     defaultValues: {
       ...DEFAULT_VALUES,

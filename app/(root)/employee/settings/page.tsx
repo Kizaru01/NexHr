@@ -13,13 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
-import { getOwnEmployeeProfile } from "@/queries/employee-portal.profile";
+import { getOwnEmployeeProfile } from "@/lib/queries/employee-portal/employee-portal.profile";
 
-export default async function EmployeeSettingsPage() {
-  const employee = await requireEmployeePage();
+export default async function EmployeeSettingsPage(): Promise<React.JSX.Element> {
+  const { employeeDatabaseId, userId } = await requireEmployeePage();
   const profile = await getOwnEmployeeProfile(
-    employee.employeeDatabaseId,
-    employee.userId
+    employeeDatabaseId,
+    userId
   );
   if (!profile) notFound();
   const enabledNotifications = Object.values(profile.notification).filter(

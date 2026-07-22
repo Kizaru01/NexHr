@@ -25,3 +25,28 @@ export type PositionListItem = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type DepartmentListSource = {
+  _id: { toString(): string };
+  name: string;
+  code?: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PositionListSource = {
+  _id: { toString(): string };
+  name: string;
+  department: { toString(): string };
+  description?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PositionDirectoryResult = {
+  departments: DepartmentOption[];
+  positions: PositionListItem[];
+};

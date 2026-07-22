@@ -15,7 +15,7 @@ type NavigationToggleProps = {
 export default function NavigationToggle({
   target,
   className,
-}: NavigationToggleProps) {
+}: NavigationToggleProps): React.JSX.Element {
   const {
     isMobileDrawerOpen,
     isSidebarExpanded,

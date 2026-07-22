@@ -25,7 +25,7 @@ type ApplicationNavigationProps = {
 export default function ApplicationNavigation({
   user,
   variant,
-}: ApplicationNavigationProps) {
+}: ApplicationNavigationProps): React.JSX.Element {
   const isDesktop = variant === "desktop";
   const { isSidebarExpanded } = useNavigation();
   const isCompact = isDesktop && !isSidebarExpanded;

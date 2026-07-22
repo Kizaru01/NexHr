@@ -28,7 +28,7 @@ export default function NavigationProvider({
   children,
 }: {
   children: ReactNode;
-}) {
+}): React.JSX.Element {
   const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [isSidebarExpanded, setSidebarExpanded] = useState(false);
 

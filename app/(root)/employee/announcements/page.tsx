@@ -1,4 +1,5 @@
-import { BellRing, Megaphone, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BellRing, Megaphone, Sparkles } from "lucide-react";
 
 import EmptyState from "@/components/employee-portal/EmptyState";
 import PageHeader from "@/components/employee-portal/PageHeader";
@@ -9,7 +10,7 @@ import StatusBadge from "@/components/hr/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
 import { normaliseSearchParams } from "@/lib/search-params";
-import { getEmployeeAnnouncements } from "@/queries/employee-portal.communications";
+import { getEmployeeAnnouncements } from "@/lib/queries/employee-portal/employee-portal.communications";
 import type { FilterControl, PageSearchParams } from "@/types/filters";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
@@ -33,7 +34,7 @@ const controls: readonly FilterControl[] = [
 
 export default async function EmployeeAnnouncementsPage({
   searchParams,
-}: PageProps) {
+}: PageProps): Promise<React.JSX.Element> {
   await requireEmployeePage();
   const filters = normaliseSearchParams(await searchParams);
   const results = await getEmployeeAnnouncements(filters);
@@ -83,6 +84,12 @@ export default async function EmployeeAnnouncementsPage({
                 <p className="mt-2 line-clamp-4 text-sm text-muted-foreground">
                   {announcement.description}
                 </p>
+                <Link
+                  href={`/employee/announcements/${announcement.id}`}
+                  className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                >
+                  Read announcement <ArrowRight className="size-4" />
+                </Link>
                 <p className="mt-auto pt-4 text-xs text-muted-foreground">
                   {announcement.publishedAt
                     ? new Date(announcement.publishedAt).toLocaleDateString()

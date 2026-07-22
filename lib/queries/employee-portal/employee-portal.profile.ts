@@ -2,12 +2,13 @@ import "server-only";
 
 import Employee from "@/models/employee.model";
 import User from "@/models/user.model";
+import type { EmployeeProfileResult } from "@/types/employee-portal";
 import { nameOf, serialiseDate } from "./employee-portal.shared";
 
 export async function getOwnEmployeeProfile(
   employeeId: string,
   userId: string
-) {
+): Promise<EmployeeProfileResult | null> {
   const [employee, user] = await Promise.all([
     Employee.findById(employeeId)
       .populate("department", "name")
@@ -24,6 +25,7 @@ export async function getOwnEmployeeProfile(
     | undefined;
   const department = employee.department as { name?: string } | undefined;
   const position = employee.position as { name?: string } | undefined;
+  const notification = user?.notification;
 
   return {
     employeeId: employee.employeeId,
@@ -45,11 +47,11 @@ export async function getOwnEmployeeProfile(
     status: employee.employmentStatus,
     type: employee.employmentType,
     notification: {
-      leave: user?.notification?.leave ?? true,
-      attendance: user?.notification?.attendance ?? true,
-      announcements: user?.notification?.announcements ?? true,
-      payroll: user?.notification?.payroll ?? true,
-      email: user?.notification?.email ?? true,
+      leave: notification?.leave ?? true,
+      attendance: notification?.attendance ?? true,
+      announcements: notification?.announcements ?? true,
+      payroll: notification?.payroll ?? true,
+      email: notification?.email ?? true,
     },
   };
 }

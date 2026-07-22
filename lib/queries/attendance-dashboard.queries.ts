@@ -2,6 +2,7 @@ import "server-only";
 
 import connectToDatabase from "@/database/mongodb";
 import Attendance from "@/models/attendance.model";
+import type { AttendanceDashboardResult } from "@/types/hr-dashboard";
 import {
   attendanceSorts,
   countStatuses,
@@ -14,11 +15,20 @@ import {
   type ListFilters,
 } from "./hr-dashboard.shared";
 
-export async function getAttendanceDashboard(filters: ListFilters) {
+export async function getAttendanceDashboard(
+  filters: ListFilters
+): Promise<AttendanceDashboardResult> {
+  const {
+    date,
+    page: pageFilter,
+    sort: sortFilter,
+    status,
+  } = filters;
+
   await connectToDatabase();
 
-  const page = safePage(filters.page);
-  const { startDate, endDate } = getDateRange(filters.date);
+  const page = safePage(pageFilter);
+  const { startDate, endDate } = getDateRange(date);
   const baseQuery: Record<string, unknown> = {
     date: { $gte: startDate, $lt: endDate },
   };
@@ -30,12 +40,12 @@ export async function getAttendanceDashboard(filters: ListFilters) {
 
   const recordQuery: Record<string, unknown> = { ...baseQuery };
 
-  if (filters.status) {
-    recordQuery.status = filters.status;
+  if (status) {
+    recordQuery.status = status;
   }
 
   const sort =
-    attendanceSorts[filters.sort ?? ""] ?? attendanceSorts["clock-in-desc"];
+    attendanceSorts[sortFilter ?? ""] ?? attendanceSorts["clock-in-desc"];
   const [records, total, statusRecords] = await Promise.all([
     Attendance.find(recordQuery)
       .populate({
@@ -71,14 +81,15 @@ export async function getAttendanceDashboard(filters: ListFilters) {
         department?: { name?: string };
         position?: { name?: string };
       };
+      const { department, employeeId, position } = employee;
 
       return [
         {
           id: record._id.toString(),
-          employeeId: employee.employeeId,
+          employeeId,
           employee: nameOf(employee),
-          department: employee.department?.name ?? "Unassigned",
-          position: employee.position?.name ?? "Unassigned",
+          department: department?.name ?? "Unassigned",
+          position: position?.name ?? "Unassigned",
           date: serialiseDate(record.date),
           checkIn: serialiseDate(record.checkInTime),
           checkOut: serialiseDate(record.checkOutTime),

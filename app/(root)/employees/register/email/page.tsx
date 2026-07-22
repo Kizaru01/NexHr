@@ -1,6 +1,6 @@
 import EmailRegistration from "@/components/Forms/RegisterEmailForm";
 
-const Email = () => {
+const Email = (): React.JSX.Element => {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-12">
       <div className="space-y-2">

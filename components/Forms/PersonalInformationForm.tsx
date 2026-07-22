@@ -15,7 +15,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { EmployeeFormValues } from "../Forms/EmployeeForm";
 
-export function PersonalInformation() {
+export function PersonalInformation(): React.JSX.Element {
   const {
     register,
     control,
@@ -95,9 +95,11 @@ export function PersonalInformation() {
                 id="birthDate"
                 type="date"
                 aria-invalid={fieldState.invalid}
-                onChange={(e) =>
+                onChange={(event) =>
                   field.onChange(
-                    e.target.value ? new Date(e.target.value) : undefined
+                    event.target.value
+                      ? new Date(event.target.value)
+                      : undefined
                   )
                 }
                 value={formatDate(field.value)}

@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useRef, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import type {
+  FilterUpdates,
+  UseUrlFiltersResult,
+} from "@/types/filters";
+
 const SEARCH_DEBOUNCE_MS = 400;
 
-type FilterUpdates = Record<string, string | null | undefined>;
-
-export function useUrlFilters() {
+export function useUrlFilters(): UseUrlFiltersResult {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();

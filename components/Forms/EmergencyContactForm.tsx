@@ -6,7 +6,7 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { EmployeeFormValues } from "../Forms/EmployeeForm";
 
-export function EmergencyContact() {
+export function EmergencyContact(): React.JSX.Element {
   const {
     register,
     formState: { errors },

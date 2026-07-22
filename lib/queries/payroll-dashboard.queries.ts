@@ -5,6 +5,12 @@ import { Types } from "mongoose";
 import connectToDatabase from "@/database/mongodb";
 import Employee from "@/models/employee.model";
 import Payroll from "@/models/payroll.model";
+import type {
+  PayrollDashboardResult,
+  PayrollDetailResult,
+  PayrollGenerationEmployee,
+  PayrollListRecord,
+} from "@/types/hr-dashboard";
 import {
   DEFAULT_PAGE_SIZE,
   findFilteredEmployeeIds,
@@ -15,7 +21,11 @@ import {
   type ListFilters,
 } from "./hr-dashboard.shared";
 
-function numberFilter(value: string | undefined, minimum: number, maximum: number) {
+function numberFilter(
+  value: string | undefined,
+  minimum: number,
+  maximum: number
+): number | undefined {
   const number = Number(value);
 
   return Number.isInteger(number) && number >= minimum && number <= maximum
@@ -23,11 +33,14 @@ function numberFilter(value: string | undefined, minimum: number, maximum: numbe
     : undefined;
 }
 
-async function buildPayrollQuery(filters: ListFilters) {
+async function buildPayrollQuery(
+  filters: ListFilters
+): Promise<Record<string, unknown>> {
+  const { month: monthFilter, year: yearFilter } = filters;
   const query: Record<string, unknown> = {};
   const employeeIds = await findFilteredEmployeeIds(filters);
-  const month = numberFilter(filters.month, 1, 12);
-  const year = numberFilter(filters.year, 2000, 9999);
+  const month = numberFilter(monthFilter, 1, 12);
+  const year = numberFilter(yearFilter, 2000, 9999);
 
   if (employeeIds) {
     query.employee = { $in: employeeIds };
@@ -53,7 +66,9 @@ const payrollEmployeePopulation = {
   ],
 };
 
-function toPayrollListRecord(record: Awaited<ReturnType<typeof Payroll.find>>[number]) {
+function toPayrollListRecord(
+  record: Awaited<ReturnType<typeof Payroll.find>>[number]
+): PayrollListRecord {
   const employee = record.employee as unknown as {
     employeeId?: string;
     firstName?: string;
@@ -62,19 +77,25 @@ function toPayrollListRecord(record: Awaited<ReturnType<typeof Payroll.find>>[nu
     department?: { name?: string };
     position?: { name?: string };
   } | null;
+  const {
+    department,
+    employeeId,
+    firstName,
+    lastName,
+    middleName,
+    position,
+  } = employee ?? {};
+  const employeeName =
+    firstName && lastName
+      ? nameOf({ firstName, middleName, lastName })
+      : "Deleted employee";
 
   return {
     id: record._id.toString(),
-    employee: employee?.firstName && employee?.lastName
-      ? nameOf({
-          firstName: employee.firstName,
-          middleName: employee.middleName,
-          lastName: employee.lastName,
-        })
-      : "Deleted employee",
-    employeeId: employee?.employeeId ?? "—",
-    department: employee?.department?.name ?? "Unassigned",
-    position: employee?.position?.name ?? "Unassigned",
+    employee: employeeName,
+    employeeId: employeeId ?? "—",
+    department: department?.name ?? "Unassigned",
+    position: position?.name ?? "Unassigned",
     month: record.month,
     year: record.year,
     grossPay:
@@ -89,7 +110,9 @@ function toPayrollListRecord(record: Awaited<ReturnType<typeof Payroll.find>>[nu
   };
 }
 
-export async function getPayrollGenerationEmployees() {
+export async function getPayrollGenerationEmployees(): Promise<
+  PayrollGenerationEmployee[]
+> {
   await connectToDatabase();
 
   const employees = await Employee.find({ employmentStatus: "Active" })
@@ -103,7 +126,9 @@ export async function getPayrollGenerationEmployees() {
   }));
 }
 
-export async function getPayrollDetail(payrollId: string) {
+export async function getPayrollDetail(
+  payrollId: string
+): Promise<PayrollDetailResult | null> {
   if (!Types.ObjectId.isValid(payrollId)) {
     return null;
   }
@@ -134,41 +159,66 @@ export async function getPayrollDetail(payrollId: string) {
     department?: { name?: string };
     position?: { name?: string };
   } | null;
+  const {
+    department,
+    email,
+    employeeId,
+    firstName,
+    lastName,
+    middleName,
+    position,
+  } = employee ?? {};
+  const employeeName =
+    firstName && lastName
+      ? nameOf({ firstName, middleName, lastName })
+      : "Deleted employee";
+  const {
+    _id,
+    allowance,
+    basicSalary,
+    bonus,
+    deductions,
+    generatedAt,
+    month,
+    netSalary,
+    overtimePay,
+    remarks,
+    tax,
+    year,
+  } = payroll;
 
   return {
-    id: payroll._id.toString(),
-    employee: employee?.firstName && employee?.lastName
-      ? nameOf({
-          firstName: employee.firstName,
-          middleName: employee.middleName,
-          lastName: employee.lastName,
-        })
-      : "Deleted employee",
-    employeeId: employee?.employeeId ?? "—",
-    email: employee?.email ?? null,
-    department: employee?.department?.name ?? "Unassigned",
-    position: employee?.position?.name ?? "Unassigned",
-    month: payroll.month,
-    year: payroll.year,
-    basicSalary: payroll.basicSalary,
-    allowance: payroll.allowance,
-    overtimePay: payroll.overtimePay,
-    bonus: payroll.bonus,
-    deductions: payroll.deductions,
-    tax: payroll.tax,
-    netSalary: payroll.netSalary,
-    generatedAt: serialiseDate(payroll.generatedAt),
-    remarks: payroll.remarks ?? null,
+    id: _id.toString(),
+    employee: employeeName,
+    employeeId: employeeId ?? "—",
+    email: email ?? null,
+    department: department?.name ?? "Unassigned",
+    position: position?.name ?? "Unassigned",
+    month,
+    year,
+    basicSalary,
+    allowance,
+    overtimePay,
+    bonus,
+    deductions,
+    tax,
+    netSalary,
+    generatedAt: serialiseDate(generatedAt),
+    remarks: remarks ?? null,
   };
 }
 
-export async function getPayrollDashboard(filters: ListFilters) {
+export async function getPayrollDashboard(
+  filters: ListFilters
+): Promise<PayrollDashboardResult> {
+  const { page: pageFilter, sort: sortFilter } = filters;
+
   await connectToDatabase();
 
-  const page = safePage(filters.page);
+  const page = safePage(pageFilter);
   const query = await buildPayrollQuery(filters);
 
-  const sort = payrollSorts[filters.sort ?? ""] ?? payrollSorts["generated-desc"];
+  const sort = payrollSorts[sortFilter ?? ""] ?? payrollSorts["generated-desc"];
   const [records, total, totals] = await Promise.all([
     Payroll.find(query)
       .populate(payrollEmployeePopulation)
@@ -204,11 +254,15 @@ export async function getPayrollDashboard(filters: ListFilters) {
   };
 }
 
-export async function getPayrollExport(filters: ListFilters) {
+export async function getPayrollExport(
+  filters: ListFilters
+): Promise<PayrollListRecord[]> {
+  const { sort: sortFilter } = filters;
+
   await connectToDatabase();
 
   const query = await buildPayrollQuery(filters);
-  const sort = payrollSorts[filters.sort ?? ""] ?? payrollSorts["generated-desc"];
+  const sort = payrollSorts[sortFilter ?? ""] ?? payrollSorts["generated-desc"];
   const records = await Payroll.find(query)
     .populate(payrollEmployeePopulation)
     .sort(sort)

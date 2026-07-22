@@ -1,16 +1,12 @@
-import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import type { StatCardProps } from "@/types/dashboard";
+
 export default function StatCard({
   label,
   value,
   icon: Icon,
   dashboardValue,
-}: {
-  label: string;
-  value?: string;
-  dashboardValue?: number;
-  icon: LucideIcon;
-}) {
+}: StatCardProps): React.JSX.Element {
   return (
     <Card>
       <CardContent className="flex items-center justify-between">

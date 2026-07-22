@@ -14,7 +14,7 @@ import StatCard from "@/components/hr/StatCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
-import { getPayrollDetail } from "@/queries/hr-dashboard.queries";
+import { getPayrollDetail } from "@/lib/queries/hr-dashboard.queries";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -39,7 +39,7 @@ function formatDate(value: string | null): string {
     : "—";
 }
 
-export default async function PayrollDetailPage({ params }: PageProps) {
+export default async function PayrollDetailPage({ params }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
   const { id } = await params;
@@ -66,17 +66,35 @@ export default async function PayrollDetailPage({ params }: PageProps) {
         actions={
           payroll.employeeId === "—" ? null : (
             <Button variant="outline" asChild>
-              <Link href={`/employees/${payroll.employeeId}`}>View employee</Link>
+              <Link href={`/employees/${payroll.employeeId}`}>
+                View employee
+              </Link>
             </Button>
           )
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Gross pay" value={currency.format(grossPay)} icon={BadgeDollarSign} />
-        <StatCard label="Deductions" value={currency.format(payroll.deductions)} icon={ReceiptText} />
-        <StatCard label="Taxes" value={currency.format(payroll.tax)} icon={Landmark} />
-        <StatCard label="Net pay" value={currency.format(payroll.netSalary)} icon={WalletCards} />
+        <StatCard
+          label="Gross pay"
+          value={currency.format(grossPay)}
+          icon={BadgeDollarSign}
+        />
+        <StatCard
+          label="Deductions"
+          value={currency.format(payroll.deductions)}
+          icon={ReceiptText}
+        />
+        <StatCard
+          label="Taxes"
+          value={currency.format(payroll.tax)}
+          icon={Landmark}
+        />
+        <StatCard
+          label="Net pay"
+          value={currency.format(payroll.netSalary)}
+          icon={WalletCards}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -104,11 +122,23 @@ export default async function PayrollDetailPage({ params }: PageProps) {
           <CardContent>
             <DetailList
               details={[
-                { label: "Basic salary", value: currency.format(payroll.basicSalary) },
-                { label: "Allowance", value: currency.format(payroll.allowance) },
-                { label: "Overtime pay", value: currency.format(payroll.overtimePay) },
+                {
+                  label: "Basic salary",
+                  value: currency.format(payroll.basicSalary),
+                },
+                {
+                  label: "Allowance",
+                  value: currency.format(payroll.allowance),
+                },
+                {
+                  label: "Overtime pay",
+                  value: currency.format(payroll.overtimePay),
+                },
                 { label: "Bonus", value: currency.format(payroll.bonus) },
-                { label: "Deductions", value: currency.format(payroll.deductions) },
+                {
+                  label: "Deductions",
+                  value: currency.format(payroll.deductions),
+                },
                 { label: "Tax", value: currency.format(payroll.tax) },
               ]}
             />

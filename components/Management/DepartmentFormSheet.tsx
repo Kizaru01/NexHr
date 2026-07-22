@@ -4,11 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import type { DepartmentListItem } from "@/types/management";
-import {
-  createDepartmentSchema,
-  type CreateDepartmentInput,
-} from "@/validations/department.schema";
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
@@ -21,6 +16,11 @@ import {
   SheetTitle,
 } from "../ui/sheet";
 import { Textarea } from "../ui/textarea";
+import type { DepartmentListItem } from "@/types/management";
+import {
+  createDepartmentSchema,
+  type CreateDepartmentInput,
+} from "@/validations/department.schema";
 
 type DepartmentFormInput = z.input<typeof createDepartmentSchema>;
 
@@ -44,7 +44,7 @@ export default function DepartmentFormSheet({
   isPending,
   onOpenChange,
   onSubmit,
-}: DepartmentFormSheetProps) {
+}: DepartmentFormSheetProps): React.JSX.Element {
   const form = useForm<DepartmentFormInput, undefined, CreateDepartmentInput>({
     resolver: zodResolver(createDepartmentSchema),
     defaultValues: department
@@ -55,6 +55,7 @@ export default function DepartmentFormSheet({
         }
       : emptyValues,
   });
+  const { errors } = form.formState;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -72,40 +73,40 @@ export default function DepartmentFormSheet({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-1 flex-col gap-5 p-4"
         >
-          <Field data-invalid={Boolean(form.formState.errors.name)}>
+          <Field data-invalid={Boolean(errors.name)}>
             <FieldLabel htmlFor="department-name">Name</FieldLabel>
             <Input
               id="department-name"
               autoFocus
               placeholder="Human Resources"
-              aria-invalid={Boolean(form.formState.errors.name)}
+              aria-invalid={Boolean(errors.name)}
               {...form.register("name")}
             />
-            <FieldError errors={[form.formState.errors.name]} />
+            <FieldError errors={[errors.name]} />
           </Field>
 
-          <Field data-invalid={Boolean(form.formState.errors.code)}>
+          <Field data-invalid={Boolean(errors.code)}>
             <FieldLabel htmlFor="department-code">Code (optional)</FieldLabel>
             <Input
               id="department-code"
               placeholder="HR"
-              aria-invalid={Boolean(form.formState.errors.code)}
+              aria-invalid={Boolean(errors.code)}
               {...form.register("code")}
             />
-            <FieldError errors={[form.formState.errors.code]} />
+            <FieldError errors={[errors.code]} />
           </Field>
 
-          <Field data-invalid={Boolean(form.formState.errors.description)}>
+          <Field data-invalid={Boolean(errors.description)}>
             <FieldLabel htmlFor="department-description">
               Description (optional)
             </FieldLabel>
             <Textarea
               id="department-description"
               placeholder="What this department is responsible for"
-              aria-invalid={Boolean(form.formState.errors.description)}
+              aria-invalid={Boolean(errors.description)}
               {...form.register("description")}
             />
-            <FieldError errors={[form.formState.errors.description]} />
+            <FieldError errors={[errors.description]} />
           </Field>
 
           <SheetFooter className="mt-auto px-0">

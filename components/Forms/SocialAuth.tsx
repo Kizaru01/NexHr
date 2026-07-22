@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "../ui/button";
 import Image from "next/image";
 import { toast } from "sonner";
-const SocialAuth = () => {
+const SocialAuth = (): React.JSX.Element => {
   const handleClick = async (provider: "github" | "google") => {
     try {
       await signIn(provider, {

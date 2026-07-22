@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { EmployeeFormValues } from "../Forms/EmployeeForm";
 
-export function SalaryInformation() {
+export function SalaryInformation(): React.JSX.Element {
   const {
     register,
     formState: { errors },

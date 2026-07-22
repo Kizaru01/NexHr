@@ -74,7 +74,6 @@ const employmentStatusEnum = z.enum([
 
 const genderEnum = z.enum(["Male", "Female"]);
 
-// ---- Personal information (shared by create + updateEmployeeProfile) ----
 export const personalInformationSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
   middleName: z.string().trim().optional(),
@@ -86,7 +85,6 @@ export const personalInformationSchema = z.object({
   avatar: z.string().trim().url("Invalid avatar URL").optional(),
 });
 
-// ---- Employment information ----
 export const employmentInformationSchema = z.object({
   department: objectIdSchema("Department"),
   position: objectIdSchema("Position"),
@@ -99,7 +97,6 @@ export const employmentInformationSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
-// ---- Full create payload ----
 export const createEmployeeSchema = z.object({
   requestId: z.string().uuid("Invalid employee creation request."),
   ...personalInformationSchema.shape,
@@ -109,7 +106,6 @@ export const createEmployeeSchema = z.object({
   salary: salarySchema,
 });
 
-// ---- Full update payload (employeeId locates the record) ----
 export const updateEmployeeSchema = createEmployeeSchema
   .omit({ requestId: true })
   .partial()
@@ -117,7 +113,6 @@ export const updateEmployeeSchema = createEmployeeSchema
     employeeId: z.string().trim().min(1, "Employee ID is required"),
   });
 
-// ---- Section-level updates ----
 export const updatePersonalInformationSchema = personalInformationSchema.extend(
   {
     employeeId: z.string().trim().min(1, "Employee ID is required"),
@@ -139,7 +134,6 @@ export const updateAddressSchema = z.object({
   address: addressSchema,
 });
 
-// ---- Queries ----
 export const getEmployeeByIdSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required"),
 });

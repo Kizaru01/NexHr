@@ -54,6 +54,33 @@ export const leaveSortOptions: readonly FilterOption[] = [
   { label: "Start date (latest)", value: "start-date-desc" },
 ];
 
+export const announcementCategoryOptions: readonly FilterOption[] = [
+  { label: "Company", value: "Company" },
+  { label: "People", value: "People" },
+  { label: "Policy", value: "Policy" },
+  { label: "Benefits", value: "Benefits" },
+  { label: "Events", value: "Events" },
+];
+
+export const announcementPriorityOptions: readonly FilterOption[] = [
+  { label: "High", value: "High" },
+  { label: "Normal", value: "Normal" },
+  { label: "Low", value: "Low" },
+];
+
+export const announcementStateOptions: readonly FilterOption[] = [
+  { label: "Published", value: "published" },
+  { label: "Draft", value: "draft" },
+  { label: "Archived", value: "archived" },
+];
+
+export const announcementSortOptions: readonly FilterOption[] = [
+  { label: "Newest first", value: "newest" },
+  { label: "Oldest first", value: "oldest" },
+  { label: "Title (A–Z)", value: "title-asc" },
+  { label: "Title (Z–A)", value: "title-desc" },
+];
+
 export const payrollSortOptions: readonly FilterOption[] = [
   { label: "Most recently generated", value: "generated-desc" },
   { label: "Oldest generated", value: "generated-asc" },

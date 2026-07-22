@@ -7,6 +7,8 @@ export interface IAnnouncement {
   priority: "Low" | "Normal" | "High";
   publishedAt: Date;
   isPublished: boolean;
+  isArchived: boolean;
+  archivedAt?: Date;
 }
 
 export interface IAnnouncementDoc extends IAnnouncement, Document {}
@@ -23,11 +25,13 @@ const AnnouncementSchema = new Schema<IAnnouncementDoc>(
     priority: { type: String, enum: ["Low", "Normal", "High"], default: "Normal" },
     publishedAt: { type: Date, default: Date.now },
     isPublished: { type: Boolean, default: false },
+    isArchived: { type: Boolean, default: false },
+    archivedAt: Date,
   },
   { timestamps: true }
 );
 
-AnnouncementSchema.index({ isPublished: 1, publishedAt: -1 });
+AnnouncementSchema.index({ isArchived: 1, isPublished: 1, publishedAt: -1 });
 
 const Announcement =
   models?.Announcement || model<IAnnouncementDoc>("Announcement", AnnouncementSchema);

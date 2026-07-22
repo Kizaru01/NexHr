@@ -15,7 +15,7 @@ export default function StatCard({
   change,
   icon: Icon,
   color,
-}: StatCardProps) {
+}: StatCardProps): React.JSX.Element {
   return (
     <Card>
       <CardContent className="flex items-start justify-between">

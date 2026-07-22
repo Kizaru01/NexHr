@@ -1,41 +1,37 @@
 "use client";
 
-import { Loader2, Paperclip, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+
+import { Loader2, Paperclip, XCircle } from "lucide-react";
 import { toast } from "sonner";
+
+import { formatDisplayDate } from "@/lib/utils";
+
+import { cancelOwnPendingLeaveRequest } from "@/lib/action/employee/employee-leave.action";
 
 import StatusBadge from "@/components/hr/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { cancelOwnPendingLeaveRequest } from "@/lib/action/employee/employee-leave.action";
-import type { LeaveBalance } from "@/queries/employee-portal.shared";
+import LeaveRequestSheet from "./LeaveRequestSheet";
 
-import LeaveRequestSheet, {
-  type LeaveRecordForForm,
-} from "./LeaveRequestSheet";
+import type {
+  EmployeeLeaveRecord,
+  LeaveBalance,
+} from "@/types/employee-portal";
 
-export type LeaveRequestRecord = LeaveRecordForForm & {
-  status: string;
-  submittedAt: string | null;
-  approver: string;
-  attachmentName?: string;
+type LeaveRequestTableProps = {
+  records: readonly EmployeeLeaveRecord[];
+  balances: readonly LeaveBalance[];
 };
-
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "—";
-}
 
 export default function LeaveRequestTable({
   records,
   balances,
-}: {
-  records: readonly LeaveRequestRecord[];
-  balances: readonly LeaveBalance[];
-}) {
+}: LeaveRequestTableProps): React.JSX.Element {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  function cancelRequest(leaveId: string) {
+  function cancelRequest(leaveId: string): void {
     startTransition(async () => {
       const response = await cancelOwnPendingLeaveRequest({ leaveId });
       if (!response.success) {
@@ -94,15 +90,21 @@ export default function LeaveRequestTable({
                     </span>
                   ) : null}
                 </td>
-                <td className="px-4 py-3">{formatDate(record.startDate)}</td>
-                <td className="px-4 py-3">{formatDate(record.endDate)}</td>
+                <td className="px-4 py-3">
+                  {formatDisplayDate(record.startDate)}
+                </td>
+                <td className="px-4 py-3">
+                  {formatDisplayDate(record.endDate)}
+                </td>
                 <td className="px-4 py-3">
                   {duration} day{duration === 1 ? "" : "s"}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={record.status} />
                 </td>
-                <td className="px-4 py-3">{formatDate(record.submittedAt)}</td>
+                <td className="px-4 py-3">
+                  {formatDisplayDate(record.submittedAt)}
+                </td>
                 <td className="px-4 py-3">{record.approver}</td>
                 <td className="px-4 py-3 text-right">
                   {editable ? (

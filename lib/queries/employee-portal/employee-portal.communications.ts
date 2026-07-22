@@ -1,7 +1,14 @@
 import "server-only";
 
+import { Types } from "mongoose";
+
 import Announcement from "@/models/announcement.model";
 import Notification from "@/models/notification.model";
+import type {
+  EmployeeAnnouncementDetail,
+  EmployeeAnnouncementsResult,
+  EmployeeNotificationsResult,
+} from "@/types/employee-portal";
 import {
   EMPLOYEE_PORTAL_PAGE_SIZE,
   safePage,
@@ -11,10 +18,16 @@ import {
 
 const announcementCategories = ["Company", "People", "Policy", "Benefits", "Events"] as const;
 
-export async function getEmployeeAnnouncements(filters: EmployeePortalFilters) {
-  const page = safePage(filters.page);
-  const query: Record<string, unknown> = { isPublished: true };
-  const search = filters.search?.trim();
+export async function getEmployeeAnnouncements(
+  filters: EmployeePortalFilters
+): Promise<EmployeeAnnouncementsResult> {
+  const { category, page: pageFilter, search: searchFilter } = filters;
+  const page = safePage(pageFilter);
+  const query: Record<string, unknown> = {
+    isPublished: true,
+    isArchived: { $ne: true },
+  };
+  const search = searchFilter?.trim();
 
   if (search) {
     query.$or = [
@@ -23,10 +36,10 @@ export async function getEmployeeAnnouncements(filters: EmployeePortalFilters) {
     ];
   }
   if (
-    filters.category &&
-    announcementCategories.includes(filters.category as never)
+    category &&
+    announcementCategories.includes(category as never)
   ) {
-    query.category = filters.category;
+    query.category = category;
   }
 
   const [announcements, total, highPriority] = await Promise.all([
@@ -37,7 +50,11 @@ export async function getEmployeeAnnouncements(filters: EmployeePortalFilters) {
       .limit(EMPLOYEE_PORTAL_PAGE_SIZE)
       .lean(),
     Announcement.countDocuments(query),
-    Announcement.countDocuments({ isPublished: true, priority: "High" }),
+    Announcement.countDocuments({
+      isPublished: true,
+      isArchived: { $ne: true },
+      priority: "High",
+    }),
   ]);
 
   return {
@@ -56,7 +73,39 @@ export async function getEmployeeAnnouncements(filters: EmployeePortalFilters) {
   };
 }
 
-export async function getEmployeeNotifications(userId: string) {
+export async function getEmployeeAnnouncementDetail(
+  announcementId: string
+): Promise<EmployeeAnnouncementDetail | null> {
+  if (!Types.ObjectId.isValid(announcementId)) {
+    return null;
+  }
+
+  const announcement = await Announcement.findOne({
+    _id: announcementId,
+    isPublished: true,
+    isArchived: { $ne: true },
+  })
+    .select("title description category priority publishedAt createdAt")
+    .lean();
+
+  if (!announcement) {
+    return null;
+  }
+
+  return {
+    id: announcement._id.toString(),
+    title: announcement.title,
+    description: announcement.description,
+    category: announcement.category,
+    priority: announcement.priority,
+    publishedAt: serialiseDate(announcement.publishedAt),
+    createdAt: serialiseDate(announcement.createdAt),
+  };
+}
+
+export async function getEmployeeNotifications(
+  userId: string
+): Promise<EmployeeNotificationsResult> {
   const [notifications, unread] = await Promise.all([
     Notification.find({ recipient: userId })
       .select("type title description href isRead createdAt")

@@ -12,7 +12,7 @@ export default function PageHeader({
   title,
   description,
   actions,
-}: PageHeaderProps) {
+}: PageHeaderProps): React.JSX.Element {
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>

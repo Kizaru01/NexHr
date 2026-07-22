@@ -2,6 +2,7 @@ import "server-only";
 
 import connectToDatabase from "@/database/mongodb";
 import Leave from "@/models/leave.model";
+import type { LeaveDashboardResult } from "@/types/hr-dashboard";
 import {
   countStatuses,
   DEFAULT_PAGE_SIZE,
@@ -13,10 +14,19 @@ import {
   type ListFilters,
 } from "./hr-dashboard.shared";
 
-export async function getLeaveDashboard(filters: ListFilters) {
+export async function getLeaveDashboard(
+  filters: ListFilters
+): Promise<LeaveDashboardResult> {
+  const {
+    page: pageFilter,
+    sort: sortFilter,
+    status,
+    type,
+  } = filters;
+
   await connectToDatabase();
 
-  const page = safePage(filters.page);
+  const page = safePage(pageFilter);
   const baseQuery: Record<string, unknown> = {};
   const employeeIds = await findFilteredEmployeeIds(filters);
 
@@ -26,15 +36,15 @@ export async function getLeaveDashboard(filters: ListFilters) {
 
   const recordQuery: Record<string, unknown> = { ...baseQuery };
 
-  if (filters.status) {
-    recordQuery.status = filters.status;
+  if (status) {
+    recordQuery.status = status;
   }
 
-  if (filters.type) {
-    recordQuery.leaveType = filters.type;
+  if (type) {
+    recordQuery.leaveType = type;
   }
 
-  const sort = leaveSorts[filters.sort ?? ""] ?? leaveSorts["recently-added"];
+  const sort = leaveSorts[sortFilter ?? ""] ?? leaveSorts["recently-added"];
   const [entries, total, statusRecords] = await Promise.all([
     Leave.find(recordQuery)
       .populate({
@@ -66,12 +76,13 @@ export async function getLeaveDashboard(filters: ListFilters) {
         lastName: string;
         department?: { name?: string };
       };
+      const { department } = employee;
 
       return [
         {
           id: entry._id.toString(),
           employee: nameOf(employee),
-          department: employee.department?.name ?? "Unassigned",
+          department: department?.name ?? "Unassigned",
           type: entry.leaveType,
           startDate: serialiseDate(entry.startDate),
           endDate: serialiseDate(entry.endDate),

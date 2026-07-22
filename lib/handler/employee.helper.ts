@@ -1,6 +1,7 @@
-import Employee, { IEmployeeDoc } from "@/models/employee.model";
-import { EmployeeDetail, EmployeeListItem } from "@/types/global";
 import type { ClientSession } from "mongoose";
+
+import Employee, { type IEmployeeDoc } from "@/models/employee.model";
+import type { EmployeeDetail, EmployeeListItem } from "@/types/global";
 import { ConflictError, NotFoundError } from "../http-errors";
 
 interface PopulatedRef {
@@ -22,7 +23,6 @@ function refId(ref: unknown): string | undefined {
   return ref ? String(ref) : undefined;
 }
 
-/** Fetches an employee by business `employeeId`, populated for display, or throws NotFoundError. */
 export async function findEmployeeDetailOrThrow(
   employeeId: string
 ): Promise<IEmployeeDoc> {
@@ -58,46 +58,87 @@ export async function assertEmailIsUnique(
 }
 
 export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
+  const {
+    _id,
+    address,
+    avatar,
+    birthDate,
+    createdAt,
+    department,
+    email,
+    emergencyContact,
+    employeeId,
+    employmentStatus,
+    employmentType,
+    firstName,
+    gender,
+    hireDate,
+    lastName,
+    manager,
+    middleName,
+    notes,
+    phone,
+    position,
+    regularizedAt,
+    salary,
+    terminationDate,
+    updatedAt,
+  } = employee;
+
   return {
-    id: employee._id.toString(),
-    employeeId: employee.employeeId,
-    firstName: employee.firstName,
-    middleName: employee.middleName,
-    lastName: employee.lastName,
-    email: employee.email,
-    phone: employee.phone,
-    birthDate: employee.birthDate,
-    gender: employee.gender,
-    avatar: employee.avatar,
-    address: employee.address,
-    emergencyContact: employee.emergencyContact,
-    department: refName(employee.department),
-    position: refName(employee.position),
-    hireDate: employee.hireDate,
-    employmentStatus: employee.employmentStatus,
-    employmentType: employee.employmentType,
-    salary: employee.salary,
-    regularizedAt: employee.regularizedAt,
-    terminationDate: employee.terminationDate,
-    manager: employee.manager ? refName(employee.manager) : undefined,
-    notes: employee.notes,
-    createdAt: employee.createdAt,
-    updatedAt: employee.updatedAt,
+    id: _id.toString(),
+    employeeId,
+    firstName,
+    middleName,
+    lastName,
+    email,
+    phone,
+    birthDate,
+    gender,
+    avatar,
+    address,
+    emergencyContact,
+    department: refName(department),
+    position: refName(position),
+    hireDate,
+    employmentStatus,
+    employmentType,
+    salary,
+    regularizedAt,
+    terminationDate,
+    manager: manager ? refName(manager) : undefined,
+    notes,
+    createdAt,
+    updatedAt,
   };
 }
 
 export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
+  const {
+    _id,
+    avatar,
+    department,
+    email,
+    employeeId,
+    employmentStatus,
+    employmentType,
+    firstName,
+    hireDate,
+    lastName,
+    position,
+  } = employee;
+
   return {
-    id: employee._id.toString(),
-    employeeId: employee.employeeId,
-    fullName: [employee.firstName, employee.lastName].filter(Boolean).join(" "),
-    email: employee.email,
-    department: refName(employee.department),
-    position: refName(employee.position),
-    employmentStatus: employee.employmentStatus,
-    employmentType: employee.employmentType,
-    hireDate: employee.hireDate,
-    avatar: employee.avatar,
+    id: _id.toString(),
+    employeeId,
+    fullName: [firstName, lastName].filter(Boolean).join(" "),
+    email,
+    department: refName(department),
+    position: refName(position),
+    employmentStatus,
+    employmentType,
+    hireDate,
+    avatar,
   };
 }
 

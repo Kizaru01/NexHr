@@ -11,7 +11,7 @@ export default function EmptyState({
   title,
   description,
   icon: Icon = Inbox,
-}: EmptyStateProps) {
+}: EmptyStateProps): React.JSX.Element {
   return (
     <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
       <div className="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">

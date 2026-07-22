@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
 import { normaliseSearchParams } from "@/lib/search-params";
-import { getOwnLeaveRequests } from "@/queries/employee-portal.leave";
+import { getOwnLeaveRequests } from "@/lib/queries/employee-portal/employee-portal.leave";
 import type { FilterControl, PageSearchParams } from "@/types/filters";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
@@ -54,14 +54,23 @@ const controls: readonly FilterControl[] = [
   },
 ];
 
-export default async function EmployeeLeavePage({ searchParams }: PageProps) {
-  const employee = await requireEmployeePage();
+export default async function EmployeeLeavePage({
+  searchParams,
+}: PageProps): Promise<React.JSX.Element> {
+  const { employeeDatabaseId } = await requireEmployeePage();
   const filters = normaliseSearchParams(await searchParams);
-  const leave = await getOwnLeaveRequests(employee.employeeDatabaseId, filters);
-  const annual = leave.balances.find(
+  const {
+    balances,
+    page,
+    records,
+    stats,
+    total,
+    totalPages,
+  } = await getOwnLeaveRequests(employeeDatabaseId, filters);
+  const annual = balances.find(
     (balance) => balance.leaveType === "Annual"
   );
-  const sick = leave.balances.find((balance) => balance.leaveType === "Sick");
+  const sick = balances.find((balance) => balance.leaveType === "Sick");
 
   return (
     <section className="space-y-6">
@@ -69,7 +78,7 @@ export default async function EmployeeLeavePage({ searchParams }: PageProps) {
         eyebrow="Time away"
         title="Leave requests"
         description="Plan time away, track approvals, and manage pending requests."
-        actions={<LeaveRequestSheet balances={leave.balances} />}
+        actions={<LeaveRequestSheet balances={balances} />}
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -84,12 +93,12 @@ export default async function EmployeeLeavePage({ searchParams }: PageProps) {
         />
         <StatCard
           label="Pending requests"
-          dashboardValue={leave.stats.pending}
+          dashboardValue={stats.pending}
           icon={CalendarClock}
         />
         <StatCard
           label="Approved requests"
-          dashboardValue={leave.stats.approved}
+          dashboardValue={stats.approved}
           icon={CheckCircle2}
         />
       </div>
@@ -97,17 +106,14 @@ export default async function EmployeeLeavePage({ searchParams }: PageProps) {
         <CardHeader className="border-b">
           <CardTitle>Leave history</CardTitle>
           <CardDescription>
-            {leave.total} {leave.total === 1 ? "request" : "requests"}
+            {total} {total === 1 ? "request" : "requests"}
           </CardDescription>
         </CardHeader>
         <CardContent className="border-b py-4">
           <FilterToolbar controls={controls} />
         </CardContent>
-        {leave.records.length ? (
-          <LeaveRequestTable
-            records={leave.records}
-            balances={leave.balances}
-          />
+        {records.length ? (
+          <LeaveRequestTable records={records} balances={balances} />
         ) : (
           <EmptyState
             title="No leave requests found"
@@ -115,8 +121,8 @@ export default async function EmployeeLeavePage({ searchParams }: PageProps) {
           />
         )}
         <Pagination
-          page={leave.page}
-          totalPages={leave.totalPages}
+          page={page}
+          totalPages={totalPages}
           parameters={filters}
         />
       </Card>

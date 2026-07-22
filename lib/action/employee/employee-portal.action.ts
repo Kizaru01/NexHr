@@ -37,12 +37,15 @@ export async function updateOwnEmployeeProfile(
       schema: ownEmployeeProfileSchema,
       roles: ["employee"],
     });
-    const employee = await requireEmployeeRecord(validated.session.user.id);
+    const { params: validatedParams, session } = validated;
+    const employee = await requireEmployeeRecord(session.user.id);
+    const { employeeCode, employeeDatabaseId } = employee;
+    const { email } = validatedParams!;
 
-    await assertEmailIsUnique(validated.params!.email, employee.employeeCode);
+    await assertEmailIsUnique(email, employeeCode);
     await Employee.findByIdAndUpdate(
-      employee.employeeDatabaseId,
-      { $set: validated.params },
+      employeeDatabaseId,
+      { $set: validatedParams },
       { runValidators: true }
     );
 
@@ -62,10 +65,13 @@ export async function updateOwnProfileImage(params: {
       schema: profileImageSchema,
       roles: ["employee"],
     });
-    const employee = await requireEmployeeRecord(validated.session.user.id);
+    const { params: validatedParams, session } = validated;
+    const employee = await requireEmployeeRecord(session.user.id);
+    const { employeeDatabaseId } = employee;
+    const { avatar } = validatedParams!;
 
-    await Employee.findByIdAndUpdate(employee.employeeDatabaseId, {
-      $set: { avatar: validated.params!.avatar },
+    await Employee.findByIdAndUpdate(employeeDatabaseId, {
+      $set: { avatar },
     });
 
     revalidateEmployeePortal();
@@ -84,9 +90,10 @@ export async function updateNotificationPreferences(
       schema: notificationPreferencesSchema,
       roles: ["employee"],
     });
+    const { params: validatedParams, session } = validated;
 
-    await User.findByIdAndUpdate(validated.session.user.id, {
-      $set: { notificationPreferences: validated.params },
+    await User.findByIdAndUpdate(session.user.id, {
+      $set: { notification: validatedParams },
     });
 
     revalidateEmployeePortal();
@@ -106,17 +113,20 @@ export async function submitAttendanceCorrection(params: {
       schema: attendanceCorrectionSchema,
       roles: ["employee"],
     });
-    const employee = await requireEmployeeRecord(validated.session.user.id);
+    const { params: validatedParams, session } = validated;
+    const employee = await requireEmployeeRecord(session.user.id);
+    const { employeeDatabaseId } = employee;
+    const { attendanceId, reason } = validatedParams!;
     const attendance = await Attendance.exists({
-      _id: validated.params!.attendanceId,
-      employee: employee.employeeDatabaseId,
+      _id: attendanceId,
+      employee: employeeDatabaseId,
     });
 
     if (!attendance) throw new NotFoundError("Attendance record");
 
     const pendingRequest = await AttendanceCorrection.exists({
-      employee: employee.employeeDatabaseId,
-      attendance: validated.params!.attendanceId,
+      employee: employeeDatabaseId,
+      attendance: attendanceId,
       status: "Pending",
     });
     if (pendingRequest) {
@@ -126,12 +136,12 @@ export async function submitAttendanceCorrection(params: {
     }
 
     await AttendanceCorrection.create({
-      employee: employee.employeeDatabaseId,
-      attendance: validated.params!.attendanceId,
-      reason: validated.params!.reason,
+      employee: employeeDatabaseId,
+      attendance: attendanceId,
+      reason,
     });
 
-    revalidateEmployeePortal(`/employee/attendance/${validated.params!.attendanceId}`);
+    revalidateEmployeePortal(`/employee/attendance/${attendanceId}`);
     return { success: true };
   } catch (error) {
     return handleError(error) as ErrorResponse;

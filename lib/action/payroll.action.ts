@@ -13,16 +13,12 @@ import {
 } from "@/validations/payroll.schema";
 import action from "../handler/action-helper";
 import handleError from "../handler/error";
-import { ConflictError, NotFoundError, ValidationError } from "../http-errors";
-
-function isDuplicateKeyError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === 11000
-  );
-}
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+  isDuplicateKeyError,
+} from "../http-errors";
 
 export async function generatePayroll(
   params: GeneratePayrollInput
@@ -34,8 +30,18 @@ export async function generatePayroll(
       roles: ["admin", "hr"],
     });
     const payrollParams = result.params!;
+    const {
+      bonus,
+      deductions,
+      employeeId,
+      month,
+      overtimePay,
+      remarks,
+      tax,
+      year,
+    } = payrollParams;
     const employee = await Employee.findOne({
-      _id: payrollParams.employeeId,
+      _id: employeeId,
       employmentStatus: "Active",
     }).select("salary");
 
@@ -46,8 +52,8 @@ export async function generatePayroll(
     const basicSalary = employee.salary.basic;
     const allowance = employee.salary.allowance ?? 0;
     const grossPay =
-      basicSalary + allowance + payrollParams.overtimePay + payrollParams.bonus;
-    const totalWithholdings = payrollParams.deductions + payrollParams.tax;
+      basicSalary + allowance + overtimePay + bonus;
+    const totalWithholdings = deductions + tax;
 
     if (totalWithholdings > grossPay) {
       throw new ValidationError({
@@ -57,16 +63,16 @@ export async function generatePayroll(
 
     await Payroll.create({
       employee: employee._id,
-      month: payrollParams.month,
-      year: payrollParams.year,
+      month,
+      year,
       basicSalary,
       allowance,
-      overtimePay: payrollParams.overtimePay,
-      bonus: payrollParams.bonus,
-      deductions: payrollParams.deductions,
-      tax: payrollParams.tax,
+      overtimePay,
+      bonus,
+      deductions,
+      tax,
       netSalary: grossPay - totalWithholdings,
-      remarks: payrollParams.remarks,
+      remarks,
     });
 
     revalidatePath("/payroll");
@@ -75,7 +81,9 @@ export async function generatePayroll(
   } catch (error) {
     return handleError(
       isDuplicateKeyError(error)
-        ? new ConflictError("Payroll has already been generated for this employee and period.")
+        ? new ConflictError(
+            "Payroll has already been generated for this employee and period."
+          )
         : error
     ) as ErrorResponse;
   }
@@ -91,6 +99,7 @@ export async function generateMonthlyPayroll(
       roles: ["admin", "hr"],
     });
     const payrollPeriod = result.params!;
+    const { month, year } = payrollPeriod;
     const employees = await Employee.find({ employmentStatus: "Active" })
       .select("_id salary")
       .lean();
@@ -101,29 +110,29 @@ export async function generateMonthlyPayroll(
 
     const generatedAt = new Date();
     const bulkResult = await Payroll.bulkWrite(
-      employees.map((employee) => {
-        const basicSalary = employee.salary.basic;
-        const allowance = employee.salary.allowance ?? 0;
+      employees.map(({ salary: { basic, allowance }, _id }) => {
+        const basicSalary = basic;
+        const employeeAllowance = allowance ?? 0;
 
         return {
           updateOne: {
             filter: {
-              employee: employee._id,
-              month: payrollPeriod.month,
-              year: payrollPeriod.year,
+              employee: _id,
+              month,
+              year,
             },
             update: {
               $setOnInsert: {
-                employee: employee._id,
-                month: payrollPeriod.month,
-                year: payrollPeriod.year,
+                employee: _id,
+                month,
+                year,
                 basicSalary,
                 allowance,
                 overtimePay: 0,
                 bonus: 0,
                 deductions: 0,
                 tax: 0,
-                netSalary: basicSalary + allowance,
+                netSalary: basicSalary + employeeAllowance,
                 generatedAt,
               },
             },
