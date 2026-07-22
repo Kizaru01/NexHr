@@ -87,7 +87,9 @@ export default function DepartmentManagement({
         : await createDepartment(values);
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to save department.");
+        toast.error("Unable to save department", {
+          description: result.error.message,
+        });
         return;
       }
 
@@ -108,7 +110,9 @@ export default function DepartmentManagement({
       const result = await setDepartmentStatus({ id: department.id, isActive });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to update department.");
+        toast.error("Unable to update department", {
+          description: result.error.message,
+        });
         return;
       }
 
@@ -130,7 +134,9 @@ export default function DepartmentManagement({
       const result = await deleteDepartment({ id: department.id });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to delete department.");
+        toast.error("Unable to delete department", {
+          description: result.error.message,
+        });
         return;
       }
 

@@ -6,7 +6,6 @@ import Employee from "@/models/employee.model";
 import type {
   ActionResponse,
   EmployeeDetail,
-  ErrorResponse,
   UpdateAddressParams,
   UpdateEmergencyContactParams,
   UpdateEmployeeInput,
@@ -83,7 +82,7 @@ export async function updateEmployee(
       data: employeeUpdatedData,
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -117,7 +116,7 @@ export async function updateEmployeeProfile(
 
     return { success: true, data: toEmployeeDetail(updated) };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -149,7 +148,7 @@ export async function updateEmploymentInformation(
 
     return { success: true, data: toEmployeeDetail(updated) };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -182,7 +181,7 @@ export async function updateEmergencyContact(
 
     return { success: true, data: toEmployeeDetail(updated) };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -215,6 +214,6 @@ export async function updateAddress(
 
     return { success: true, data: toEmployeeDetail(updated) };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

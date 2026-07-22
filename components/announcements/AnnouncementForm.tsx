@@ -86,8 +86,8 @@ export default function AnnouncementForm({
 
     if (!result.success) {
       toast.error(
-        result.error?.message ??
-          `Unable to ${announcement ? "update" : "create"} announcement.`
+        `Unable to ${announcement ? "update" : "create"} announcement`,
+        { description: result.error.message }
       );
       return;
     }

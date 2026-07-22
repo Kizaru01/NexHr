@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import Employee from "@/models/employee.model";
 import Payroll from "@/models/payroll.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import {
   generatePayrollSchema,
   payrollPeriodSchema,
@@ -22,7 +22,7 @@ import {
 
 export async function generatePayroll(
   params: GeneratePayrollInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const result = await action({
       params,
@@ -77,7 +77,7 @@ export async function generatePayroll(
 
     revalidatePath("/payroll");
     revalidatePath("/employee/payroll");
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
     return handleError(
       isDuplicateKeyError(error)
@@ -85,7 +85,7 @@ export async function generatePayroll(
             "Payroll has already been generated for this employee and period."
           )
         : error
-    ) as ErrorResponse;
+    );
   }
 }
 
@@ -152,6 +152,6 @@ export async function generateMonthlyPayroll(
       data: { created, skipped: employees.length - created },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

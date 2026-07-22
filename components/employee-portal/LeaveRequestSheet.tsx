@@ -157,7 +157,9 @@ export default function LeaveRequestSheet({
       : await createOwnLeaveRequest(payload);
 
     if (!response.success) {
-      toast.error(response.error?.message ?? "Unable to save leave request.");
+      toast.error("Unable to save leave request", {
+        description: response.error.message,
+      });
       return;
     }
 

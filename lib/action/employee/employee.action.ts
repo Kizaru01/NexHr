@@ -12,7 +12,6 @@ import type {
   DeleteEmployeeParams,
   EmployeeDetail,
   EmployeeListItem,
-  ErrorResponse,
   GetEmployeeByIdParams,
   GetEmployeesParams,
 } from "@/types/global";
@@ -216,7 +215,7 @@ async function createEmployeeInTransaction(
 
 export async function createEmployee(
   params: CreateEmployeeInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<EmployeeDetail>> {
   try {
     const validationResult = await action({
       params,
@@ -225,11 +224,11 @@ export async function createEmployee(
     });
     const employeeData = validationResult.params!;
 
-    await createEmployeeInTransaction(employeeData);
+    const employee = await createEmployeeInTransaction(employeeData);
 
     revalidatePath(EMPLOYEES_PATH);
 
-    return { success: true };
+    return { success: true, data: employee };
   } catch (error) {
     if (
       isDuplicateKeyError(error) ||
@@ -251,7 +250,7 @@ export async function createEmployee(
         }
       } catch {
         // Preserve the original transaction error if the reconciliation read fails.
-        return handleError(error) as ErrorResponse;
+        return handleError(error);
       }
     }
 
@@ -259,16 +258,16 @@ export async function createEmployee(
       const duplicateError = new ConflictError(
         "An employee with this email or employee ID already exists."
       );
-      return handleError(duplicateError) as ErrorResponse;
+      return handleError(duplicateError);
     }
 
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function deleteEmployee(
   params: DeleteEmployeeParams
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const validationResult = await action({
       params,
@@ -284,9 +283,9 @@ export async function deleteEmployee(
 
     revalidatePath(EMPLOYEES_PATH);
 
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -307,7 +306,7 @@ export async function getEmployeeById(
 
     return { success: true, data: employeeDetail };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
@@ -366,6 +365,6 @@ export async function getEmployees(
       },
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

@@ -75,9 +75,9 @@ export default function ProfileImageForm({
   async function onSubmit(values: ImageValues): Promise<void> {
     const response = await updateOwnProfileImage(values);
     if (!response.success) {
-      toast.error(
-        response.error?.message ?? "Unable to update your profile image."
-      );
+      toast.error("Unable to update your profile image", {
+        description: response.error.message,
+      });
       return;
     }
 

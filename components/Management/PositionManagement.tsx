@@ -68,7 +68,9 @@ export default function PositionManagement({
         : await createPosition(values);
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to save position.");
+        toast.error("Unable to save position", {
+          description: result.error.message,
+        });
         return;
       }
 
@@ -89,7 +91,9 @@ export default function PositionManagement({
       const result = await setPositionStatus({ id: position.id, isActive });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to update position.");
+        toast.error("Unable to update position", {
+          description: result.error.message,
+        });
         return;
       }
 
@@ -111,7 +115,9 @@ export default function PositionManagement({
       const result = await deletePosition({ id: position.id });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to delete position.");
+        toast.error("Unable to delete position", {
+          description: result.error.message,
+        });
         return;
       }
 

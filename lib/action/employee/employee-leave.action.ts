@@ -13,7 +13,7 @@ import handleError from "@/lib/handler/error";
 import { ConflictError, NotFoundError } from "@/lib/http-errors";
 import Leave from "@/models/leave.model";
 import type { LeaveAvailabilityParams } from "@/types/employee-portal";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import {
   cancelLeaveRequestSchema,
   leaveRequestSchema,
@@ -65,7 +65,7 @@ function revalidateLeavePortal(): void {
 
 export async function createOwnLeaveRequest(
   params: LeaveRequestInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -87,15 +87,15 @@ export async function createOwnLeaveRequest(
     });
 
     revalidateLeavePortal();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function updateOwnPendingLeaveRequest(
   params: UpdateLeaveRequestInput
-): Promise<ActionResponse> {
+): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -131,15 +131,15 @@ export async function updateOwnPendingLeaveRequest(
     });
 
     revalidateLeavePortal();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function cancelOwnPendingLeaveRequest(params: {
   leaveId: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const validated = await action({
       params,
@@ -163,8 +163,8 @@ export async function cancelOwnPendingLeaveRequest(params: {
     if (!request) throw new NotFoundError("Pending leave request");
 
     revalidateLeavePortal();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 import NavLinks from "@/components/Navlink";
 import { Button } from "@/components/ui/button";
@@ -27,8 +29,23 @@ export default function ApplicationNavigation({
   variant,
 }: ApplicationNavigationProps): React.JSX.Element {
   const isDesktop = variant === "desktop";
+  const router = useRouter();
   const { isSidebarExpanded } = useNavigation();
   const isCompact = isDesktop && !isSidebarExpanded;
+
+  async function submitSignOut(): Promise<void> {
+    const response = await signOutFromApplication();
+
+    if (!response.success) {
+      toast.error("Failed to sign out", {
+        description: response.error.message,
+      });
+      return;
+    }
+
+    router.push("/sign-in");
+    router.refresh();
+  }
 
   return (
     <div className="flex h-full flex-col justify-between">
@@ -90,7 +107,10 @@ export default function ApplicationNavigation({
                 {user.role ?? "employee"}
               </p>
             </div>
-            <form action={signOutFromApplication} className={cn(isCompact && "hidden xl:block")}>
+            <form
+              action={submitSignOut}
+              className={cn(isCompact && "hidden xl:block")}
+            >
               <Button type="submit" variant="ghost" size="icon" aria-label="Sign out">
                 <LogOut className="size-4" />
               </Button>

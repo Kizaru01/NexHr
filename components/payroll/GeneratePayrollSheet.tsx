@@ -84,7 +84,9 @@ export default function GeneratePayrollSheet({
       const result = await generatePayroll(values);
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to generate payroll.");
+        toast.error("Unable to generate payroll", {
+          description: result.error.message,
+        });
         return;
       }
 

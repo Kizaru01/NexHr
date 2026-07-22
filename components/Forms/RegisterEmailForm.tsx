@@ -38,7 +38,7 @@ const EmailRegistration = (): React.JSX.Element => {
 
     if (!result.success) {
       toast.error("Failed", {
-        description: result.error?.message ?? "Registration failed.",
+        description: result.error.message,
       });
 
       return;

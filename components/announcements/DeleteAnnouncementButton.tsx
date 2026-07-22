@@ -30,7 +30,9 @@ export default function DeleteAnnouncementButton({
       const result = await deleteAnnouncement({ id: announcementId });
 
       if (!result.success) {
-        toast.error(result.error?.message ?? "Unable to delete announcement.");
+        toast.error("Unable to delete announcement", {
+          description: result.error.message,
+        });
         return;
       }
 

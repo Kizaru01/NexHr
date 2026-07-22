@@ -5,74 +5,98 @@ import Attendance from "@/models/attendance.model";
 import Employee from "@/models/employee.model";
 import Leave from "@/models/leave.model";
 import Payroll from "@/models/payroll.model";
+import handleError from "@/lib/handler/error";
 import { getDateBounds } from "./employee-portal/employee-portal.shared";
+import type {
+  AttendanceReportsResult,
+  EmployeeReportsResult,
+  LeaveReportsResult,
+  PayrollReportsResult,
+} from "@/types/hr-dashboard";
+import type { ActionResponse } from "@/types/global";
 
-export async function getEmployeeReports() {
-  await connectToDatabase();
+export async function getEmployeeReports(): Promise<
+  ActionResponse<EmployeeReportsResult>
+> {
+  try {
+    await connectToDatabase();
 
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const [total, active, inactive, newHires, resigned, departments] =
-    await Promise.all([
-      Employee.countDocuments(),
-      Employee.countDocuments({ employmentStatus: "Active" }),
-      Employee.countDocuments({ employmentStatus: "Inactive" }),
-      Employee.countDocuments({
-        hireDate: { $gte: monthStart, $lt: nextMonthStart },
-      }),
-      Employee.countDocuments({ employmentStatus: "Resigned" }),
-      Employee.aggregate<{
-        _id: { name?: string } | null;
-        employees: number;
-        activeEmployees: number;
-      }>([
-        {
-          $group: {
-            _id: "$department",
-            employees: { $sum: 1 },
-            activeEmployees: {
-              $sum: {
-                $cond: [{ $eq: ["$employmentStatus", "Active"] }, 1, 0],
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const [total, active, inactive, newHires, resigned, departments] =
+      await Promise.all([
+        Employee.countDocuments(),
+        Employee.countDocuments({ employmentStatus: "Active" }),
+        Employee.countDocuments({ employmentStatus: "Inactive" }),
+        Employee.countDocuments({
+          hireDate: { $gte: monthStart, $lt: nextMonthStart },
+        }),
+        Employee.countDocuments({ employmentStatus: "Resigned" }),
+        Employee.aggregate<{
+          _id: { name?: string } | null;
+          employees: number;
+          activeEmployees: number;
+        }>([
+          {
+            $group: {
+              _id: "$department",
+              employees: { $sum: 1 },
+              activeEmployees: {
+                $sum: {
+                  $cond: [{ $eq: ["$employmentStatus", "Active"] }, 1, 0],
+                },
               },
             },
           },
-        },
-        {
-          $lookup: {
-            from: "departments",
-            localField: "_id",
-            foreignField: "_id",
-            as: "department",
+          {
+            $lookup: {
+              from: "departments",
+              localField: "_id",
+              foreignField: "_id",
+              as: "department",
+            },
           },
-        },
-        { $unwind: { path: "$department", preserveNullAndEmptyArrays: true } },
-        {
-          $project: {
-            _id: { name: "$department.name" },
-            employees: 1,
-            activeEmployees: 1,
+          {
+            $unwind: {
+              path: "$department",
+              preserveNullAndEmptyArrays: true,
+            },
           },
-        },
-        { $sort: { employees: -1, "_id.name": 1 } },
-      ]),
-    ]);
+          {
+            $project: {
+              _id: { name: "$department.name" },
+              employees: 1,
+              activeEmployees: 1,
+            },
+          },
+          { $sort: { employees: -1, "_id.name": 1 } },
+        ]),
+      ]);
 
-  return {
-    stats: { total, active, inactive, newHires, resigned },
-    departments: departments.map((department) => ({
-      name: department._id?.name ?? "Unassigned",
-      employees: department.employees,
-      activeEmployees: department.activeEmployees,
-    })),
-    period: new Intl.DateTimeFormat("en", {
-      month: "long",
-      year: "numeric",
-    }).format(now),
-  };
+    return {
+      success: true,
+      data: {
+        stats: { total, active, inactive, newHires, resigned },
+        departments: departments.map((department) => ({
+          name: department._id?.name ?? "Unassigned",
+          employees: department.employees,
+          activeEmployees: department.activeEmployees,
+        })),
+        period: new Intl.DateTimeFormat("en", {
+          month: "long",
+          year: "numeric",
+        }).format(now),
+      },
+    };
+  } catch (error) {
+    return handleError(error);
+  }
 }
 
-export async function getAttendanceReports(monthFilter?: string) {
+export async function getAttendanceReports(
+  monthFilter?: string
+): Promise<AttendanceReportsResult> {
   await connectToDatabase();
 
   const now = new Date();
@@ -153,11 +177,26 @@ export async function getAttendanceReports(monthFilter?: string) {
   };
 }
 
-export async function getLeaveReports() {
+export async function getLeaveReports(
+  yearFilter?: string
+): Promise<LeaveReportsResult> {
   await connectToDatabase();
 
+  const currentYear = new Date().getFullYear();
+  const requestedYear = Number(yearFilter);
+  const year =
+    Number.isInteger(requestedYear) && requestedYear >= 2000
+      ? requestedYear
+      : currentYear;
+  const match = {
+    startDate: {
+      $gte: new Date(year, 0, 1),
+      $lt: new Date(year + 1, 0, 1),
+    },
+  };
   const [statuses, leaveTypes] = await Promise.all([
     Leave.aggregate<{ _id: string; count: number }>([
+      { $match: match },
       { $group: { _id: "$status", count: { $sum: 1 } } },
     ]),
     Leave.aggregate<{
@@ -167,6 +206,7 @@ export async function getLeaveReports() {
       approved: number;
       rejected: number;
     }>([
+      { $match: match },
       {
         $group: {
           _id: "$leaveType",
@@ -191,6 +231,7 @@ export async function getLeaveReports() {
   }, {});
 
   return {
+    year,
     stats: {
       pending: counts.Pending ?? 0,
       approved: counts.Approved ?? 0,
@@ -206,7 +247,9 @@ export async function getLeaveReports() {
   };
 }
 
-export async function getPayrollReports(monthFilter?: string) {
+export async function getPayrollReports(
+  monthFilter?: string
+): Promise<PayrollReportsResult> {
   await connectToDatabase();
 
   const now = new Date();

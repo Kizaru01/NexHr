@@ -113,7 +113,9 @@ export default function OwnProfileForm({
     const response = await updateOwnEmployeeProfile(payload);
 
     if (!response.success) {
-      toast.error(response.error?.message ?? "Unable to update your profile.");
+      toast.error("Unable to update your profile", {
+        description: response.error.message,
+      });
       return;
     }
 

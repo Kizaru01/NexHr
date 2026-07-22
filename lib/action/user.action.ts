@@ -1,7 +1,7 @@
 "use server";
 
 import User from "@/models/user.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import { registerUserSchema } from "@/validations/user.schema";
 import action from "../handler/action-helper";
 import handleError from "../handler/error";
@@ -13,16 +13,15 @@ interface CreateUserParams {
 
 export async function createUser(
   params: CreateUserParams
-): Promise<ActionResponse> {
-  const validatedResult = await action({
-    params,
-    schema: registerUserSchema,
-    roles: ["admin", "hr"],
-  });
-  const { email } = validatedResult.params!;
-  const normalizedEmail = email.toLowerCase();
-
+): Promise<ActionResponse<null>> {
   try {
+    const validatedResult = await action({
+      params,
+      schema: registerUserSchema,
+      roles: ["admin", "hr"],
+    });
+    const { email } = validatedResult.params!;
+    const normalizedEmail = email.toLowerCase();
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) throw new ConflictError("Email already registered");
@@ -33,8 +32,9 @@ export async function createUser(
 
     return {
       success: true,
+      data: null,
     };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

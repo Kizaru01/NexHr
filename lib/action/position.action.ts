@@ -6,7 +6,7 @@ import { Types } from "mongoose";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
-import type { ActionResponse, ErrorResponse } from "@/types/global";
+import type { ActionResponse } from "@/types/global";
 import type {
   PositionListItem,
   PositionListSource,
@@ -120,7 +120,7 @@ export async function createPosition(
             "A position with that name already exists in this department."
           )
         : error
-    ) as ErrorResponse;
+    );
   }
 }
 
@@ -172,14 +172,14 @@ export async function updatePosition(
             "A position with that name already exists in this department."
           )
         : error
-    ) as ErrorResponse;
+    );
   }
 }
 
 export async function setPositionStatus(params: {
   id: string;
   isActive: boolean;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const validationResult = await action({
       params,
@@ -197,15 +197,15 @@ export async function setPositionStatus(params: {
 
     revalidatePositionViews();
 
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }
 
 export async function deletePosition(params: {
   id: string;
-}): Promise<ActionResponse> {
+}): Promise<ActionResponse<null>> {
   try {
     const validationResult = await action({
       params,
@@ -227,8 +227,8 @@ export async function deletePosition(params: {
     await Position.deleteOne({ _id: id });
     revalidatePositionViews();
 
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
-    return handleError(error) as ErrorResponse;
+    return handleError(error);
   }
 }

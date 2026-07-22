@@ -227,6 +227,7 @@ export type AttendanceReportsResult = {
 };
 
 export type LeaveReportsResult = {
+  year: number;
   stats: {
     pending: number;
     approved: number;

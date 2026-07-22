@@ -31,7 +31,15 @@ export default async function ReportsPage({
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(await searchParams);
-  const { departments, period, stats } = await getEmployeeReports();
+
+  const response = await getEmployeeReports();
+
+  if (!response.success) {
+    throw new Error(response.error.message);
+  }
+
+  const { data } = response;
+  const { departments, stats, period } = data;
   const { active, inactive, newHires, resigned, total } = stats;
 
   return (
@@ -93,24 +101,24 @@ export default async function ReportsPage({
                   <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
                     <tr>
                       <th className="px-5 py-3 font-medium">Department</th>
-                      <th className="px-5 py-3 text-right font-medium">Total</th>
-                      <th className="px-5 py-3 text-right font-medium">Active</th>
+                      <th className="px-5 py-3 text-right font-medium">
+                        Total
+                      </th>
+                      <th className="px-5 py-3 text-right font-medium">
+                        Active
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {departments.map(
-                      ({ activeEmployees, employees, name }) => (
-                        <tr key={name} className="border-t">
-                          <td className="px-5 py-3 font-medium">{name}</td>
-                          <td className="px-5 py-3 text-right">
-                            {employees}
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            {activeEmployees}
-                          </td>
-                        </tr>
-                      )
-                    )}
+                    {departments.map(({ activeEmployees, employees, name }) => (
+                      <tr key={name} className="border-t">
+                        <td className="px-5 py-3 font-medium">{name}</td>
+                        <td className="px-5 py-3 text-right">{employees}</td>
+                        <td className="px-5 py-3 text-right">
+                          {activeEmployees}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
