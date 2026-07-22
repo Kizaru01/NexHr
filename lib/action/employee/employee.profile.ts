@@ -20,23 +20,24 @@ import {
   updatePersonalInformationSchema,
 } from "@/validations/employee.schema";
 import {
-  assertEmailIsUnique,
   findEmployeeDetailOrThrow,
   toEmployeeDetail,
 } from "../../handler/employee.helper";
+import { updateEmployeeAndUserProfile } from "../../handler/employee-profile.helper";
 import action from "../../handler/action-helper";
 import handleError from "../../handler/error";
+import { getUserId } from "../../handler/user.helper";
 import { ForbiddenError } from "../../http-errors";
 
 const EMPLOYEES_PATH = "/employees";
 
 function assertEmployeeOwnsProfile(
   session: { user: { id?: string; role?: string } },
-  employee: { userId?: { toString(): string } }
+  employee: { userId: unknown }
 ): void {
   if (
     session.user.role === "employee" &&
-    employee.userId?.toString() !== session.user.id
+    getUserId(employee.userId) !== session.user.id
   ) {
     throw new ForbiddenError("You can only update your own employee profile.");
   }
@@ -59,17 +60,24 @@ export async function updateEmployee(
 
     const { employeeId, email, ...rest } = validationResult.params!;
 
-    await findEmployeeDetailOrThrow(employeeId);
+    const employee = await findEmployeeDetailOrThrow(employeeId);
 
-    if (email) await assertEmailIsUnique(email, employeeId);
+    if (email) {
+      await updateEmployeeAndUserProfile({
+        employeeDatabaseId: employee._id.toString(),
+        userId: getUserId(employee.userId),
+        email,
+        employeeUpdates: rest,
+      });
+    } else {
+      await Employee.updateOne(
+        { _id: employee._id },
+        { $set: rest },
+        { runValidators: true }
+      );
+    }
 
-    const updated = await Employee.findOneAndUpdate(
-      { employeeId },
-      { ...rest, ...(email ? { email } : {}) },
-      { new: true, runValidators: true }
-    )
-      .populate("department")
-      .populate("position");
+    const updated = await findEmployeeDetailOrThrow(employeeId);
 
     if (!updated) throw new Error("Failed to update employee");
 
@@ -100,15 +108,14 @@ export async function updateEmployeeProfile(
 
     const employee = await findEmployeeDetailOrThrow(employeeId);
     assertEmployeeOwnsProfile(validationResult.session, employee);
-    await assertEmailIsUnique(email, employeeId);
+    await updateEmployeeAndUserProfile({
+      employeeDatabaseId: employee._id.toString(),
+      userId: getUserId(employee.userId),
+      email,
+      employeeUpdates: rest,
+    });
 
-    const updated = await Employee.findOneAndUpdate(
-      { employeeId },
-      { email, ...rest },
-      { new: true, runValidators: true }
-    )
-      .populate("department")
-      .populate("position");
+    const updated = await findEmployeeDetailOrThrow(employeeId);
 
     if (!updated) throw new Error("Failed to update employee profile");
 
@@ -139,6 +146,7 @@ export async function updateEmploymentInformation(
       { ...rest },
       { new: true, runValidators: true }
     )
+      .populate("userId", "email isActive")
       .populate("department")
       .populate("position");
 
@@ -172,6 +180,7 @@ export async function updateEmergencyContact(
       { emergencyContact },
       { new: true, runValidators: true }
     )
+      .populate("userId", "email isActive")
       .populate("department")
       .populate("position");
 
@@ -205,6 +214,7 @@ export async function updateAddress(
       { address },
       { new: true, runValidators: true }
     )
+      .populate("userId", "email isActive")
       .populate("department")
       .populate("position");
 

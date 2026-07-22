@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:employee-users": "node --env-file=.env scripts/migrate-employee-users.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

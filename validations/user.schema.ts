@@ -13,7 +13,3 @@ export const SignInWithOAuth = z.object({
   email: emailSchema,
   image: z.string().url("Invalid image URL").optional(),
 });
-
-export const registerUserSchema = z.object({
-  email: emailSchema,
-});

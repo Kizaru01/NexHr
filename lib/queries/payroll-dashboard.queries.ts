@@ -1,13 +1,10 @@
 import "server-only";
 
-import { Types } from "mongoose";
-
 import connectToDatabase from "@/database/mongodb";
 import Employee from "@/models/employee.model";
 import Payroll from "@/models/payroll.model";
 import type {
   PayrollDashboardResult,
-  PayrollDetailResult,
   PayrollGenerationEmployee,
   PayrollListRecord,
 } from "@/types/hr-dashboard";
@@ -42,17 +39,9 @@ async function buildPayrollQuery(
   const month = numberFilter(monthFilter, 1, 12);
   const year = numberFilter(yearFilter, 2000, 9999);
 
-  if (employeeIds) {
-    query.employee = { $in: employeeIds };
-  }
-
-  if (month) {
-    query.month = month;
-  }
-
-  if (year) {
-    query.year = year;
-  }
+  if (employeeIds) query.employee = { $in: employeeIds };
+  if (month) query.month = month;
+  if (year) query.year = year;
 
   return query;
 }
@@ -126,88 +115,6 @@ export async function getPayrollGenerationEmployees(): Promise<
   }));
 }
 
-export async function getPayrollDetail(
-  payrollId: string
-): Promise<PayrollDetailResult | null> {
-  if (!Types.ObjectId.isValid(payrollId)) {
-    return null;
-  }
-
-  await connectToDatabase();
-
-  const payroll = await Payroll.findById(payrollId)
-    .populate({
-      path: "employee",
-      select: "employeeId firstName middleName lastName email department position",
-      populate: [
-        { path: "department", select: "name" },
-        { path: "position", select: "name" },
-      ],
-    })
-    .lean();
-
-  if (!payroll) {
-    return null;
-  }
-
-  const employee = payroll.employee as unknown as {
-    employeeId?: string;
-    firstName?: string;
-    middleName?: string;
-    lastName?: string;
-    email?: string;
-    department?: { name?: string };
-    position?: { name?: string };
-  } | null;
-  const {
-    department,
-    email,
-    employeeId,
-    firstName,
-    lastName,
-    middleName,
-    position,
-  } = employee ?? {};
-  const employeeName =
-    firstName && lastName
-      ? nameOf({ firstName, middleName, lastName })
-      : "Deleted employee";
-  const {
-    _id,
-    allowance,
-    basicSalary,
-    bonus,
-    deductions,
-    generatedAt,
-    month,
-    netSalary,
-    overtimePay,
-    remarks,
-    tax,
-    year,
-  } = payroll;
-
-  return {
-    id: _id.toString(),
-    employee: employeeName,
-    employeeId: employeeId ?? "—",
-    email: email ?? null,
-    department: department?.name ?? "Unassigned",
-    position: position?.name ?? "Unassigned",
-    month,
-    year,
-    basicSalary,
-    allowance,
-    overtimePay,
-    bonus,
-    deductions,
-    tax,
-    netSalary,
-    generatedAt: serialiseDate(generatedAt),
-    remarks: remarks ?? null,
-  };
-}
-
 export async function getPayrollDashboard(
   filters: ListFilters
 ): Promise<PayrollDashboardResult> {
@@ -217,7 +124,6 @@ export async function getPayrollDashboard(
 
   const page = safePage(pageFilter);
   const query = await buildPayrollQuery(filters);
-
   const sort = payrollSorts[sortFilter ?? ""] ?? payrollSorts["generated-desc"];
   const [records, total, totals] = await Promise.all([
     Payroll.find(query)
@@ -238,7 +144,6 @@ export async function getPayrollDashboard(
       },
     ]),
   ]);
-
   const summary = totals[0];
 
   return {

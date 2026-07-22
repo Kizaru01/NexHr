@@ -1,6 +1,7 @@
 import "server-only";
 
 import Leave from "@/models/leave.model";
+export { serialiseDate } from "@/lib/serialization";
 import {
   leaveDurationInDays,
   leaveEntitlements,
@@ -14,10 +15,6 @@ import type {
 export const EMPLOYEE_PORTAL_PAGE_SIZE = 10;
 
 export type { EmployeePortalFilters, LeaveBalance } from "@/types/employee-portal";
-
-export function serialiseDate(value?: Date | null): string | null {
-  return value?.toISOString() ?? null;
-}
 
 export function safePage(value?: string): number {
   return Math.max(Number(value) || 1, 1);

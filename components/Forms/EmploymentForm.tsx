@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectTrigger,
@@ -14,10 +15,10 @@ import {
 } from "@/components/ui/select";
 
 import type {
-  EmployeeFormValues,
-  EmployeeSelectOption,
   EmployeePositionSelectOption,
-} from "../Forms/EmployeeForm";
+  EmployeeSelectOption,
+} from "@/types/global";
+import type { EmployeeFormInput } from "../Forms/EmployeeForm";
 import { EMPLOYMENT_TYPES, EMPLOYMENT_STATUS, formatDate } from "@/lib/utils";
 
 type EmploymentInformationProps = {
@@ -31,7 +32,7 @@ export const EmploymentInformation = ({
   positionOptions,
   managerOptions,
 }: EmploymentInformationProps): React.JSX.Element => {
-  const { control, getValues, setValue } = useFormContext<EmployeeFormValues>();
+  const { control, getValues, setValue } = useFormContext<EmployeeFormInput>();
   const selectedDepartment = useWatch({ control, name: "department" });
   const filteredPositionOptions = useMemo(
     () =>
@@ -53,15 +54,15 @@ export const EmploymentInformation = ({
               <FieldLabel htmlFor="hireDate">Hire Date</FieldLabel>
               <Input
                 {...field}
+                id="hireDate"
                 type="date"
-                value={field.value ? formatDate(field.value) : ""}
-                onChange={(event) =>
-                  field.onChange(
-                    event.target.value
-                      ? new Date(event.target.value)
-                      : undefined
-                  )
+                aria-invalid={fieldState.invalid}
+                value={
+                  typeof field.value === "string"
+                    ? field.value
+                    : formatDate(field.value)
                 }
+                onChange={(event) => field.onChange(event.target.value)}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
@@ -75,7 +76,7 @@ export const EmploymentInformation = ({
               <FieldLabel htmlFor="manager">Manager</FieldLabel>
               <Select
                 name={field.name}
-                value={field.value}
+                value={field.value ?? ""}
                 onValueChange={field.onChange}
                 disabled={managerOptions.length === 0}
               >
@@ -123,7 +124,7 @@ export const EmploymentInformation = ({
                     currentPosition &&
                     currentPosition.departmentId !== departmentId
                   ) {
-                    setValue("position", "" as never, {
+                    setValue("position", "", {
                       shouldDirty: true,
                       shouldValidate: true,
                     });
@@ -167,7 +168,7 @@ export const EmploymentInformation = ({
               <FieldLabel htmlFor="position">Position</FieldLabel>
               <Select
                 name={field.name}
-                value={field.value}
+                value={field.value ?? ""}
                 onValueChange={field.onChange}
                 disabled={
                   !selectedDepartment || filteredPositionOptions.length === 0
@@ -209,7 +210,7 @@ export const EmploymentInformation = ({
               <FieldLabel htmlFor="employmentType">Employment Type</FieldLabel>
               <Select
                 name={field.name}
-                value={field.value}
+                value={field.value ?? ""}
                 onValueChange={field.onChange}
               >
                 <SelectTrigger
@@ -235,17 +236,19 @@ export const EmploymentInformation = ({
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="employmentType">Employment Type</FieldLabel>
+              <FieldLabel htmlFor="employmentStatus">
+                Employment Status
+              </FieldLabel>
               <Select
                 name={field.name}
-                value={field.value}
+                value={field.value ?? ""}
                 onValueChange={field.onChange}
               >
                 <SelectTrigger
-                  id="employmentType"
+                  id="employmentStatus"
                   aria-invalid={fieldState.invalid}
                 >
-                  <SelectValue placeholder="Select employment type" />
+                  <SelectValue placeholder="Select employment status" />
                 </SelectTrigger>
                 <SelectContent>
                   {EMPLOYMENT_STATUS.map((type) => (
@@ -267,10 +270,9 @@ export const EmploymentInformation = ({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor="notes">Notes</FieldLabel>
-            <Input
+            <Textarea
               {...field}
-              type="textarea"
-              value={field.value}
+              value={field.value ?? ""}
               onChange={field.onChange}
             />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

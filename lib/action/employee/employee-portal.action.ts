@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import action from "@/lib/handler/action-helper";
-import { assertEmailIsUnique } from "@/lib/handler/employee.helper";
+import { updateEmployeeAndUserProfile } from "@/lib/handler/employee-profile.helper";
 import { requireEmployeeRecord } from "@/lib/handler/require-employee";
 import handleError from "@/lib/handler/error";
 import { ConflictError, NotFoundError } from "@/lib/http-errors";
@@ -39,15 +39,15 @@ export async function updateOwnEmployeeProfile(
     });
     const { params: validatedParams, session } = validated;
     const employee = await requireEmployeeRecord(session.user.id);
-    const { employeeCode, employeeDatabaseId } = employee;
-    const { email } = validatedParams!;
+    const { employeeDatabaseId } = employee;
+    const { email, ...employeeUpdates } = validatedParams!;
 
-    await assertEmailIsUnique(email, employeeCode);
-    await Employee.findByIdAndUpdate(
+    await updateEmployeeAndUserProfile({
       employeeDatabaseId,
-      { $set: validatedParams },
-      { runValidators: true }
-    );
+      userId: session.user.id,
+      email,
+      employeeUpdates,
+    });
 
     revalidateEmployeePortal();
     return { success: true, data: null };

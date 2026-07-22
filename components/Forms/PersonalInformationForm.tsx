@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/select";
 
 import { formatDate } from "@/lib/utils";
-import { EmployeeFormValues } from "../Forms/EmployeeForm";
+import type { EmployeeFormInput } from "../Forms/EmployeeForm";
 
 export function PersonalInformation(): React.JSX.Element {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext<EmployeeFormValues>();
+  } = useFormContext<EmployeeFormInput>();
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Personal Information</h3>
@@ -95,14 +95,15 @@ export function PersonalInformation(): React.JSX.Element {
                 id="birthDate"
                 type="date"
                 aria-invalid={fieldState.invalid}
-                onChange={(event) =>
-                  field.onChange(
-                    event.target.value
-                      ? new Date(event.target.value)
-                      : undefined
-                  )
+                name={field.name}
+                onBlur={field.onBlur}
+                onChange={(event) => field.onChange(event.target.value)}
+                ref={field.ref}
+                value={
+                  typeof field.value === "string"
+                    ? field.value
+                    : formatDate(field.value)
                 }
-                value={formatDate(field.value)}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>

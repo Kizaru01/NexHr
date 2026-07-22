@@ -3,6 +3,9 @@ import type { NextResponse } from "next/server";
 export type SuccessResponse<T = null> = {
   success: true;
   data: T;
+  warning?: {
+    message: string;
+  };
 };
 
 export type ErrorResponse = {
@@ -143,7 +146,7 @@ export interface EmployeeListItem {
   position: string;
   employmentStatus: EmploymentStatus;
   employmentType: EmploymentType;
-  hireDate: Date;
+  hireDate: string;
   avatar?: string;
 }
 
@@ -157,7 +160,7 @@ export interface EmployeeListResultItem {
   position: string;
   employmentStatus: EmploymentStatus;
   employmentType: EmploymentType;
-  hireDate: Date;
+  hireDate: string;
 }
 
 export interface GetEmployeesResult {
@@ -176,21 +179,30 @@ export interface EmployeeDetail {
   lastName: string;
   email: string;
   phone?: string;
-  birthDate?: Date;
+  birthDate: string | null;
   gender?: Gender;
   avatar?: string;
   address?: Address;
   emergencyContact?: EmergencyContactInfo;
   department: string;
   position: string;
-  hireDate: Date;
+  hireDate: string;
   employmentStatus: EmploymentStatus;
   employmentType: EmploymentType;
   salary: Salary;
-  regularizedAt?: Date;
-  terminationDate?: Date;
+  regularizedAt: string | null;
+  terminationDate: string | null;
   manager?: string;
   notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeSelectOption {
+  value: string;
+  label: string;
+}
+
+export interface EmployeePositionSelectOption extends EmployeeSelectOption {
+  departmentId: string;
 }
