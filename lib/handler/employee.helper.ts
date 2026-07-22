@@ -1,8 +1,7 @@
-import type { ClientSession } from "mongoose";
-
 import Employee, { type IEmployeeDoc } from "@/models/employee.model";
 import type { EmployeeDetail, EmployeeListItem } from "@/types/global";
-import { ConflictError, NotFoundError } from "../http-errors";
+import { NotFoundError } from "../http-errors";
+import { getUserEmail } from "./user.helper";
 
 interface PopulatedRef {
   _id: { toString(): string };
@@ -27,6 +26,7 @@ export async function findEmployeeDetailOrThrow(
   employeeId: string
 ): Promise<IEmployeeDoc> {
   const employee = await Employee.findOne({ employeeId })
+    .populate("userId", "email isActive")
     .populate("department")
     .populate("position")
     .populate("manager");
@@ -38,25 +38,6 @@ export async function findEmployeeDetailOrThrow(
   return employee;
 }
 
-export async function assertEmailIsUnique(
-  email: string,
-  excludeEmployeeId?: string,
-  session?: ClientSession
-): Promise<void> {
-  const query = Employee.exists({
-    email,
-    ...(excludeEmployeeId ? { employeeId: { $ne: excludeEmployeeId } } : {}),
-  });
-
-  if (session) query.session(session);
-
-  const exists = await query;
-
-  if (exists) {
-    throw new ConflictError(`Email "${email}" is already in use`);
-  }
-}
-
 export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
   const {
     _id,
@@ -65,7 +46,6 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     birthDate,
     createdAt,
     department,
-    email,
     emergencyContact,
     employeeId,
     employmentStatus,
@@ -83,6 +63,7 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     salary,
     terminationDate,
     updatedAt,
+    userId,
   } = employee;
 
   return {
@@ -91,7 +72,7 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     firstName,
     middleName,
     lastName,
-    email,
+    email: getUserEmail(userId),
     phone,
     birthDate,
     gender,
@@ -118,7 +99,6 @@ export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
     _id,
     avatar,
     department,
-    email,
     employeeId,
     employmentStatus,
     employmentType,
@@ -126,13 +106,14 @@ export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
     hireDate,
     lastName,
     position,
+    userId,
   } = employee;
 
   return {
     id: _id.toString(),
     employeeId,
     fullName: [firstName, lastName].filter(Boolean).join(" "),
-    email,
+    email: getUserEmail(userId),
     department: refName(department),
     position: refName(position),
     employmentStatus,

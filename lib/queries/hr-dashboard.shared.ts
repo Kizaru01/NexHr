@@ -2,6 +2,7 @@ import "server-only";
 
 import { Types } from "mongoose";
 
+import { findUserIdsByEmailSearch } from "@/lib/handler/user.helper";
 import Employee from "@/models/employee.model";
 import type { FilterValues } from "@/types/filters";
 import type { SortDefinition } from "@/types/hr-dashboard";
@@ -110,9 +111,13 @@ export async function findFilteredEmployeeIds(
   setObjectIdFilter(employeeQuery, "department", department);
 
   if (searchTerm) {
-    employeeQuery.$or = ["firstName", "lastName", "email", "employeeId"].map(
-      (field) => ({ [field]: { $regex: searchTerm, $options: "i" } })
-    );
+    const matchingUserIds = await findUserIdsByEmailSearch(searchTerm);
+    employeeQuery.$or = [
+      ...["firstName", "lastName", "employeeId"].map((field) => ({
+        [field]: { $regex: searchTerm, $options: "i" },
+      })),
+      { userId: { $in: matchingUserIds } },
+    ];
   }
 
   if (Object.keys(employeeQuery).length === 0) {

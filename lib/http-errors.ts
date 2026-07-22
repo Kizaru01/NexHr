@@ -16,13 +16,13 @@ export class RequestError extends Error {
 export class ValidationError extends RequestError {
   constructor(fieldErrors: Record<string, string[]>) {
     const message = ValidationError.formatFieldError(fieldErrors);
-    super(400, message);
+    super(400, message, fieldErrors);
   }
 
   static formatFieldError(errors: Record<string, string[]>): string {
     const formattedMessages = Object.entries(errors).map(
       ([field, messages]) => {
-        const fieldName = field.charAt(0).toUpperCase + field.slice(1);
+        const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
 
         if (messages[0] === "Required") {
           return `${fieldName} is required`;

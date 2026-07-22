@@ -15,10 +15,10 @@ export async function getOwnEmployeeProfile(
       .populate("position", "name")
       .populate("manager", "firstName middleName lastName")
       .lean(),
-    User.findById(userId).select("notification").lean(),
+    User.findById(userId).select("email notification").lean(),
   ]);
 
-  if (!employee) return null;
+  if (!employee || !user) return null;
 
   const manager = employee.manager as
     | { firstName: string; middleName?: string; lastName: string }
@@ -33,7 +33,7 @@ export async function getOwnEmployeeProfile(
     middleName: employee.middleName,
     lastName: employee.lastName,
     fullName: nameOf(employee),
-    email: employee.email,
+    email: user.email,
     phone: employee.phone,
     birthDate: serialiseDate(employee.birthDate),
     gender: employee.gender,

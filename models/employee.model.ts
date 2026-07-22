@@ -3,14 +3,13 @@ import { Document, Schema, model, models } from "mongoose";
 import type { Address } from "@/types/global";
 
 export interface IEmployee {
-  userId?: Schema.Types.ObjectId;
+  userId: Schema.Types.ObjectId;
   employeeId: string;
   creationRequestId?: string;
 
   firstName: string;
   middleName?: string;
   lastName: string;
-  email: string;
   phone?: string;
   birthDate?: Date;
   gender?: "Male" | "Female";
@@ -56,8 +55,8 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
       unique: true,
-      sparse: true,
     },
     employeeId: {
       type: String,
@@ -85,14 +84,6 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
     lastName: {
       type: String,
       required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      sparse: true,
-      lowercase: true,
       trim: true,
     },
     phone: { type: String },

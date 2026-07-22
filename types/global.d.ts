@@ -3,6 +3,9 @@ import type { NextResponse } from "next/server";
 export type SuccessResponse<T = null> = {
   success: true;
   data: T;
+  warning?: {
+    message: string;
+  };
 };
 
 export type ErrorResponse = {

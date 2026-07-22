@@ -1,5 +1,7 @@
 import z from "zod";
 
+import { emailSchema } from "./user.schema";
+
 const objectIdSchema = (field: string) =>
   z
     .string()
@@ -134,7 +136,7 @@ export const ownEmployeeProfileSchema = z.object({
   firstName: z.string().trim().min(2).max(80),
   middleName: z.string().trim().max(80).optional(),
   lastName: z.string().trim().min(2).max(80),
-  email: z.string().trim().toLowerCase().email("Enter a valid email address."),
+  email: emailSchema,
   phone: phoneSchema.optional(),
   birthDate: z
     .date()
@@ -159,7 +161,7 @@ export const ownEmployeeProfileFormSchema = z.object({
   firstName: z.string().trim().min(2).max(80),
   middleName: z.string().trim().max(80).optional(),
   lastName: z.string().trim().min(2).max(80),
-  email: z.string().trim().toLowerCase().email("Enter a valid email address."),
+  email: emailSchema,
   phone: z.string().trim().optional(),
   birthDate: z
     .string()

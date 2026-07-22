@@ -4,7 +4,7 @@ export interface IUser {
   image?: string;
   role?: "admin" | "hr" | "employee";
   provider: string;
-  providerId: string;
+  providerId?: string;
   isActive: boolean;
   lastLogin?: Date;
   notification?: {

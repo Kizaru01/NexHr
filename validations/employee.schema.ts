@@ -1,40 +1,13 @@
 import z from "zod";
 
+import { emailSchema } from "./user.schema";
+
 const objectIdSchema = (field: string) =>
   z
     .string()
     .trim()
     .min(1, `${field} is required`)
     .regex(/^[a-f\d]{24}$/i, `${field} must be a valid ObjectId`);
-
-export const CreateEmployeeSchema = z.object({
-  requestId: z.string().uuid("Invalid employee creation request."),
-  firstName: z.string().trim().min(1, "First name is required."),
-  middleName: z.string().trim().optional(),
-  lastName: z.string().trim().min(1, "Last name is required."),
-  department: objectIdSchema("Department"),
-  position: objectIdSchema("Position"),
-  hireDate: z.date({
-    error: "Hire date is required.",
-  }),
-  employmentType: z.enum([
-    "Regular",
-    "Probationary",
-    "Contractual",
-    "Intern",
-    "Part-time",
-  ]),
-  salary: z.object({
-    basic: z.number().positive("Basic salary must be greater than 0."),
-    allowance: z.number().min(0, "Allowance cannot be negative.").optional(),
-  }),
-  manager: objectIdSchema("Manager").optional(),
-  notes: z
-    .string()
-    .trim()
-    .max(500, "Notes cannot exceed 500 characters.")
-    .optional(),
-});
 
 export const addressSchema = z.object({
   street: z.string().trim().optional(),
@@ -78,7 +51,7 @@ export const personalInformationSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
   middleName: z.string().trim().optional(),
   lastName: z.string().trim().min(1, "Last name is required"),
-  email: z.string().trim().toLowerCase().email("Invalid email address"),
+  email: emailSchema,
   phone: z.string().trim().optional(),
   birthDate: z.coerce.date().optional(),
   gender: genderEnum,

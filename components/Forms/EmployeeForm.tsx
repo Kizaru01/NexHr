@@ -99,7 +99,13 @@ export const EmployeeForm = ({
         }
 
         window.sessionStorage.removeItem(CREATE_EMPLOYEE_REQUEST_STORAGE_KEY);
-        toast.success("Employee created successfully.");
+        if (result.warning) {
+          toast.warning("Employee created with a warning", {
+            description: result.warning.message,
+          });
+        } else {
+          toast.success("Employee created successfully.");
+        }
         router.push("/employees");
       } catch {
         toast.error("Unable to save employee. Please retry.");
@@ -159,7 +165,7 @@ export const EmployeeForm = ({
             Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Saving..." : "Save Employee"}
+            {isPending ? "Creating..." : "Create Employee"}
           </Button>
         </div>
       </form>

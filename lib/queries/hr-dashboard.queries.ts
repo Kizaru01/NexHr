@@ -13,8 +13,8 @@ export {
 } from "./announcement-dashboard.queries";
 export {
   getPayrollDashboard,
-  getPayrollDetail,
   getPayrollExport,
   getPayrollGenerationEmployees,
 } from "./payroll-dashboard.queries";
+export { getPayrollDetail } from "./payroll-detail.queries";
 export type { ListFilters, SelectOption } from "./hr-dashboard.shared";
