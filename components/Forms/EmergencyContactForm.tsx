@@ -4,13 +4,13 @@ import { useFormContext } from "react-hook-form";
 
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { EmployeeFormValues } from "../Forms/EmployeeForm";
+import type { EmployeeFormInput } from "../Forms/EmployeeForm";
 
 export function EmergencyContact(): React.JSX.Element {
   const {
     register,
     formState: { errors },
-  } = useFormContext<EmployeeFormValues>();
+  } = useFormContext<EmployeeFormInput>();
 
   return (
     <div className="space-y-4">

@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 
 import { findUserIdsByEmailSearch } from "@/lib/handler/user.helper";
 import Employee from "@/models/employee.model";
+export { serialiseDate } from "@/lib/serialization";
 import type { FilterValues } from "@/types/filters";
 import type { SortDefinition } from "@/types/hr-dashboard";
 
@@ -46,10 +47,6 @@ export const payrollSorts: Record<string, SortDefinition> = {
 
 export function safePage(value?: string): number {
   return Math.max(Number(value) || 1, 1);
-}
-
-export function serialiseDate(value?: Date | null): string | null {
-  return value?.toISOString() ?? null;
 }
 
 export function nameOf({

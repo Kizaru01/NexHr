@@ -17,18 +17,14 @@ import {
 } from "./index";
 import { createEmployeeSchema } from "@/validations/employee.schema";
 import { useTransition, useState, useRef, useEffect } from "react";
+import type {
+  EmployeePositionSelectOption,
+  EmployeeSelectOption,
+} from "@/types/global";
 
 export type EmployeeFormValues = z.infer<typeof createEmployeeSchema>;
-type EmployeeFormInput = z.input<typeof createEmployeeSchema>;
+export type EmployeeFormInput = z.input<typeof createEmployeeSchema>;
 type EmployeeFormOutput = z.output<typeof createEmployeeSchema>;
-export type EmployeeSelectOption = {
-  value: string;
-  label: string;
-};
-
-export type EmployeePositionSelectOption = EmployeeSelectOption & {
-  departmentId: string;
-};
 
 type EmployeeFormProps = {
   departmentOptions: EmployeeSelectOption[];
@@ -36,16 +32,45 @@ type EmployeeFormProps = {
   managerOptions: EmployeeSelectOption[];
 };
 
-const DEFAULT_VALUES: Partial<EmployeeFormValues> = {
-  employmentType: "Probationary",
-  salary: { basic: 0, allowance: 0 },
-};
-
 const CREATE_EMPLOYEE_REQUEST_STORAGE_KEY =
   "hrmanagement:create-employee:request-id";
 
 function createRequestId(): string {
   return globalThis.crypto.randomUUID();
+}
+
+function createDefaultValues(requestId: string): EmployeeFormInput {
+  return {
+    requestId,
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    birthDate: "",
+    gender: "",
+    avatar: "",
+    department: "",
+    position: "",
+    hireDate: "",
+    employmentType: "Probationary",
+    employmentStatus: "Active",
+    manager: "",
+    notes: "",
+    address: {
+      street: "",
+      barangay: "",
+      city: "",
+      province: "",
+      postalCode: "",
+    },
+    emergencyContact: {
+      name: "",
+      relationship: "",
+      phone: "",
+    },
+    salary: { basic: 0, allowance: 0 },
+  };
 }
 
 export const EmployeeForm = ({
@@ -60,10 +85,7 @@ export const EmployeeForm = ({
 
   const form = useForm<EmployeeFormInput, undefined, EmployeeFormOutput>({
     resolver: zodResolver(createEmployeeSchema),
-    defaultValues: {
-      ...DEFAULT_VALUES,
-      requestId: initialRequestId,
-    },
+    defaultValues: createDefaultValues(initialRequestId),
   });
 
   useEffect(() => {

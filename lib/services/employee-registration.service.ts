@@ -26,6 +26,7 @@ type ErrorWithLabels = {
 
 export type EmployeeRegistrationResult = {
   employee: EmployeeDetail;
+  activationIssuedAt: Date;
   email: string;
   userId: string;
   requestId: string;
@@ -108,6 +109,7 @@ function toRegistrationResult(
 ): EmployeeRegistrationResult {
   return {
     employee: toEmployeeDetail(employee),
+    activationIssuedAt: employee.createdAt,
     email: getUserEmail(employee.userId),
     userId: getUserId(employee.userId),
     requestId,

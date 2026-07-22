@@ -55,7 +55,7 @@ export async function createEmployee(
         const activationToken = createActivationToken({
           userId: registration.userId,
           email: registration.email,
-          issuedAt: registration.employee.createdAt,
+          issuedAt: registration.activationIssuedAt,
           tokenId: registration.requestId,
         });
         await emailService.sendWelcomeEmail({
