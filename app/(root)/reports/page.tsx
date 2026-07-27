@@ -45,11 +45,11 @@ export default async function ReportsPage({
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">
+        <p className="page-eyebrow">
           Workforce intelligence
         </p>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-        <p className="mt-1 text-muted-foreground">
+        <h1 className="heading-1">Reports</h1>
+        <p className="page-description">
           Review workforce composition and attendance indicators for {period}.
         </p>
       </div>

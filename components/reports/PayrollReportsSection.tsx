@@ -40,7 +40,7 @@ export default async function PayrollReportsSection({
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Compensation</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight">Payroll reports</h2>
+          <h2 className="mt-1 heading-2">Payroll reports</h2>
           <p className="mt-1 text-muted-foreground">
             Review generated payroll costs for {payroll.period}.
           </p>

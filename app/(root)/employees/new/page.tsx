@@ -32,10 +32,11 @@ const NewEmployee = async (): Promise<React.JSX.Element> => {
     .lean();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Add New Employee</h1>
-        <p className="text-muted-foreground">
+        <p className="page-eyebrow">People directory</p>
+        <h1 className="heading-1">Add New Employee</h1>
+        <p className="page-description">
           Fill out the employee&apos;s personal, employment, salary, address,
           and emergency contact details.
         </p>

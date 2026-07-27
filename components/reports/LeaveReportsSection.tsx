@@ -43,7 +43,7 @@ export default async function LeaveReportsSection({
       <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Time away</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight">
+          <h2 className="mt-1 heading-2">
             Leave reports
           </h2>
           <p className="mt-1 text-muted-foreground">

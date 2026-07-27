@@ -37,7 +37,7 @@ export default async function EmployeeProfilePage(): Promise<
             <p className="text-sm text-muted-foreground">
               {profile.employeeId}
             </p>
-            <h2 className="mt-1 text-2xl font-bold">{profile.fullName}</h2>
+            <h2 className="mt-1 heading-2">{profile.fullName}</h2>
             <p className="mt-1 text-muted-foreground">
               {profile.position} · {profile.department}
             </p>

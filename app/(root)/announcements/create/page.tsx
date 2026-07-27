@@ -14,9 +14,9 @@ export default function CreateAnnouncementPage(): React.JSX.Element {
         </Link>
       </Button>
       <div>
-        <p className="text-sm font-medium text-primary">Company communications</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">Create announcement</h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="page-eyebrow">Company communications</p>
+        <h1 className="heading-1">Create announcement</h1>
+        <p className="page-description">
           Share timely company, people, policy, benefits, or event updates.
         </p>
       </div>

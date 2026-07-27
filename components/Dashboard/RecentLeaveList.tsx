@@ -1,30 +1,42 @@
 "use client";
-import { recentLeaveRequests } from "@/constants/dashboard-static";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
-import Image from "next/image";
+
 import Link from "next/link";
-const statusVariant = {
-  Pending:
-    "bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100",
+import { ArrowUpRight } from "lucide-react";
 
-  Approved: "bg-green-100 text-green-700 border-green-300 hover:bg-green-100",
-
-  Rejected: "bg-red-100 text-red-700 border-red-300 hover:bg-red-100",
-};
+import StatusBadge from "@/components/hr/StatusBadge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { recentLeaveRequests } from "@/constants/dashboard-static";
 
 const RecentLeaveList = (): React.JSX.Element => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Leave Requests</CardTitle>
+        <CardAction>
+          <Link
+            href="/leave"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover"
+          >
+            View all <ArrowUpRight className="size-3.5" />
+          </Link>
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-1">
         {recentLeaveRequests.map((leave) => (
-          <div key={leave.id} className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar>
+          <div
+            key={leave.id}
+            className="interactive-row flex items-center justify-between gap-3 px-2 py-1.5"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar className="size-9">
                 <AvatarFallback>
                   {leave.employee
                     .split(" ")
@@ -32,34 +44,18 @@ const RecentLeaveList = (): React.JSX.Element => {
                     .join("")}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col">
-                <p className="font-bold">{leave.employee}</p>
-                <div className="flex items-center gap-2">
-                  {" "}
-                  <p className="text-muted-foreground text-sm">
-                    {leave.leaveType}
-                  </p>
-                  <p>•</p>
-                  <p className="text-muted-foreground text-sm">
-                    {leave.startDate} - {leave.endDate}
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <p className="truncate text-[0.8125rem] font-semibold">
+                  {leave.employee}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {leave.leaveType} · {leave.startDate} – {leave.endDate}
+                </p>
               </div>
             </div>
-            <p className={statusVariant[leave.status]}>
-              &quot;{leave.status}&quot;
-            </p>
+            <StatusBadge status={leave.status} />
           </div>
         ))}
-        <Link href="/leave" className="py-4 flex gap-8 pl-4 cursor-pointer">
-          <p className="text-blue-500 text-lg">View All Request</p>
-          <Image
-            src="/icons/chevron-right.svg"
-            alt="arrow"
-            height={20}
-            width={20}
-          />
-        </Link>
       </CardContent>
     </Card>
   );

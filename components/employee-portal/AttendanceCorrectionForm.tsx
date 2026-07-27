@@ -46,7 +46,7 @@ export default function AttendanceCorrectionForm({
 
   if (hasPendingCorrection) {
     return (
-      <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
+      <p className="rounded-lg border border-warning/25 bg-warning-soft p-3 text-sm text-warning-foreground">
         A correction request for this attendance record is awaiting review.
       </p>
     );

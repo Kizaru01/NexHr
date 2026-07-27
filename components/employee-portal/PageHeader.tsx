@@ -14,11 +14,11 @@ export default function PageHeader({
   actions,
 }: PageHeaderProps): React.JSX.Element {
   return (
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <header className="page-header">
       <div>
-        <p className="text-sm font-medium text-primary">{eyebrow}</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p>
+        <p className="page-eyebrow">{eyebrow}</p>
+        <h1 className="heading-1">{title}</h1>
+        <p className="page-description">{description}</p>
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
     </header>

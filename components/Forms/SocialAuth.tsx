@@ -20,21 +20,19 @@ const SocialAuth = (): React.JSX.Element => {
     }
   };
   return (
-    <div className="mt-10 flex flex-wrap ">
+    <div className="mt-8 flex flex-wrap">
       <Button
-        className="background-dark400_light900 body-medium text-dark-200_light800 min-h-12 flex-1 rounded-2 px-4 py-3.5"
+        className="min-h-11 flex-1"
         onClick={() => handleClick("google")}
       >
         <Image
           src="/icons/google.svg"
-          alt="google"
+          alt=""
           width={20}
           height={20}
-          className="invert-color mr-2.5 object-contain"
+          className="mr-1 object-contain"
         />
-        <span className="text-white dark:text-black ">
-          Continue with Google
-        </span>
+        <span>Continue with Google</span>
       </Button>
     </div>
   );

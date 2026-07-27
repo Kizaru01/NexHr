@@ -33,7 +33,7 @@ export default function Pagination({
   const hasNextPage = page < totalPages;
 
   return (
-    <div className="flex items-center justify-between border-t px-4 py-3">
+    <div className="flex items-center justify-between border-t bg-muted/25 px-4 py-3">
       <p className="text-sm text-muted-foreground">
         Page {page} of {totalPages}
       </p>

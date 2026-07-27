@@ -96,11 +96,11 @@ export default async function PayrollPage({ searchParams }: PageProps): Promise<
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="page-header">
         <div>
-          <p className="text-sm font-medium text-primary">Compensation</p>
-          <h1 className="text-3xl font-bold tracking-tight">Payroll</h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="page-eyebrow">Compensation</p>
+          <h1 className="heading-1">Payroll</h1>
+          <p className="page-description">
             Review generated payroll records across your workforce.
           </p>
         </div>

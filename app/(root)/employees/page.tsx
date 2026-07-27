@@ -77,11 +77,11 @@ export default async function EmployeesPage({ searchParams }: PageProps): Promis
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="page-header">
         <div>
-          <p className="text-sm font-medium text-primary">People directory</p>
-          <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="page-eyebrow">People directory</p>
+          <h1 className="heading-1">Employees</h1>
+          <p className="page-description">
             Manage employee records, employment information, and reporting
             lines.
           </p>
