@@ -1,5 +1,10 @@
 import { EmployeeForm } from "@/components/Forms";
 import connectToDatabase from "@/database/mongodb";
+import {
+  toEmployeeDepartmentOption,
+  toEmployeeManagerOption,
+  toEmployeePositionOption,
+} from "@/lib/handler/employee.helper";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
@@ -37,21 +42,9 @@ const NewEmployee = async (): Promise<React.JSX.Element> => {
       </div>
 
       <EmployeeForm
-        departmentOptions={departments.map((department) => ({
-          value: department._id.toString(),
-          label: department.name,
-        }))}
-        positionOptions={positions.map((position) => ({
-          value: position._id.toString(),
-          label: position.name,
-          departmentId: position.department.toString(),
-        }))}
-        managerOptions={managers.map((manager) => ({
-          value: manager._id.toString(),
-          label: [manager.firstName, manager.middleName, manager.lastName]
-            .filter(Boolean)
-            .join(" "),
-        }))}
+        departmentOptions={departments.map(toEmployeeDepartmentOption)}
+        positionOptions={positions.map(toEmployeePositionOption)}
+        managerOptions={managers.map(toEmployeeManagerOption)}
       />
     </div>
   );

@@ -1,20 +1,43 @@
-import type { ClientSession } from "mongoose";
+import { serialiseDate } from "@/lib/serialization";
+import Employee, {
+  type IEmployee,
+  type IEmployeeDoc,
+} from "@/models/employee.model";
+import type {
+  Address,
+  EmergencyContactInfo,
+  EmployeeDetail,
+  EmployeeListItem,
+  EmployeePositionSelectOption,
+  EmployeeSelectOption,
+  Salary,
+} from "@/types/global";
+import { NotFoundError } from "../http-errors";
+import { getUserEmail } from "./user.helper";
 
-import Employee, { type IEmployeeDoc } from "@/models/employee.model";
-import type { EmployeeDetail, EmployeeListItem } from "@/types/global";
-import { ConflictError, NotFoundError } from "../http-errors";
+interface StringableReference {
+  toString(): string;
+}
 
 interface PopulatedRef {
-  _id: { toString(): string };
+  _id: StringableReference;
   name?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
 }
 
 function isPopulated(ref: unknown): ref is PopulatedRef {
-  return !!ref && typeof ref === "object" && "_id" in (ref as object);
+  return ref !== null && typeof ref === "object" && "_id" in ref;
 }
 
 function refName(ref: unknown): string {
-  if (isPopulated(ref)) return ref.name ?? ref._id.toString();
+  if (isPopulated(ref)) {
+    const personName = [ref.firstName, ref.middleName, ref.lastName]
+      .filter(Boolean)
+      .join(" ");
+    return ref.name ?? (personName || ref._id.toString());
+  }
   return ref ? String(ref) : "";
 }
 
@@ -23,10 +46,42 @@ function refId(ref: unknown): string | undefined {
   return ref ? String(ref) : undefined;
 }
 
+function toAddress(address: IEmployee["address"]): Address | undefined {
+  if (!address) return undefined;
+
+  return {
+    street: address.street,
+    barangay: address.barangay,
+    city: address.city,
+    province: address.province,
+    postalCode: address.postalCode,
+  };
+}
+
+function toEmergencyContact(
+  emergencyContact: IEmployee["emergencyContact"]
+): EmergencyContactInfo | undefined {
+  if (!emergencyContact) return undefined;
+
+  return {
+    name: emergencyContact.name,
+    relationship: emergencyContact.relationship,
+    phone: emergencyContact.phone,
+  };
+}
+
+function toSalary(salary: IEmployee["salary"]): Salary {
+  return {
+    basic: salary.basic,
+    allowance: salary.allowance,
+  };
+}
+
 export async function findEmployeeDetailOrThrow(
   employeeId: string
 ): Promise<IEmployeeDoc> {
   const employee = await Employee.findOne({ employeeId })
+    .populate("userId", "email isActive")
     .populate("department")
     .populate("position")
     .populate("manager");
@@ -38,25 +93,6 @@ export async function findEmployeeDetailOrThrow(
   return employee;
 }
 
-export async function assertEmailIsUnique(
-  email: string,
-  excludeEmployeeId?: string,
-  session?: ClientSession
-): Promise<void> {
-  const query = Employee.exists({
-    email,
-    ...(excludeEmployeeId ? { employeeId: { $ne: excludeEmployeeId } } : {}),
-  });
-
-  if (session) query.session(session);
-
-  const exists = await query;
-
-  if (exists) {
-    throw new ConflictError(`Email "${email}" is already in use`);
-  }
-}
-
 export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
   const {
     _id,
@@ -65,7 +101,6 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     birthDate,
     createdAt,
     department,
-    email,
     emergencyContact,
     employeeId,
     employmentStatus,
@@ -83,6 +118,7 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     salary,
     terminationDate,
     updatedAt,
+    userId,
   } = employee;
 
   return {
@@ -91,25 +127,25 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     firstName,
     middleName,
     lastName,
-    email,
+    email: getUserEmail(userId),
     phone,
-    birthDate,
+    birthDate: serialiseDate(birthDate),
     gender,
     avatar,
-    address,
-    emergencyContact,
+    address: toAddress(address),
+    emergencyContact: toEmergencyContact(emergencyContact),
     department: refName(department),
     position: refName(position),
-    hireDate,
+    hireDate: serialiseDate(hireDate),
     employmentStatus,
     employmentType,
-    salary,
-    regularizedAt,
-    terminationDate,
+    salary: toSalary(salary),
+    regularizedAt: serialiseDate(regularizedAt),
+    terminationDate: serialiseDate(terminationDate),
     manager: manager ? refName(manager) : undefined,
     notes,
-    createdAt,
-    updatedAt,
+    createdAt: serialiseDate(createdAt),
+    updatedAt: serialiseDate(updatedAt),
   };
 }
 
@@ -118,7 +154,6 @@ export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
     _id,
     avatar,
     department,
-    email,
     employeeId,
     employmentStatus,
     employmentType,
@@ -126,19 +161,56 @@ export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
     hireDate,
     lastName,
     position,
+    userId,
   } = employee;
 
   return {
     id: _id.toString(),
     employeeId,
     fullName: [firstName, lastName].filter(Boolean).join(" "),
-    email,
+    email: getUserEmail(userId),
     department: refName(department),
     position: refName(position),
     employmentStatus,
     employmentType,
-    hireDate,
+    hireDate: serialiseDate(hireDate),
     avatar,
+  };
+}
+
+export function toEmployeeDepartmentOption(department: {
+  _id: StringableReference;
+  name: string;
+}): EmployeeSelectOption {
+  return {
+    value: department._id.toString(),
+    label: department.name,
+  };
+}
+
+export function toEmployeePositionOption(position: {
+  _id: StringableReference;
+  name: string;
+  department: StringableReference;
+}): EmployeePositionSelectOption {
+  return {
+    value: position._id.toString(),
+    label: position.name,
+    departmentId: position.department.toString(),
+  };
+}
+
+export function toEmployeeManagerOption(manager: {
+  _id: StringableReference;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+}): EmployeeSelectOption {
+  return {
+    value: manager._id.toString(),
+    label: [manager.firstName, manager.middleName, manager.lastName]
+      .filter(Boolean)
+      .join(" "),
   };
 }
 

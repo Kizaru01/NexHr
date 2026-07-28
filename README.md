@@ -16,6 +16,22 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+Employee welcome emails use the shared email service. Configure
+`RESEND_API_KEY` and `EMAIL_FROM` in addition to the existing `AUTH_SECRET` and
+`NEXTAUTH_URL` values. If delivery is unavailable, employee creation still
+succeeds and returns a warning to the HR/Admin user.
+
+After deploying the employee/user relationship refactor, migrate existing
+records before accepting writes:
+
+```bash
+npm run migrate:employee-users
+```
+
+The migration links legacy employee records to their user accounts, creates a
+missing employee-role account when necessary, and removes the legacy employee
+email field.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

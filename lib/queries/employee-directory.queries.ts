@@ -1,6 +1,10 @@
 import "server-only";
 
 import connectToDatabase from "@/database/mongodb";
+import {
+  findUserIdsByEmailSearch,
+  getUserEmail,
+} from "@/lib/handler/user.helper";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
@@ -65,14 +69,19 @@ export async function getEmployeeDirectory(
   }
 
   if (searchTerm) {
-    query.$or = ["firstName", "lastName", "email", "employeeId"].map(
+    const matchingUserIds = await findUserIdsByEmailSearch(searchTerm);
+    query.$or = ["firstName", "lastName", "employeeId"].map(
       (field) => ({ [field]: { $regex: searchTerm, $options: "i" } })
     );
+    (query.$or as Array<Record<string, unknown>>).push({
+      userId: { $in: matchingUserIds },
+    });
   }
 
   const sort = employeeSorts[sortFilter ?? ""] ?? employeeSorts["recently-added"];
   const [employees, total] = await Promise.all([
     Employee.find(query)
+      .populate("userId", "email")
       .populate("department", "name")
       .populate("position", "name")
       .populate("manager", "firstName lastName")
@@ -89,7 +98,6 @@ export async function getEmployeeDirectory(
         _id,
         avatar,
         department,
-        email,
         employeeId,
         employmentStatus,
         employmentType,
@@ -97,6 +105,7 @@ export async function getEmployeeDirectory(
         manager,
         phone,
         position,
+        userId,
       } = employee;
       const departmentName =
         (department as { name?: string })?.name ?? "Unassigned";
@@ -122,7 +131,7 @@ export async function getEmployeeDirectory(
         status: employmentStatus,
         type: employmentType,
         hireDate: serialiseDate(hireDate),
-        email,
+        email: getUserEmail(userId),
         phone,
         manager: managerName,
       };
@@ -139,6 +148,7 @@ export async function getEmployeeProfile(
   await connectToDatabase();
 
   const employee = await Employee.findOne({ employeeId })
+    .populate("userId", "email")
     .populate("department", "name")
     .populate("position", "name")
     .populate("manager", "firstName middleName lastName")
@@ -154,7 +164,6 @@ export async function getEmployeeProfile(
     birthDate,
     createdAt,
     department,
-    email,
     emergencyContact,
     employeeId: resolvedEmployeeId,
     employmentStatus,
@@ -166,12 +175,13 @@ export async function getEmployeeProfile(
     phone,
     position,
     updatedAt,
+    userId,
   } = employee;
 
   return {
     employeeId: resolvedEmployeeId,
     name: nameOf(employee),
-    email,
+    email: getUserEmail(userId),
     phone,
     avatar,
     gender,

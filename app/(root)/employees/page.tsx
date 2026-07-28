@@ -136,7 +136,7 @@ export default async function EmployeesPage({ searchParams }: PageProps): Promis
               </tr>
             </thead>
             <tbody>
-              {employees.map((employee) => (
+              {employees.map(({ email, ...employee }) => (
                 <tr
                   key={employee.id}
                   className="border-t transition-colors hover:bg-muted/40"
@@ -160,7 +160,7 @@ export default async function EmployeesPage({ searchParams }: PageProps): Promis
                   <td className="px-4 py-3">{employee.type}</td>
                   <td className="px-4 py-3">{formatDate(employee.hireDate)}</td>
                   <td className="px-4 py-3">
-                    <span>{employee.email}</span>
+                    <span>{email}</span>
                     <span className="block text-xs text-muted-foreground">
                       {employee.phone ?? "No phone"}
                     </span>

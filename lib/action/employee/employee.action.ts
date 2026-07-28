@@ -1,11 +1,23 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import mongoose from "mongoose";
+import { revalidatePath } from "next/cache";
 
-import Department from "@/models/department.model";
+import action from "@/lib/handler/action-helper";
+import {
+  findEmployeeDetailOrThrow,
+  toEmployeeDetail,
+  toEmployeeListItem,
+} from "@/lib/handler/employee.helper";
+import handleError from "@/lib/handler/error";
+import { findUserIdsByEmailSearch, getUserId } from "@/lib/handler/user.helper";
+import { ConflictError, isDuplicateKeyError } from "@/lib/http-errors";
+import logger from "@/lib/logger";
+import { createActivationToken } from "@/lib/services/activation-token.service";
+import emailService from "@/lib/services/email.service";
+import { registerEmployeeAccount } from "@/lib/services/employee-registration.service";
 import Employee from "@/models/employee.model";
-import Position from "@/models/position.model";
+import User from "@/models/user.model";
 import type {
   ActionResponse,
   CreateEmployeeInput,
@@ -21,197 +33,8 @@ import {
   getEmployeeByIdSchema,
   getEmployeesSchema,
 } from "@/validations/employee.schema";
-import action from "../../handler/action-helper";
-import {
-  assertEmailIsUnique,
-  findEmployeeDetailOrThrow,
-  toEmployeeDetail,
-} from "../../handler/employee.helper";
-import handleError from "../../handler/error";
-import { getNextEmployeeId } from "../../handler/employee-id.helper";
-import {
-  ConflictError,
-  NotFoundError,
-  isDuplicateKeyError,
-} from "../../http-errors";
 
 const EMPLOYEES_PATH = "/employees";
-const MAX_TRANSACTION_ATTEMPTS = 8;
-const MAX_COMMIT_ATTEMPTS = 3;
-
-type ErrorWithLabels = {
-  hasErrorLabel?: (label: string) => boolean;
-};
-
-function hasErrorLabel(error: unknown, label: string): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    typeof (error as ErrorWithLabels).hasErrorLabel === "function" &&
-    (error as ErrorWithLabels).hasErrorLabel!(label)
-  );
-}
-function isTransientTransactionError(error: unknown): boolean {
-  return hasErrorLabel(error, "TransientTransactionError");
-}
-
-async function commitTransactionWithRetry(
-  session: mongoose.ClientSession
-): Promise<void> {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= MAX_COMMIT_ATTEMPTS; attempt += 1) {
-    try {
-      await session.commitTransaction();
-      return;
-    } catch (error) {
-      lastError = error;
-
-      if (
-        !hasErrorLabel(error, "UnknownTransactionCommitResult") ||
-        attempt === MAX_COMMIT_ATTEMPTS
-      ) {
-        throw error;
-      }
-    }
-  }
-
-  throw lastError;
-}
-
-async function waitBeforeTransactionRetry(attempt: number): Promise<void> {
-  const backoffMs = Math.min(25 * 2 ** (attempt - 1), 400);
-  const jitterMs = Math.floor(Math.random() * 25);
-
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, backoffMs + jitterMs);
-  });
-}
-
-async function findEmployeeByCreationRequestId(
-  requestId: string,
-  session: mongoose.ClientSession
-) {
-  return Employee.findOne({ creationRequestId: requestId })
-    .session(session)
-    .populate([
-      { path: "department", options: { session } },
-      { path: "position", options: { session } },
-      { path: "manager", options: { session } },
-    ]);
-}
-
-async function findCommittedEmployeeByCreationRequestId(requestId: string) {
-  return Employee.findOne({ creationRequestId: requestId }).populate([
-    { path: "department" },
-    { path: "position" },
-    { path: "manager" },
-  ]);
-}
-
-async function createEmployeeInTransaction(
-  employeeParams: CreateEmployeeInput
-): Promise<EmployeeDetail> {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
-    let session: mongoose.ClientSession | undefined;
-    let counterReserved = false;
-
-    try {
-      session = await mongoose.startSession();
-      await session.startTransaction();
-
-      const existingEmployee = await findEmployeeByCreationRequestId(
-        employeeParams.requestId,
-        session
-      );
-
-      if (existingEmployee) {
-        const employeeDetail = toEmployeeDetail(existingEmployee);
-
-        await commitTransactionWithRetry(session);
-
-        return employeeDetail;
-      }
-
-      await assertEmailIsUnique(employeeParams.email, undefined, session);
-
-      const [department, position, manager] = await Promise.all([
-        Department.exists({
-          _id: employeeParams.department,
-          isActive: true,
-        }).session(session),
-        Position.exists({
-          _id: employeeParams.position,
-          department: employeeParams.department,
-          isActive: true,
-        }).session(session),
-        employeeParams.manager
-          ? Employee.exists({
-              _id: employeeParams.manager,
-              employmentStatus: "Active",
-            }).session(session)
-          : Promise.resolve(true),
-      ]);
-
-      if (!department) throw new NotFoundError("Department");
-      if (!position) throw new NotFoundError("Position");
-      if (!manager) throw new NotFoundError("Manager");
-
-      const employeeId = await getNextEmployeeId(session);
-      counterReserved = true;
-      const { requestId, ...employeeData } = employeeParams;
-
-      const [employee] = await Employee.create(
-        [
-          {
-            ...employeeData,
-            employeeId,
-            creationRequestId: requestId,
-          },
-        ],
-        { session }
-      );
-      await employee.populate([
-        { path: "department", options: { session } },
-        { path: "position", options: { session } },
-        { path: "manager", options: { session } },
-      ]);
-
-      const employeeDetails = toEmployeeDetail(employee);
-
-      await commitTransactionWithRetry(session);
-
-      return employeeDetails;
-    } catch (error) {
-      if (session?.inTransaction()) {
-        try {
-          await session.abortTransaction();
-        } catch {
-          // The original transaction error is the actionable failure.
-        }
-      }
-
-      lastError = error;
-
-      if (
-        (isTransientTransactionError(error) ||
-          (!counterReserved && isDuplicateKeyError(error))) &&
-        attempt < MAX_TRANSACTION_ATTEMPTS
-      ) {
-        await waitBeforeTransactionRetry(attempt);
-        continue;
-      }
-
-      throw error;
-    } finally {
-      await session?.endSession();
-    }
-  }
-
-  throw lastError ?? new Error("Employee creation transaction failed.");
-}
 
 export async function createEmployee(
   params: CreateEmployeeInput
@@ -222,46 +45,60 @@ export async function createEmployee(
       schema: createEmployeeSchema,
       roles: ["admin", "hr"],
     });
-    const employeeData = validationResult.params!;
+    const data = validationResult.params!;
 
-    const employee = await createEmployeeInTransaction(employeeData);
+    const registration = await registerEmployeeAccount(data);
+    let warning: { message: string } | undefined;
 
-    revalidatePath(EMPLOYEES_PATH);
-
-    return { success: true, data: employee };
-  } catch (error) {
-    if (
-      isDuplicateKeyError(error) ||
-      hasErrorLabel(error, "UnknownTransactionCommitResult")
-    ) {
+    if (registration.shouldSendWelcomeEmail) {
       try {
-        const existingEmployee = await findCommittedEmployeeByCreationRequestId(
-          params.requestId
+        const activationToken = createActivationToken({
+          userId: registration.userId,
+          email: registration.email,
+          issuedAt: registration.activationIssuedAt,
+          tokenId: registration.requestId,
+        });
+        await emailService.sendWelcomeEmail({
+          to: registration.email,
+          employeeName: [
+            registration.employee.firstName,
+            registration.employee.lastName,
+          ].join(" "),
+          employeeId: registration.employee.employeeId,
+          activationToken,
+          requestId: registration.requestId,
+        });
+      } catch (emailError) {
+        logger.error(
+          {
+            err: emailError,
+            employeeId: registration.employee.employeeId,
+            userId: registration.userId,
+          },
+          "Employee created, but the welcome email could not be sent."
         );
-
-        const employeeDetails = toEmployeeDetail(existingEmployee);
-
-        if (existingEmployee) {
-          revalidatePath(EMPLOYEES_PATH);
-          return {
-            success: true,
-            data: JSON.parse(JSON.stringify(employeeDetails)),
-          };
-        }
-      } catch {
-        // Preserve the original transaction error if the reconciliation read fails.
-        return handleError(error);
+        warning = {
+          message:
+            "Employee created successfully, but the welcome email could not be sent.",
+        };
       }
     }
 
-    if (isDuplicateKeyError(error)) {
-      const duplicateError = new ConflictError(
-        "An employee with this email or employee ID already exists."
-      );
-      return handleError(duplicateError);
-    }
+    revalidatePath(EMPLOYEES_PATH);
 
-    return handleError(error);
+    return {
+      success: true,
+      data: registration.employee,
+      ...(warning ? { warning } : {}),
+    };
+  } catch (error) {
+    return handleError(
+      isDuplicateKeyError(error)
+        ? new ConflictError(
+            "An employee account with this email or request already exists."
+          )
+        : error
+    );
   }
 }
 
@@ -274,15 +111,30 @@ export async function deleteEmployee(
       schema: deleteEmployeeSchema,
       roles: ["admin", "hr"],
     });
-
     const { employeeId } = validationResult.params!;
+    const employee = await findEmployeeDetailOrThrow(employeeId);
+    const userId = getUserId(employee.userId);
+    const session = await mongoose.startSession();
 
-    await findEmployeeDetailOrThrow(employeeId);
+    try {
+      await session.withTransaction(async (): Promise<void> => {
+        const [employeeResult, userResult] = await Promise.all([
+          Employee.deleteOne({ _id: employee._id }).session(session),
+          User.deleteOne({ _id: userId }).session(session),
+        ]);
 
-    await Employee.deleteOne({ employeeId });
+        if (
+          employeeResult.deletedCount !== 1 ||
+          userResult.deletedCount !== 1
+        ) {
+          throw new Error("Employee account deletion was not completed.");
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
 
     revalidatePath(EMPLOYEES_PATH);
-
     return { success: true, data: null };
   } catch (error) {
     return handleError(error);
@@ -298,13 +150,11 @@ export async function getEmployeeById(
       schema: getEmployeeByIdSchema,
       roles: ["admin", "hr", "employee"],
     });
+    const employee = await findEmployeeDetailOrThrow(
+      validationResult.params!.employeeId
+    );
 
-    const { employeeId } = validationResult.params!;
-    const employee = await findEmployeeDetailOrThrow(employeeId);
-
-    const employeeDetail = toEmployeeDetail(employee);
-
-    return { success: true, data: employeeDetail };
+    return { success: true, data: toEmployeeDetail(employee) };
   } catch (error) {
     return handleError(error);
   }
@@ -319,7 +169,6 @@ export async function getEmployees(
       schema: getEmployeesSchema,
       roles: ["admin", "hr"],
     });
-
     const {
       page = 1,
       pageSize = 10,
@@ -328,7 +177,6 @@ export async function getEmployees(
       employmentStatus,
       employmentType,
     } = validationResult.params!;
-
     const skip = (Number(page) - 1) * Number(pageSize);
     const limit = Number(pageSize);
     const searchQuery: mongoose.QueryFilter<typeof Employee> = {};
@@ -337,16 +185,18 @@ export async function getEmployees(
     if (employmentStatus) searchQuery.employmentStatus = employmentStatus;
     if (employmentType) searchQuery.employmentType = employmentType;
     if (search) {
+      const matchingUserIds = await findUserIdsByEmailSearch(search);
       searchQuery.$or = [
         { firstName: { $regex: search, $options: "i" } },
         { lastName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
         { employeeId: { $regex: search, $options: "i" } },
+        { userId: { $in: matchingUserIds } },
       ];
     }
 
     const [employees, totalEmployees] = await Promise.all([
       Employee.find(searchQuery)
+        .populate("userId", "email")
         .populate("department")
         .populate("position")
         .sort({ createdAt: -1 })
@@ -355,13 +205,11 @@ export async function getEmployees(
       Employee.countDocuments(searchQuery),
     ]);
 
-    const isNext = totalEmployees > skip + employees.length;
-
     return {
       success: true,
       data: {
-        employees,
-        isNext,
+        employees: employees.map(toEmployeeListItem),
+        isNext: totalEmployees > skip + employees.length,
       },
     };
   } catch (error) {

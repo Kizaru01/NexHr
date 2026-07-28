@@ -12,11 +12,10 @@ import User, { IUser } from "@/models/user.model";
 import { SignInWithOAuth } from "@/validations/user.schema";
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = await request.json();
-
-  await connectToDatabase();
-
   try {
+    const body = await request.json();
+    await connectToDatabase();
+
     const validateData = SignInWithOAuth.safeParse(body);
 
     if (!validateData.success)
@@ -32,20 +31,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       throw new ForbiddenError("This is account is inactive.");
     }
 
-    const employee = await Employee.findOne({ email });
+    const employee = await Employee.findOne({ userId: existingUser._id });
 
     if (!employee) {
       throw new UnauthorizedError("Employee record not found.");
     }
 
-    if (!employee.userId) {
-      employee.userId = existingUser._id;
-      await employee.save();
-    } else if (!employee.userId.equals(existingUser._id)) {
-      throw new ForbiddenError(
-        "Employee is already linked to another account."
-      );
-    }
     const updatedData: Partial<IUser> = {
       lastLogin: new Date(),
     };

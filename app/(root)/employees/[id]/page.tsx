@@ -60,6 +60,7 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
   const { id } = await params;
   const employee = await getEmployeeProfile(id);
   if (!employee) notFound();
+  const { email } = employee;
   return (
     <section className="mx-auto max-w-5xl space-y-6">
       <Button variant="ghost" size="sm" asChild>
@@ -90,7 +91,7 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
       </Card>
       <div className="grid gap-6 lg:grid-cols-2">
         <ProfileSection title="Personal information" icon={UserRound}>
-          <Detail label="Email">{employee.email}</Detail>
+          <Detail label="Email">{email}</Detail>
           <Detail label="Phone">{value(employee.phone)}</Detail>
           <Detail label="Gender">{value(employee.gender)}</Detail>
           <Detail label="Birth date">

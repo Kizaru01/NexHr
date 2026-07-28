@@ -2,7 +2,9 @@ import "server-only";
 
 import { Types } from "mongoose";
 
+import { findUserIdsByEmailSearch } from "@/lib/handler/user.helper";
 import Employee from "@/models/employee.model";
+export { serialiseDate } from "@/lib/serialization";
 import type { FilterValues } from "@/types/filters";
 import type { SortDefinition } from "@/types/hr-dashboard";
 
@@ -45,10 +47,6 @@ export const payrollSorts: Record<string, SortDefinition> = {
 
 export function safePage(value?: string): number {
   return Math.max(Number(value) || 1, 1);
-}
-
-export function serialiseDate(value?: Date | null): string | null {
-  return value?.toISOString() ?? null;
 }
 
 export function nameOf({
@@ -110,9 +108,13 @@ export async function findFilteredEmployeeIds(
   setObjectIdFilter(employeeQuery, "department", department);
 
   if (searchTerm) {
-    employeeQuery.$or = ["firstName", "lastName", "email", "employeeId"].map(
-      (field) => ({ [field]: { $regex: searchTerm, $options: "i" } })
-    );
+    const matchingUserIds = await findUserIdsByEmailSearch(searchTerm);
+    employeeQuery.$or = [
+      ...["firstName", "lastName", "employeeId"].map((field) => ({
+        [field]: { $regex: searchTerm, $options: "i" },
+      })),
+      { userId: { $in: matchingUserIds } },
+    ];
   }
 
   if (Object.keys(employeeQuery).length === 0) {
