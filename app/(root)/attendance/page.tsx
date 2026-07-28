@@ -74,9 +74,9 @@ export default async function AttendancePage({ searchParams }: PageProps): Promi
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">Workforce time</p>
-        <h1 className="text-3xl font-bold tracking-tight">Attendance</h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="page-eyebrow">Workforce time</p>
+        <h1 className="heading-1">Attendance</h1>
+        <p className="page-description">
           Review daily attendance, working hours, and exceptions.
         </p>
       </div>

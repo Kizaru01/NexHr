@@ -8,18 +8,18 @@ export default function StatCard({
   dashboardValue,
 }: StatCardProps): React.JSX.Element {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
+    <Card className="min-h-32 justify-center">
+      <CardContent className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="truncate text-caption font-medium">{label}</p>
           {dashboardValue ? (
-            <p className="mt-1 text-2xl font-bold">{dashboardValue}</p>
+            <p className="mt-2 metric-value">{dashboardValue}</p>
           ) : (
-            <p className="mt-1 text-2xl font-bold">{value}</p>
+            <p className="mt-2 metric-value">{value}</p>
           )}
         </div>
-        <div className="rounded-lg bg-primary/10 p-3 text-primary">
-          <Icon className="size-5" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <Icon className="size-[1.125rem]" />
         </div>
       </CardContent>
     </Card>

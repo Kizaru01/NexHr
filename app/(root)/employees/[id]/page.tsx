@@ -81,7 +81,7 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
             <p className="text-sm text-muted-foreground">
               {employee.employeeId}
             </p>
-            <h1 className="text-3xl font-bold">{employee.name}</h1>
+            <h1 className="heading-1">{employee.name}</h1>
             <p className="mt-1 text-muted-foreground">
               {employee.position} · {employee.department}
             </p>

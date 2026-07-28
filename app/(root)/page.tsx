@@ -18,21 +18,22 @@ const Home = async (): Promise<React.JSX.Element> => {
   }
 
   return (
-    <>
+    <div className="space-y-5 xl:space-y-6">
       <DashboardNavbar />
-      <div className="grid gap-2 sm:gap-4 md:gap-6 grid-cols-2 tablet:grid-cols-4 mt-4">
+      <div className="dashboard-grid">
         {dashboardStats.map((stat) => {
           return <StatCard key={stat.title} {...stat} />;
         })}
       </div>
-      <div className="rounded-xl border px-4 pb-2 mt-4 w-full">
-        <p className="text-3xl p-2">Overview</p>
-        <div className="grid gap-6 lg:grid-cols-2">
+
+      <section aria-labelledby="overview-heading">
+        <div className="grid gap-4 xl:grid-cols-2">
           <EmployeeOverviewChart />
           <AttendanceOverviewChart />
         </div>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 2xl:hidden pt-4 max-md:px-6">
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2 2xl:hidden">
         <div className="space-y-6">
           <RecentLeaveList />
           <RecentAnnouncements />
@@ -41,12 +42,12 @@ const Home = async (): Promise<React.JSX.Element> => {
         <QuickAction />
       </div>
 
-      <div className="hidden gap-6 2xl:grid 2xl:grid-cols-3 pt-4">
+      <div className="hidden gap-4 2xl:grid 2xl:grid-cols-3">
         <RecentLeaveList />
         <RecentAnnouncements />
         <QuickAction />
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,22 +1,24 @@
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
-  Active: "bg-emerald-100 text-emerald-800",
-  Present: "bg-emerald-100 text-emerald-800",
-  Approved: "bg-emerald-100 text-emerald-800",
-  Published: "bg-emerald-100 text-emerald-800",
-  Late: "bg-amber-100 text-amber-800",
-  Pending: "bg-amber-100 text-amber-800",
-  "On Leave": "bg-sky-100 text-sky-800",
-  Leave: "bg-sky-100 text-sky-800",
-  Absent: "bg-rose-100 text-rose-800",
-  Rejected: "bg-rose-100 text-rose-800",
-  Cancelled: "bg-slate-100 text-slate-800",
-  Draft: "bg-slate-100 text-slate-800",
-  Archived: "bg-slate-100 text-slate-800",
-  High: "bg-rose-100 text-rose-800",
-  Normal: "bg-sky-100 text-sky-800",
-  Low: "bg-slate-100 text-slate-800",
+  Active: "bg-success-soft text-success-foreground",
+  Present: "bg-success-soft text-success-foreground",
+  Approved: "bg-success-soft text-success-foreground",
+  Published: "bg-success-soft text-success-foreground",
+  Paid: "bg-success-soft text-success-foreground",
+  Late: "bg-warning-soft text-warning-foreground",
+  Pending: "bg-warning-soft text-warning-foreground",
+  "On Leave": "bg-information-soft text-information-foreground",
+  Leave: "bg-information-soft text-information-foreground",
+  Normal: "bg-information-soft text-information-foreground",
+  Absent: "bg-destructive-soft text-destructive-foreground",
+  Rejected: "bg-destructive-soft text-destructive-foreground",
+  High: "bg-destructive-soft text-destructive-foreground",
+  Cancelled: "bg-inactive-soft text-inactive",
+  Draft: "bg-inactive-soft text-inactive",
+  Archived: "bg-inactive-soft text-inactive",
+  Inactive: "bg-inactive-soft text-inactive",
+  Low: "bg-inactive-soft text-inactive",
 };
 
 export default function StatusBadge({
@@ -30,7 +32,7 @@ export default function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+        "status-badge whitespace-nowrap",
         statusClassName
       )}
     >

@@ -127,11 +127,12 @@ export default function PositionManagement({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold">Positions</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="page-eyebrow">Organization structure</p>
+          <h1 className="heading-1">Positions</h1>
+          <p className="page-description">
             Manage department-specific positions available during employee
             creation.
           </p>
@@ -145,7 +146,7 @@ export default function PositionManagement({
       </div>
 
       {activeDepartmentCount === 0 && (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        <p className="rounded-lg border border-warning/25 bg-warning-soft px-4 py-3 text-sm text-warning-foreground">
           Create or restore an active department before creating a position.
         </p>
       )}
@@ -159,11 +160,11 @@ export default function PositionManagement({
               No positions match the current filters.
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-border">
               {initialPositions.map((position) => (
                 <div
                   key={position.id}
-                  className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -171,14 +172,14 @@ export default function PositionManagement({
                       <span
                         className={
                           position.isActive
-                            ? "rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"
-                            : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                            ? "status-badge bg-success-soft text-success-foreground"
+                            : "status-badge bg-inactive-soft text-inactive"
                         }
                       >
                         {position.isActive ? "Active" : "Archived"}
                       </span>
                       {!position.departmentIsActive && (
-                        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-300">
+                        <span className="status-badge bg-warning-soft text-warning-foreground">
                           Department archived
                         </span>
                       )}

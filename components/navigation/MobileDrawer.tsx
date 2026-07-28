@@ -18,7 +18,7 @@ export default function MobileDrawer({ children }: { children: ReactNode }): Rea
       <SheetContent
         id="mobile-navigation"
         side="left"
-        className="w-[min(22rem,calc(100vw-2rem))] gap-0 p-0 sm:max-w-none"
+        className="w-[min(20rem,calc(100vw-2rem))] gap-0 border-sidebar-border bg-sidebar p-0 sm:max-w-none"
       >
         <SheetTitle className="sr-only">Navigation menu</SheetTitle>
         {children}

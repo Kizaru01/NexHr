@@ -4,7 +4,11 @@ import mongoose from "mongoose";
 
 import Employee from "@/models/employee.model";
 import User from "@/models/user.model";
-import { ConflictError, isDuplicateKeyError, NotFoundError } from "../http-errors";
+import {
+  ConflictError,
+  isDuplicateKeyError,
+  NotFoundError,
+} from "../http-errors";
 import { assertEmailIsUnique } from "./user.helper";
 
 type UpdateEmployeeAndUserProfileParams = {
@@ -43,7 +47,8 @@ export async function updateEmployeeAndUserProfile({
       );
       const employeeExists =
         employeeResult !== null &&
-        (!("matchedCount" in employeeResult) || employeeResult.matchedCount > 0);
+        (!("matchedCount" in employeeResult) ||
+          employeeResult.matchedCount > 0);
 
       if (!employeeExists) throw new NotFoundError("Employee");
       if (userResult.matchedCount === 0) {

@@ -14,11 +14,11 @@ export default async function RootLayout({
 
   return (
     <NavigationProvider>
-      <div className="flex min-h-screen bg-muted/30">
+      <div className="flex min-h-screen bg-background">
         <LeftSideBar user={user} />
         <div className="min-w-0 flex min-h-screen flex-1 flex-col">
           <ResponsiveNavbar />
-          <main className="min-w-0 flex-1 overflow-y-auto px-4 pb-6 pt-2 sm:px-6 lg:px-8 xl:px-10 xl:py-6">
+          <main className="page-container min-w-0 overflow-y-auto">
             {children}
           </main>
         </div>

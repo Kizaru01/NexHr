@@ -146,11 +146,12 @@ export default function DepartmentManagement({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold">Departments</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="page-eyebrow">Organization structure</p>
+          <h1 className="heading-1">Departments</h1>
+          <p className="page-description">
             Manage the departments available during employee creation.
           </p>
         </div>
@@ -168,11 +169,11 @@ export default function DepartmentManagement({
               No departments match the current filters.
             </div>
           ) : (
-            <div className="divide-y">
+              <div className="divide-y divide-border">
               {initialDepartments.map((department) => (
                 <div
                   key={department.id}
-                  className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -180,8 +181,8 @@ export default function DepartmentManagement({
                       <span
                         className={
                           department.isActive
-                            ? "rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"
-                            : "rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                            ? "status-badge bg-success-soft text-success-foreground"
+                            : "status-badge bg-inactive-soft text-inactive"
                         }
                       >
                         {department.isActive ? "Active" : "Archived"}

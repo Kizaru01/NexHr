@@ -18,12 +18,12 @@ export default function ResponsiveNavbar(): React.JSX.Element {
   const pageTitle = getCurrentPageTitle(pathname);
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center border-b border-border bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80 md:px-6 xl:hidden">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b border-border bg-background/92 px-4 backdrop-blur-md supports-backdrop-filter:bg-background/80 md:px-6 xl:hidden">
       <div className="flex min-w-0 items-center gap-3">
         <NavigationToggle target="mobile" className="md:hidden" />
         <NavigationToggle target="sidebar" className="hidden md:inline-flex" />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
+          <p className="truncate text-sm font-semibold tracking-[-0.01em] text-foreground">
             {pageTitle}
           </p>
           <p className="hidden text-xs text-muted-foreground md:block">

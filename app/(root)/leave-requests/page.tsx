@@ -69,9 +69,9 @@ export default async function LeaveRequestsPage({ searchParams }: PageProps): Pr
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">Time away</p>
-        <h1 className="text-3xl font-bold tracking-tight">Leave requests</h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="page-eyebrow">Time away</p>
+        <h1 className="heading-1">Leave requests</h1>
+        <p className="page-description">
           Track leave approvals and employee availability.
         </p>
       </div>
