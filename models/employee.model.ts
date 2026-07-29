@@ -1,5 +1,6 @@
 import { Document, Schema, model, models } from "mongoose";
 
+import { normalisePersonName } from "@/lib/person-name";
 import type { Address } from "@/types/global";
 
 export interface IEmployee {
@@ -72,15 +73,18 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
       type: String,
       required: true,
       trim: true,
+      set: normalisePersonName,
     },
     middleName: {
       type: String,
       trim: true,
+      set: normalisePersonName,
     },
     lastName: {
       type: String,
       required: true,
       trim: true,
+      set: normalisePersonName,
     },
     phone: {
       type: String,

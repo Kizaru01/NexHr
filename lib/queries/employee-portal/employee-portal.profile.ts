@@ -1,5 +1,6 @@
 import "server-only";
 
+import { normalisePersonName } from "@/lib/person-name";
 import Employee from "@/models/employee.model";
 import User from "@/models/user.model";
 import type { EmployeeProfileResult } from "@/types/employee-portal";
@@ -42,9 +43,11 @@ export async function getOwnEmployeeProfile(
 
   return {
     employeeId: employee.employeeId,
-    firstName: employee.firstName,
-    middleName: employee.middleName,
-    lastName: employee.lastName,
+    firstName: normalisePersonName(employee.firstName),
+    middleName: employee.middleName
+      ? normalisePersonName(employee.middleName)
+      : undefined,
+    lastName: normalisePersonName(employee.lastName),
     fullName: nameOf(employee) || "Profile pending",
     email: user.email,
     phone: employee.phone,

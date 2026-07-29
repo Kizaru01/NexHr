@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Types } from "mongoose";
 
+import { formatPersonName } from "@/lib/person-name";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
@@ -135,13 +136,7 @@ function toDepartmentListItem(
     description,
     managerId,
     managerName: populatedManager
-      ? [
-          populatedManager.firstName,
-          populatedManager.middleName,
-          populatedManager.lastName,
-        ]
-          .filter(Boolean)
-          .join(" ")
+      ? formatPersonName(populatedManager)
       : undefined,
     isActive,
     createdAt: createdAt.toISOString(),

@@ -1,5 +1,6 @@
 import z from "zod";
 
+import { normalisePersonName } from "@/lib/person-name";
 import { emailSchema } from "./user.schema";
 
 const objectIdSchema = (field: string) =>
@@ -133,9 +134,24 @@ export const attendanceCorrectionSchema = z.object({
 });
 
 export const ownEmployeeProfileSchema = z.object({
-  firstName: z.string().trim().min(2).max(80),
-  middleName: z.string().trim().max(80).optional(),
-  lastName: z.string().trim().min(2).max(80),
+  firstName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .transform(normalisePersonName),
+  middleName: z
+    .string()
+    .trim()
+    .max(80)
+    .transform((value) => (value ? normalisePersonName(value) : undefined))
+    .optional(),
+  lastName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .transform(normalisePersonName),
   email: emailSchema,
   phone: phoneSchema,
   birthDate: z
@@ -162,9 +178,24 @@ export const ownEmployeeProfileSchema = z.object({
 });
 
 export const ownEmployeeProfileFormSchema = z.object({
-  firstName: z.string().trim().min(2).max(80),
-  middleName: z.string().trim().max(80).optional(),
-  lastName: z.string().trim().min(2).max(80),
+  firstName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .transform(normalisePersonName),
+  middleName: z
+    .string()
+    .trim()
+    .max(80)
+    .transform((value) => (value ? normalisePersonName(value) : undefined))
+    .optional(),
+  lastName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .transform(normalisePersonName),
   email: emailSchema,
   phone: phoneSchema,
   birthDate: z
