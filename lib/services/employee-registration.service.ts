@@ -183,6 +183,7 @@ async function executeRegistrationTransaction(
             activationTokenId: requestId,
             activationTokenExpiresAt:
               getActivationTokenExpiresAt(activationIssuedAt),
+            welcomeEmailStatus: "failed",
           },
         ],
         { session }

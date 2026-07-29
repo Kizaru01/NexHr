@@ -4,6 +4,7 @@ import connectToDatabase from "@/database/mongodb";
 import {
   findUserIdsByEmailSearch,
   getUserEmail,
+  hasFailedWelcomeEmail,
 } from "@/lib/handler/user.helper";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
@@ -82,7 +83,7 @@ export async function getEmployeeDirectory(
     employeeSorts[sortFilter ?? ""] ?? employeeSorts["recently-added"];
   const [employees, total] = await Promise.all([
     Employee.find(query)
-      .populate("userId", "email")
+      .populate("userId", "email isActive welcomeEmailStatus")
       .populate({
         path: "department",
         select: "name manager",
@@ -149,6 +150,7 @@ export async function getEmployeeDirectory(
         email: getUserEmail(userId),
         phone,
         manager: managerName,
+        welcomeEmailFailed: hasFailedWelcomeEmail(userId),
       };
     }),
     page,
@@ -163,7 +165,7 @@ export async function getEmployeeProfile(
   await connectToDatabase();
 
   const employee = await Employee.findOne({ employeeId })
-    .populate("userId", "email isActive")
+    .populate("userId", "email isActive welcomeEmailStatus")
     .populate({
       path: "department",
       select: "name manager",
@@ -244,5 +246,6 @@ export async function getEmployeeProfile(
     notes,
     accountActive,
     profileCompleted,
+    welcomeEmailFailed: hasFailedWelcomeEmail(userId),
   };
 }

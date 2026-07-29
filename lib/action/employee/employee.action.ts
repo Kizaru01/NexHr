@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 
@@ -11,11 +12,16 @@ import {
 } from "@/lib/handler/employee.helper";
 import handleError from "@/lib/handler/error";
 import { findUserIdsByEmailSearch, getUserId } from "@/lib/handler/user.helper";
-import { ConflictError, isDuplicateKeyError } from "@/lib/http-errors";
+import {
+  ConflictError,
+  isDuplicateKeyError,
+  NotFoundError,
+  RequestError,
+} from "@/lib/http-errors";
 import logger from "@/lib/logger";
-import { createActivationToken } from "@/lib/services/activation-token.service";
-import emailService from "@/lib/services/email.service";
+import { getActivationTokenExpiresAt } from "@/lib/services/activation-token.service";
 import { registerEmployeeAccount } from "@/lib/services/employee-registration.service";
+import { deliverEmployeeWelcomeEmail } from "@/lib/services/employee-welcome-email.service";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import User from "@/models/user.model";
@@ -27,15 +33,18 @@ import type {
   EmployeeListItem,
   GetEmployeeByIdParams,
   GetEmployeesParams,
+  ResendEmployeeWelcomeEmailParams,
 } from "@/types/global";
 import {
   createEmployeeSchema,
   deleteEmployeeSchema,
   getEmployeeByIdSchema,
   getEmployeesSchema,
+  resendEmployeeWelcomeEmailSchema,
 } from "@/validations/employee.schema";
 
 const EMPLOYEES_PATH = "/employees";
+const WELCOME_EMAIL_RETRY_LOCK_MS = 60_000;
 
 export async function createEmployee(
   params: CreateEmployeeInput
@@ -53,17 +62,12 @@ export async function createEmployee(
 
     if (registration.shouldSendWelcomeEmail) {
       try {
-        const activationToken = createActivationToken({
-          userId: registration.userId,
+        await deliverEmployeeWelcomeEmail({
+          activationIssuedAt: registration.activationIssuedAt,
           email: registration.email,
-          issuedAt: registration.activationIssuedAt,
-          tokenId: registration.requestId,
-        });
-        await emailService.sendWelcomeEmail({
-          to: registration.email,
           employeeId: registration.employee.employeeId,
-          activationToken,
-          requestId: registration.requestId,
+          tokenId: registration.requestId,
+          userId: registration.userId,
         });
       } catch (emailError) {
         logger.error(
@@ -96,6 +100,119 @@ export async function createEmployee(
           )
         : error
     );
+  }
+}
+
+export async function resendEmployeeWelcomeEmail(
+  params: ResendEmployeeWelcomeEmailParams
+): Promise<ActionResponse<null>> {
+  try {
+    const validationResult = await action({
+      params,
+      schema: resendEmployeeWelcomeEmailSchema,
+      roles: ["admin", "hr"],
+    });
+    const { employeeId } = validationResult.params!;
+    const employee = await Employee.findOne({ employeeId })
+      .select("employeeId userId")
+      .lean();
+
+    if (!employee) {
+      throw new NotFoundError("Employee");
+    }
+
+    const attemptedAt = new Date();
+    const tokenId = randomUUID();
+    const retryLockedUntil = new Date(
+      attemptedAt.getTime() + WELCOME_EMAIL_RETRY_LOCK_MS
+    );
+    const user = await User.findOneAndUpdate(
+      {
+        _id: employee.userId,
+        isActive: false,
+        welcomeEmailStatus: "failed",
+        $or: [
+          { welcomeEmailRetryLockedUntil: { $exists: false } },
+          { welcomeEmailRetryLockedUntil: { $lte: attemptedAt } },
+        ],
+      },
+      {
+        $set: {
+          activationIssuedAt: attemptedAt,
+          activationTokenId: tokenId,
+          activationTokenExpiresAt:
+            getActivationTokenExpiresAt(attemptedAt),
+          welcomeEmailLastAttemptAt: attemptedAt,
+          welcomeEmailRetryLockedUntil: retryLockedUntil,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+      .select("email")
+      .lean();
+
+    if (!user) {
+      const currentUser = await User.findById(employee.userId)
+        .select(
+          "isActive welcomeEmailStatus +welcomeEmailRetryLockedUntil"
+        )
+        .lean();
+
+      if (!currentUser) {
+        throw new NotFoundError("Employee user account");
+      }
+      if (currentUser.isActive) {
+        throw new ConflictError("This employee account is already active.");
+      }
+      if (currentUser.welcomeEmailStatus !== "failed") {
+        throw new ConflictError("The welcome email was already sent.");
+      }
+      if (
+        currentUser.welcomeEmailRetryLockedUntil &&
+        currentUser.welcomeEmailRetryLockedUntil > attemptedAt
+      ) {
+        throw new ConflictError(
+          "A welcome email retry is already in progress."
+        );
+      }
+
+      throw new ConflictError(
+        "The welcome email retry could not be started. Please try again."
+      );
+    }
+
+    try {
+      await deliverEmployeeWelcomeEmail({
+        activationIssuedAt: attemptedAt,
+        email: user.email,
+        employeeId: employee.employeeId,
+        tokenId,
+        userId: user._id.toString(),
+      });
+    } catch (emailError) {
+      logger.error(
+        {
+          err: emailError,
+          employeeId: employee.employeeId,
+          userId: user._id.toString(),
+        },
+        "The welcome email retry failed."
+      );
+      throw new RequestError(
+        502,
+        "The welcome email could not be sent. Please try again."
+      );
+    }
+
+    revalidatePath(EMPLOYEES_PATH);
+    revalidatePath(`${EMPLOYEES_PATH}/${employee.employeeId}`);
+
+    return { success: true, data: null };
+  } catch (error) {
+    return handleError(error);
   }
 }
 

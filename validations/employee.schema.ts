@@ -160,6 +160,8 @@ export const getEmployeeByIdSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required"),
 });
 
+export const resendEmployeeWelcomeEmailSchema = getEmployeeByIdSchema;
+
 export const deleteEmployeeSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required"),
 });

@@ -9,6 +9,7 @@ import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import UrlFilterSelect from "@/components/hr/filters/UrlFilterSelect";
 import Pagination from "@/components/hr/Pagination";
 import StatusBadge from "@/components/hr/StatusBadge";
+import ResendWelcomeEmailButton from "@/components/employees/ResendWelcomeEmailButton";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -167,11 +168,18 @@ export default async function EmployeesPage({ searchParams }: PageProps) {
                   </td>
                   <td className="px-4 py-3">{employee.manager}</td>
                   <td className="px-4 py-3">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/employees/${employee.employeeId}`}>
-                        View
-                      </Link>
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      {employee.welcomeEmailFailed && (
+                        <ResendWelcomeEmailButton
+                          employeeId={employee.employeeId}
+                        />
+                      )}
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/employees/${employee.employeeId}`}>
+                          View
+                        </Link>
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

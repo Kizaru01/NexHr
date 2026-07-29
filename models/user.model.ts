@@ -10,6 +10,10 @@ export interface IUser {
   activationTokenId?: string;
   activationTokenExpiresAt?: Date;
   activatedAt?: Date;
+  welcomeEmailStatus?: "failed" | "sent";
+  welcomeEmailSentAt?: Date;
+  welcomeEmailLastAttemptAt?: Date;
+  welcomeEmailRetryLockedUntil?: Date;
   lastLogin?: Date;
   notification?: {
     leave: boolean;
@@ -64,6 +68,16 @@ const UserSchema = new Schema<IUser>(
       select: false,
     },
     activatedAt: Date,
+    welcomeEmailStatus: {
+      type: String,
+      enum: ["failed", "sent"],
+    },
+    welcomeEmailSentAt: Date,
+    welcomeEmailLastAttemptAt: Date,
+    welcomeEmailRetryLockedUntil: {
+      type: Date,
+      select: false,
+    },
     lastLogin: Date,
     notification: {
       leave: { type: Boolean, default: true },

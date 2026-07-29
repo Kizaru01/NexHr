@@ -13,6 +13,7 @@ import { getEmployeeProfile } from "@/lib/queries/hr-dashboard.queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatusBadge from "@/components/hr/StatusBadge";
+import ResendWelcomeEmailButton from "@/components/employees/ResendWelcomeEmailButton";
 type PageProps = { params: Promise<{ id: string }> };
 const value = (item?: string | null) => item || "Not provided";
 function ProfileSection({
@@ -86,7 +87,12 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
               {employee.position} · {employee.department}
             </p>
           </div>
-          <StatusBadge status={employee.status} />
+          <div className="flex flex-wrap items-center gap-2">
+            {employee.welcomeEmailFailed && (
+              <ResendWelcomeEmailButton employeeId={employee.employeeId} />
+            )}
+            <StatusBadge status={employee.status} />
+          </div>
         </CardContent>
       </Card>
       <div className="grid gap-6 lg:grid-cols-2">
