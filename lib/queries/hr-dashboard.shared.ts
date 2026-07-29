@@ -3,6 +3,7 @@ import "server-only";
 import { Types } from "mongoose";
 
 import { findUserIdsByEmailSearch } from "@/lib/handler/user.helper";
+import { formatPersonName } from "@/lib/person-name";
 import Employee from "@/models/employee.model";
 export { serialiseDate } from "@/lib/serialization";
 import type { FilterValues } from "@/types/filters";
@@ -58,7 +59,7 @@ export function nameOf({
   middleName?: string;
   lastName?: string;
 }): string {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ");
+  return formatPersonName({ firstName, middleName, lastName });
 }
 
 export function setObjectIdFilter(

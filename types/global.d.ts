@@ -118,6 +118,10 @@ export interface GetEmployeeByIdParams {
   employeeId: string;
 }
 
+export interface ResendEmployeeWelcomeEmailParams {
+  employeeId: string;
+}
+
 export interface GetEmployeesParams {
   page?: number;
   pageSize?: number;

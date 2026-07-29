@@ -1,5 +1,6 @@
 import "server-only";
 
+import { formatPersonName } from "@/lib/person-name";
 import Leave from "@/models/leave.model";
 export { serialiseDate } from "@/lib/serialization";
 import {
@@ -70,7 +71,7 @@ export function nameOf({
   middleName?: string;
   lastName?: string;
 }): string {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ");
+  return formatPersonName({ firstName, middleName, lastName });
 }
 
 export async function getLeaveBalances(

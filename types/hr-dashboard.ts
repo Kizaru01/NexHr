@@ -35,6 +35,7 @@ export type EmployeeDirectoryRecord = {
   email: string;
   phone?: string;
   manager: string;
+  welcomeEmailFailed: boolean;
 };
 
 export type EmployeeDirectoryResult = {
@@ -65,6 +66,7 @@ export type EmployeeProfileResult = {
   notes?: string;
   accountActive: boolean;
   profileCompleted: boolean;
+  welcomeEmailFailed: boolean;
 };
 
 export type AttendanceDashboardRecord = {

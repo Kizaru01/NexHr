@@ -3,6 +3,7 @@ import "server-only";
 import { Types } from "mongoose";
 
 import connectToDatabase from "@/database/mongodb";
+import { formatPersonName } from "@/lib/person-name";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
@@ -84,11 +85,7 @@ export async function getDepartmentDirectory(
           lastName?: string;
         }
       | undefined;
-    const managerName = manager
-      ? [manager.firstName, manager.middleName, manager.lastName]
-          .filter(Boolean)
-          .join(" ")
-      : undefined;
+    const managerName = manager ? formatPersonName(manager) : undefined;
 
     return {
       id: department._id.toString(),
@@ -119,10 +116,7 @@ export async function getDepartmentManagerOptions(): Promise<
 
   return employees.map((employee) => ({
     id: employee._id.toString(),
-    name:
-      [employee.firstName, employee.middleName, employee.lastName]
-        .filter(Boolean)
-        .join(" ") || employee.employeeId,
+    name: formatPersonName(employee) || employee.employeeId,
     departmentId: employee.department.toString(),
   }));
 }

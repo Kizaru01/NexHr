@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 
 import { auth } from "@/auth";
 import connectToDatabase from "@/database/mongodb";
+import { formatPersonName } from "@/lib/person-name";
 import Employee from "@/models/employee.model";
 import Payroll from "@/models/payroll.model";
 
@@ -80,7 +81,7 @@ export async function GET(
     }).format(amount);
   const escapedPeriod = escapeHtml(period);
   const escapedEmployeeName = escapeHtml(
-    [firstName, lastName].filter(Boolean).join(" ") || employeeId
+    formatPersonName({ firstName, lastName }) || employeeId
   );
   const payslipStyles = [
     "<style>",

@@ -1,4 +1,8 @@
 import { serialiseDate } from "@/lib/serialization";
+import {
+  formatPersonName,
+  normalisePersonName,
+} from "@/lib/person-name";
 import Employee, {
   type IEmployee,
   type IEmployeeDoc,
@@ -33,9 +37,7 @@ function isPopulated(ref: unknown): ref is PopulatedRef {
 
 function refName(ref: unknown): string {
   if (isPopulated(ref)) {
-    const personName = [ref.firstName, ref.middleName, ref.lastName]
-      .filter(Boolean)
-      .join(" ");
+    const personName = formatPersonName(ref);
     return ref.name ?? (personName || ref._id.toString());
   }
   return ref ? String(ref) : "";
@@ -126,9 +128,11 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
   return {
     id: _id.toString(),
     employeeId,
-    firstName,
-    middleName,
-    lastName,
+    firstName: normalisePersonName(firstName),
+    middleName: middleName
+      ? normalisePersonName(middleName)
+      : undefined,
+    lastName: normalisePersonName(lastName),
     email: getUserEmail(userId),
     phone,
     birthDate: serialiseDate(birthDate),
@@ -170,7 +174,7 @@ export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
     id: _id.toString(),
     employeeId,
     fullName:
-      [firstName, lastName].filter(Boolean).join(" ") || getUserEmail(userId),
+      formatPersonName({ firstName, lastName }) || getUserEmail(userId),
     email: getUserEmail(userId),
     department: refName(department),
     position: refName(position),
@@ -211,9 +215,7 @@ export function toEmployeeManagerOption(manager: {
 }): EmployeeSelectOption {
   return {
     value: manager._id.toString(),
-    label: [manager.firstName, manager.middleName, manager.lastName]
-      .filter(Boolean)
-      .join(" "),
+    label: formatPersonName(manager),
   };
 }
 

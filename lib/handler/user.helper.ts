@@ -10,6 +10,7 @@ type PopulatedUserReference = {
   email?: string;
   isActive?: boolean;
   activationIssuedAt?: Date;
+  welcomeEmailStatus?: "failed" | "sent";
 };
 
 function isPopulatedUserReference(
@@ -67,6 +68,14 @@ export function getUserEmail(reference: unknown): string {
 
 export function isUserActive(reference: unknown): boolean {
   return isPopulatedUserReference(reference) && reference.isActive === true;
+}
+
+export function hasFailedWelcomeEmail(reference: unknown): boolean {
+  return (
+    isPopulatedUserReference(reference) &&
+    reference.isActive !== true &&
+    reference.welcomeEmailStatus === "failed"
+  );
 }
 
 export function getUserActivationIssuedAt(reference: unknown): Date {

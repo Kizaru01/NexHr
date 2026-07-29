@@ -1,5 +1,6 @@
 import z from "zod";
 
+import { normalisePersonName } from "@/lib/person-name";
 import type { EmploymentType, Gender } from "@/types/global";
 import { emailSchema } from "./user.schema";
 
@@ -16,6 +17,15 @@ const optionalTrimmedStringSchema = z
   .string()
   .trim()
   .transform((value) => value || undefined)
+  .optional();
+
+const optionalPersonNameSchema = z
+  .string()
+  .trim()
+  .max(80)
+  .transform((value) =>
+    value ? normalisePersonName(value) : undefined
+  )
   .optional();
 
 const optionalUrlSchema = z
@@ -96,9 +106,19 @@ const requiredGenderSchema = z
   .refine((value): value is Gender => value !== "", "Gender is required");
 
 export const personalInformationSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required"),
-  middleName: optionalTrimmedStringSchema,
-  lastName: z.string().trim().min(1, "Last name is required"),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, "First name is required")
+    .max(80)
+    .transform(normalisePersonName),
+  middleName: optionalPersonNameSchema,
+  lastName: z
+    .string()
+    .trim()
+    .min(1, "Last name is required")
+    .max(80)
+    .transform(normalisePersonName),
   email: emailSchema,
   phone: optionalTrimmedStringSchema,
   birthDate: optionalDateSchema,
@@ -117,8 +137,18 @@ export const employmentInformationSchema = z.object({
 
 export const createEmployeeSchema = z.object({
   requestId: z.string().uuid("Invalid employee creation request."),
-  firstName: z.string().trim().min(2).max(80),
-  lastName: z.string().trim().min(2).max(80),
+  firstName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .transform(normalisePersonName),
+  lastName: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .transform(normalisePersonName),
   phone: requiredPhoneSchema,
   email: emailSchema,
   department: employmentInformationSchema.shape.department,
@@ -159,6 +189,8 @@ export const updateAddressSchema = z.object({
 export const getEmployeeByIdSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required"),
 });
+
+export const resendEmployeeWelcomeEmailSchema = getEmployeeByIdSchema;
 
 export const deleteEmployeeSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required"),

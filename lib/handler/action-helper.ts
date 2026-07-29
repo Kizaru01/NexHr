@@ -4,9 +4,9 @@ import type { Session } from "next-auth";
 import { ZodError, type ZodSchema } from "zod";
 
 import { auth } from "@/auth";
-import connectToDatabase from "@/database/mongodb";
 import type { UserRole } from "@/types/global";
 import { requireEmployeeRecord } from "@/lib/handler/require-employee";
+import { requireActiveDatabaseUser } from "@/lib/handler/require-active-user";
 
 import {
   ForbiddenError,
@@ -23,7 +23,15 @@ type ActionOptions<T> = {
 
 type ActionResult<T> = {
   params: T | undefined;
-  session: Session;
+  session: VerifiedSession;
+};
+
+type VerifiedSession = Session & {
+  user: Session["user"] & {
+    id: string;
+    role: UserRole;
+    isActive: true;
+  };
 };
 
 export default async function action<T>({
@@ -52,24 +60,30 @@ export default async function action<T>({
     throw new UnauthorizedError();
   }
 
-  if (!session.user.isActive) {
-    throw new UnauthorizedError("Your account is inactive.");
-  }
+  const currentUser = await requireActiveDatabaseUser(session.user);
 
-  if (roles && !roles.includes(session.user.role)) {
+  if (roles && !roles.includes(currentUser.role)) {
     throw new ForbiddenError();
   }
 
-  await connectToDatabase();
+  const verifiedSession: VerifiedSession = {
+    ...session,
+    user: {
+      ...session.user,
+      id: currentUser.id,
+      role: currentUser.role,
+      isActive: true,
+    },
+  };
 
-  if (session.user.role === "employee") {
-    await requireEmployeeRecord(session.user.id, {
+  if (currentUser.role === "employee") {
+    await requireEmployeeRecord(currentUser.id, {
       allowIncompleteProfile: allowIncompleteEmployeeProfile,
     });
   }
 
   return {
     params: validatedParams,
-    session,
+    session: verifiedSession,
   };
 }
