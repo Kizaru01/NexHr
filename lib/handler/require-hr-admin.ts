@@ -9,7 +9,9 @@ export async function requireHrAdminPage(): Promise<void> {
   if (!session?.user) {
     redirect("/sign-in");
   }
-
+  if (!session?.user?.isActive) {
+    redirect("/sign-in");
+  }
   if (session.user.role !== "admin" && session.user.role !== "hr") {
     redirect("/");
   }

@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import User from "./models/user.model";
 import { UserRole } from "./types/global";
 import connectToDatabase from "./database/mongodb";
+import { synchronizeOAuthUser } from "./lib/services/oauth-user.service";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -21,25 +22,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (!user || !account) return false;
 
       try {
-        const response = await fetch(
-          `${process.env.NEXTAUTH_URL}/api/auth/signin-with-oauth`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: user.email,
-              image: user.image,
-              provider: account.provider,
-              providerId: account.providerAccountId,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          return false;
-        }
+        await synchronizeOAuthUser({
+          email: user.email,
+          image: user.image ?? undefined,
+          provider: account.provider,
+          providerId: account.providerAccountId,
+        });
 
         return true;
       } catch (error) {
