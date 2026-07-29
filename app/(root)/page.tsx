@@ -9,6 +9,7 @@ import RecentLeaveList from "@/components/Dashboard/RecentLeaveList";
 import DashboardNavbar from "@/components/Navbar/Dashboard-navbar";
 import QuickAction from "@/components/QuickAction";
 import { dashboardStats } from "@/constants/dashboard-static";
+import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
 
 const Home = async (): Promise<React.JSX.Element> => {
   const session = await auth();
@@ -16,7 +17,7 @@ const Home = async (): Promise<React.JSX.Element> => {
   if (session?.user?.role === "employee") {
     redirect("/employee");
   }
-
+  await requireHrAdminPage();
   return (
     <div className="space-y-5 xl:space-y-6">
       <DashboardNavbar />

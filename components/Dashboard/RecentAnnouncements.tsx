@@ -12,7 +12,9 @@ import {
 import { getAnnouncementDashboard } from "@/lib/queries/announcement-dashboard.queries";
 
 const RecentAnnouncements = async (): Promise<React.JSX.Element> => {
-  const { announcements } = await getAnnouncementDashboard({});
+  const { announcements } = await getAnnouncementDashboard({
+    state: "published",
+  });
 
   return (
     <Card>
