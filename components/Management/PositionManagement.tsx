@@ -26,6 +26,10 @@ type PositionManagementProps = {
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
+const currencyFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+});
 
 export default function PositionManagement({
   departments,
@@ -186,6 +190,12 @@ export default function PositionManagement({
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {position.departmentName}
+                    </p>
+                    <p className="text-sm font-medium">
+                      {currencyFormatter.format(position.salary.basic)}
+                      {position.salary.allowance
+                        ? ` + ${currencyFormatter.format(position.salary.allowance)} allowance`
+                        : ""}
                     </p>
                     {position.description && (
                       <p className="line-clamp-2 text-sm text-muted-foreground">

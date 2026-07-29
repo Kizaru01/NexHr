@@ -77,6 +77,7 @@ function toPositionListItem(position: PositionListSource): PositionListItem {
     description,
     isActive,
     name,
+    salary,
     updatedAt,
   } = position;
 
@@ -87,6 +88,10 @@ function toPositionListItem(position: PositionListSource): PositionListItem {
     departmentName: "",
     departmentIsActive: true,
     description,
+    salary: {
+      basic: salary.basic,
+      allowance: salary.allowance,
+    },
     isActive,
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
@@ -134,7 +139,7 @@ export async function updatePosition(
       roles: ["admin", "hr"],
     });
     const { id, ...positionParams } = validationResult.params!;
-    const { department, description, name } = positionParams;
+    const { department, description, name, salary } = positionParams;
 
     const position = await Position.findById(id);
 
@@ -159,6 +164,7 @@ export async function updatePosition(
     position.name = name;
     position.department = new Types.ObjectId(department);
     position.description = description;
+    position.salary = salary;
     await position.save();
 
     const listPosition = toPositionListItem(position);

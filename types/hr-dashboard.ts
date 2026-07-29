@@ -63,6 +63,8 @@ export type EmployeeProfileResult = {
   createdAt: string | null;
   updatedAt: string | null;
   notes?: string;
+  accountActive: boolean;
+  profileCompleted: boolean;
 };
 
 export type AttendanceDashboardRecord = {

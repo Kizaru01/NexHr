@@ -9,9 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { recentLeaveRequests } from "@/constants/dashboard-static";
+import { getAnnouncementDashboard } from "@/lib/queries/announcement-dashboard.queries";
 
-const RecentAnnouncements = (): React.JSX.Element => {
+const RecentAnnouncements = async (): Promise<React.JSX.Element> => {
+  const { announcements } = await getAnnouncementDashboard({});
+
   return (
     <Card>
       <CardHeader>
@@ -27,9 +29,9 @@ const RecentAnnouncements = (): React.JSX.Element => {
       </CardHeader>
 
       <CardContent className="space-y-1">
-        {recentLeaveRequests.map((leave) => (
+        {announcements.map((announcement) => (
           <div
-            key={leave.id}
+            key={announcement.id}
             className="interactive-row flex items-center gap-3 px-2 py-1.5"
           >
             <Avatar className="size-9">
@@ -39,10 +41,10 @@ const RecentAnnouncements = (): React.JSX.Element => {
             </Avatar>
             <div className="min-w-0">
               <p className="truncate text-[0.8125rem] font-semibold">
-                {leave.employee}
+                {announcement.title}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {leave.leaveType} update · {leave.startDate}
+                {announcement.category}
               </p>
             </div>
           </div>

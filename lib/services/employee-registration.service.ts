@@ -6,11 +6,13 @@ import { toEmployeeDetail } from "@/lib/handler/employee.helper";
 import { getNextEmployeeId } from "@/lib/handler/employee-id.helper";
 import {
   assertEmailIsUnique,
+  getUserActivationIssuedAt,
   getUserEmail,
   getUserId,
   isUserActive,
 } from "@/lib/handler/user.helper";
 import { isDuplicateKeyError, NotFoundError } from "@/lib/http-errors";
+import { getActivationTokenExpiresAt } from "@/lib/services/activation-token.service";
 import Department from "@/models/department.model";
 import Employee, { type IEmployeeDoc } from "@/models/employee.model";
 import Position from "@/models/position.model";
@@ -85,10 +87,21 @@ function populateEmployeeRegistration(
   const options = session ? { session } : undefined;
 
   return employee.populate([
-    { path: "userId", select: "email isActive", options },
-    { path: "department", options },
+    {
+      path: "userId",
+      select: "email isActive +activationIssuedAt",
+      options,
+    },
+    {
+      path: "department",
+      options,
+      populate: {
+        path: "manager",
+        select: "firstName middleName lastName",
+        options,
+      },
+    },
     { path: "position", options },
-    { path: "manager", options },
   ]);
 }
 
@@ -109,7 +122,7 @@ function toRegistrationResult(
 ): EmployeeRegistrationResult {
   return {
     employee: toEmployeeDetail(employee),
-    activationIssuedAt: employee.createdAt,
+    activationIssuedAt: getUserActivationIssuedAt(employee.userId),
     email: getUserEmail(employee.userId),
     userId: getUserId(employee.userId),
     requestId,
@@ -157,18 +170,21 @@ async function executeRegistrationTransaction(
       }).session(session);
       if (!position) throw new NotFoundError("Position");
 
-      const manager = employeeParams.manager
-        ? await Employee.exists({
-            _id: employeeParams.manager,
-            employmentStatus: "Active",
-          }).session(session)
-        : true;
-      if (!manager) throw new NotFoundError("Manager");
-
       const employeeId = await getNextEmployeeId(session);
       const { requestId, email, ...employeeData } = employeeParams;
+      const activationIssuedAt = new Date();
       const [user] = await User.create(
-        [{ email, role: "employee", isActive: false }],
+        [
+          {
+            email,
+            role: "employee",
+            isActive: false,
+            activationIssuedAt,
+            activationTokenId: requestId,
+            activationTokenExpiresAt:
+              getActivationTokenExpiresAt(activationIssuedAt),
+          },
+        ],
         { session }
       );
       const [employee] = await Employee.create(
@@ -178,6 +194,7 @@ async function executeRegistrationTransaction(
             userId: user._id,
             employeeId,
             creationRequestId: requestId,
+            profileCompleted: false,
           },
         ],
         { session }

@@ -5,7 +5,6 @@ import { useMemo } from "react";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectTrigger,
@@ -19,18 +18,16 @@ import type {
   EmployeeSelectOption,
 } from "@/types/global";
 import type { EmployeeFormInput } from "../Forms/EmployeeForm";
-import { EMPLOYMENT_TYPES, EMPLOYMENT_STATUS, formatDate } from "@/lib/utils";
+import { EMPLOYMENT_TYPES, formatDate } from "@/lib/utils";
 
 type EmploymentInformationProps = {
   departmentOptions: EmployeeSelectOption[];
   positionOptions: EmployeePositionSelectOption[];
-  managerOptions: EmployeeSelectOption[];
 };
 
 export const EmploymentInformation = ({
   departmentOptions,
   positionOptions,
-  managerOptions,
 }: EmploymentInformationProps): React.JSX.Element => {
   const { control, getValues, setValue } = useFormContext<EmployeeFormInput>();
   const selectedDepartment = useWatch({ control, name: "department" });
@@ -45,7 +42,7 @@ export const EmploymentInformation = ({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Employment Information</h3>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4">
         <Controller
           name="hireDate"
           control={control}
@@ -68,41 +65,7 @@ export const EmploymentInformation = ({
             </Field>
           )}
         />
-        <Controller
-          name="manager"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="manager">Manager</FieldLabel>
-              <Select
-                name={field.name}
-                value={field.value ?? ""}
-                onValueChange={field.onChange}
-                disabled={managerOptions.length === 0}
-              >
-                <SelectTrigger id="manager" aria-invalid={fieldState.invalid}>
-                  <SelectValue placeholder="Select manager (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {managerOptions.length === 0 ? (
-                    <p className="px-2 py-1.5 text-sm text-muted-foreground">
-                      No managers available
-                    </p>
-                  ) : (
-                    managerOptions.map((manager) => (
-                      <SelectItem key={manager.value} value={manager.value}>
-                        {manager.label}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
         <Controller
           name="department"
           control={control}
@@ -199,9 +162,7 @@ export const EmploymentInformation = ({
             </Field>
           )}
         />
-      </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Controller
           name="employmentType"
           control={control}
@@ -231,54 +192,7 @@ export const EmploymentInformation = ({
             </Field>
           )}
         />
-        <Controller
-          name="employmentStatus"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="employmentStatus">
-                Employment Status
-              </FieldLabel>
-              <Select
-                name={field.name}
-                value={field.value ?? ""}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger
-                  id="employmentStatus"
-                  aria-invalid={fieldState.invalid}
-                >
-                  <SelectValue placeholder="Select employment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EMPLOYMENT_STATUS.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
       </div>
-
-      <Controller
-        name="notes"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="notes">Notes</FieldLabel>
-            <Textarea
-              {...field}
-              value={field.value ?? ""}
-              onChange={field.onChange}
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
     </div>
   );
 };

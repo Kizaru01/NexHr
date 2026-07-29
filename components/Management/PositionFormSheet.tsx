@@ -44,6 +44,10 @@ const emptyValues: PositionFormInput = {
   name: "",
   department: "",
   description: "",
+  salary: {
+    basic: 0,
+    allowance: 0,
+  },
 };
 
 export default function PositionFormSheet({
@@ -61,6 +65,10 @@ export default function PositionFormSheet({
           name: position.name,
           department: position.departmentId,
           description: position.description ?? "",
+          salary: {
+            basic: position.salary.basic,
+            allowance: position.salary.allowance ?? 0,
+          },
         }
       : emptyValues,
   });
@@ -148,6 +156,39 @@ export default function PositionFormSheet({
             />
             <FieldError errors={[errors.description]} />
           </Field>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field data-invalid={Boolean(errors.salary?.basic)}>
+              <FieldLabel htmlFor="position-basic-salary">
+                Basic salary
+              </FieldLabel>
+              <Input
+                id="position-basic-salary"
+                type="number"
+                min={0}
+                step="0.01"
+                aria-invalid={Boolean(errors.salary?.basic)}
+                {...form.register("salary.basic", { valueAsNumber: true })}
+              />
+              <FieldError errors={[errors.salary?.basic]} />
+            </Field>
+            <Field data-invalid={Boolean(errors.salary?.allowance)}>
+              <FieldLabel htmlFor="position-allowance">
+                Allowance (optional)
+              </FieldLabel>
+              <Input
+                id="position-allowance"
+                type="number"
+                min={0}
+                step="0.01"
+                aria-invalid={Boolean(errors.salary?.allowance)}
+                {...form.register("salary.allowance", {
+                  valueAsNumber: true,
+                })}
+              />
+              <FieldError errors={[errors.salary?.allowance]} />
+            </Field>
+          </div>
 
           <SheetFooter className="mt-auto px-0">
             <Button

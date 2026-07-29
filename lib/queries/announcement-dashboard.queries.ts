@@ -16,7 +16,13 @@ import {
   type SortDefinition,
 } from "./hr-dashboard.shared";
 
-const categories = ["Company", "People", "Policy", "Benefits", "Events"] as const;
+const categories = [
+  "Company",
+  "People",
+  "Policy",
+  "Benefits",
+  "Events",
+] as const;
 const priorities = ["Low", "Normal", "High"] as const;
 const sorts: Record<string, SortDefinition> = {
   newest: { createdAt: -1 },
@@ -68,22 +74,31 @@ export async function getAnnouncementDashboard(
   if (state === "archived") query.isArchived = true;
 
   const sort = sorts[sortFilter ?? ""] ?? sorts.newest;
-  const [announcements, total, published, drafts, highPriority] = await Promise.all([
-    Announcement.find(query)
-      .select("title description category priority publishedAt isPublished isArchived archivedAt createdAt")
-      .sort(sort)
-      .skip((page - 1) * DEFAULT_PAGE_SIZE)
-      .limit(DEFAULT_PAGE_SIZE)
-      .lean(),
-    Announcement.countDocuments(query),
-    Announcement.countDocuments({ isPublished: true, isArchived: { $ne: true } }),
-    Announcement.countDocuments({ isPublished: false, isArchived: { $ne: true } }),
-    Announcement.countDocuments({
-      isPublished: true,
-      isArchived: { $ne: true },
-      priority: "High",
-    }),
-  ]);
+  const [announcements, total, published, drafts, highPriority] =
+    await Promise.all([
+      Announcement.find(query)
+        .select(
+          "title description category priority publishedAt isPublished isArchived archivedAt createdAt"
+        )
+        .sort(sort)
+        .skip((page - 1) * DEFAULT_PAGE_SIZE)
+        .limit(DEFAULT_PAGE_SIZE)
+        .lean(),
+      Announcement.countDocuments(query),
+      Announcement.countDocuments({
+        isPublished: true,
+        isArchived: { $ne: true },
+      }),
+      Announcement.countDocuments({
+        isPublished: false,
+        isArchived: { $ne: true },
+      }),
+      Announcement.countDocuments({
+        isPublished: true,
+        isArchived: { $ne: true },
+        priority: "High",
+      }),
+    ]);
 
   return {
     announcements: announcements.map((announcement) => ({
@@ -99,9 +114,10 @@ export async function getAnnouncementDashboard(
           : "Draft",
       isPublished: announcement.isPublished,
       isArchived: announcement.isArchived,
-      publishedAt: announcement.isPublished && !announcement.isArchived
-        ? serialiseDate(announcement.publishedAt)
-        : null,
+      publishedAt:
+        announcement.isPublished && !announcement.isArchived
+          ? serialiseDate(announcement.publishedAt)
+          : null,
       createdAt: serialiseDate(announcement.createdAt),
     })),
     stats: { published, drafts, highPriority },
@@ -130,13 +146,13 @@ export async function getAnnouncementForEditing(
   if (!announcement) {
     return null;
   }
-
+  const { title, description, category, priority, isPublished } = announcement;
   return {
     id: announcement._id.toString(),
-    title: announcement.title,
-    description: announcement.description,
-    category: announcement.category,
-    priority: announcement.priority,
-    isPublished: announcement.isPublished,
+    title,
+    description,
+    category,
+    priority,
+    isPublished,
   };
 }

@@ -13,6 +13,18 @@ const optionalDescription = z
   .transform((value) => value || undefined)
   .optional();
 
+export const positionSalarySchema = z.object({
+  basic: z
+    .number()
+    .finite()
+    .min(0, "Basic salary cannot be negative."),
+  allowance: z
+    .number()
+    .finite()
+    .min(0, "Allowance cannot be negative.")
+    .optional(),
+});
+
 export const positionFieldsSchema = z.object({
   name: z
     .string()
@@ -21,6 +33,7 @@ export const positionFieldsSchema = z.object({
     .max(100, "Position name cannot exceed 100 characters."),
   department: objectId("Department"),
   description: optionalDescription,
+  salary: positionSalarySchema,
 });
 
 export const createPositionSchema = positionFieldsSchema;

@@ -39,9 +39,17 @@ export async function GET(
 
   await connectToDatabase();
   const employee = await Employee.findOne({ userId: session.user.id })
-    .select("_id employeeId firstName lastName")
+    .select(
+      "_id employeeId firstName lastName employmentStatus profileCompleted"
+    )
     .lean();
-  if (!employee) return new NextResponse("Not found", { status: 404 });
+  if (
+    !employee ||
+    !employee.profileCompleted ||
+    !["Active", "On Leave"].includes(employee.employmentStatus)
+  ) {
+    return new NextResponse("Not found", { status: 404 });
+  }
 
   const payroll = await Payroll.findOne({
     _id: id,
@@ -71,7 +79,9 @@ export async function GET(
       currency: "PHP",
     }).format(amount);
   const escapedPeriod = escapeHtml(period);
-  const escapedEmployeeName = escapeHtml(`${firstName} ${lastName}`);
+  const escapedEmployeeName = escapeHtml(
+    [firstName, lastName].filter(Boolean).join(" ") || employeeId
+  );
   const payslipStyles = [
     "<style>",
     "body{font-family:Arial,sans-serif;margin:48px;color:#171717}",

@@ -9,15 +9,14 @@ type PopulatedUserReference = {
   _id: { toString(): string };
   email?: string;
   isActive?: boolean;
+  activationIssuedAt?: Date;
 };
 
 function isPopulatedUserReference(
   reference: unknown
 ): reference is PopulatedUserReference {
   return (
-    typeof reference === "object" &&
-    reference !== null &&
-    "_id" in reference
+    typeof reference === "object" && reference !== null && "_id" in reference
   );
 }
 
@@ -67,7 +66,16 @@ export function getUserEmail(reference: unknown): string {
 }
 
 export function isUserActive(reference: unknown): boolean {
-  return (
-    isPopulatedUserReference(reference) && reference.isActive === true
-  );
+  return isPopulatedUserReference(reference) && reference.isActive === true;
+}
+
+export function getUserActivationIssuedAt(reference: unknown): Date {
+  if (
+    isPopulatedUserReference(reference) &&
+    reference.activationIssuedAt instanceof Date
+  ) {
+    return reference.activationIssuedAt;
+  }
+
+  throw new NotFoundError("Employee activation state");
 }

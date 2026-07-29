@@ -6,15 +6,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import z from "zod";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
+import { Field, FieldError, FieldLabel } from "../ui/field";
+import { Input } from "../ui/input";
 import { createEmployee } from "@/lib/action/employee/employee.action";
 import { toast } from "sonner";
-import {
-  PersonalInformation,
-  EmploymentInformation,
-  SalaryInformation,
-  AddressInformation,
-  EmergencyContact,
-} from "./index";
+import { EmploymentInformation } from "./index";
 import { createEmployeeSchema } from "@/validations/employee.schema";
 import { useTransition, useState, useRef, useEffect } from "react";
 import type {
@@ -29,7 +25,6 @@ type EmployeeFormOutput = z.output<typeof createEmployeeSchema>;
 type EmployeeFormProps = {
   departmentOptions: EmployeeSelectOption[];
   positionOptions: EmployeePositionSelectOption[];
-  managerOptions: EmployeeSelectOption[];
 };
 
 const CREATE_EMPLOYEE_REQUEST_STORAGE_KEY =
@@ -43,40 +38,19 @@ function createDefaultValues(requestId: string): EmployeeFormInput {
   return {
     requestId,
     firstName: "",
-    middleName: "",
     lastName: "",
-    email: "",
     phone: "",
-    birthDate: "",
-    gender: "",
-    avatar: "",
+    email: "",
     department: "",
     position: "",
     hireDate: "",
     employmentType: "Probationary",
-    employmentStatus: "Active",
-    manager: "",
-    notes: "",
-    address: {
-      street: "",
-      barangay: "",
-      city: "",
-      province: "",
-      postalCode: "",
-    },
-    emergencyContact: {
-      name: "",
-      relationship: "",
-      phone: "",
-    },
-    salary: { basic: 0, allowance: 0 },
   };
 }
 
 export const EmployeeForm = ({
   departmentOptions,
   positionOptions,
-  managerOptions,
 }: EmployeeFormProps): React.JSX.Element => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -145,7 +119,59 @@ export const EmployeeForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardContent className="pt-6">
-            <PersonalInformation />
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">
+                Employee and account information
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Enter the employee&apos;s basic contact details. The activation
+                email will be sent to their work email.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  data-invalid={Boolean(form.formState.errors.firstName)}
+                >
+                  <FieldLabel htmlFor="firstName">First name</FieldLabel>
+                  <Input
+                    id="firstName"
+                    aria-invalid={Boolean(form.formState.errors.firstName)}
+                    {...form.register("firstName")}
+                  />
+                  <FieldError errors={[form.formState.errors.firstName]} />
+                </Field>
+                <Field
+                  data-invalid={Boolean(form.formState.errors.lastName)}
+                >
+                  <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+                  <Input
+                    id="lastName"
+                    aria-invalid={Boolean(form.formState.errors.lastName)}
+                    {...form.register("lastName")}
+                  />
+                  <FieldError errors={[form.formState.errors.lastName]} />
+                </Field>
+                <Field data-invalid={Boolean(form.formState.errors.phone)}>
+                  <FieldLabel htmlFor="phone">Contact number</FieldLabel>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    aria-invalid={Boolean(form.formState.errors.phone)}
+                    {...form.register("phone")}
+                  />
+                  <FieldError errors={[form.formState.errors.phone]} />
+                </Field>
+                <Field data-invalid={Boolean(form.formState.errors.email)}>
+                  <FieldLabel htmlFor="email">Work email</FieldLabel>
+                  <Input
+                    id="email"
+                    type="email"
+                    aria-invalid={Boolean(form.formState.errors.email)}
+                    {...form.register("email")}
+                  />
+                  <FieldError errors={[form.formState.errors.email]} />
+                </Field>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -154,26 +180,7 @@ export const EmployeeForm = ({
             <EmploymentInformation
               departmentOptions={departmentOptions}
               positionOptions={positionOptions}
-              managerOptions={managerOptions}
             />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <SalaryInformation />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <AddressInformation />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <EmergencyContact />
           </CardContent>
         </Card>
 

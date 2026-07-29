@@ -9,7 +9,10 @@ export async function getOwnPayroll(
   employeeId: string
 ): Promise<EmployeePayrollResult> {
   const [employee, payrolls] = await Promise.all([
-    Employee.findById(employeeId).select("salary").lean(),
+    Employee.findById(employeeId)
+      .select("position")
+      .populate("position", "salary")
+      .lean(),
     Payroll.find({ employee: employeeId })
       .select("month year basicSalary allowance overtimePay bonus deductions tax netSalary generatedAt")
       .sort({ year: -1, month: -1 })
@@ -19,7 +22,12 @@ export async function getOwnPayroll(
   const latest = payrolls[0] ?? null;
 
   return {
-    currentSalary: employee?.salary?.basic ?? null,
+    currentSalary:
+      (
+        employee?.position as unknown as {
+          salary?: { basic?: number };
+        }
+      )?.salary?.basic ?? null,
     latest: latest
       ? {
           netPay: latest.netSalary,

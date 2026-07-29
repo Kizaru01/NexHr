@@ -106,7 +106,7 @@ export default function GeneratePayrollSheet({
           <SheetHeader>
             <SheetTitle>Generate payroll</SheetTitle>
             <SheetDescription>
-              Basic salary and allowance are taken from the active employee
+              Basic salary and allowance are taken from the employee&apos;s position
               record.
             </SheetDescription>
           </SheetHeader>

@@ -1,7 +1,10 @@
 import DepartmentManagement from "@/components/Management/DepartmentManagement";
 import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
 import { normaliseSearchParams } from "@/lib/search-params";
-import { getDepartmentDirectory } from "@/lib/queries/management.queries";
+import {
+  getDepartmentDirectory,
+  getDepartmentManagerOptions,
+} from "@/lib/queries/management.queries";
 import type { PageSearchParams } from "@/types/filters";
 
 type PageProps = { searchParams: Promise<PageSearchParams> };
@@ -11,7 +14,15 @@ export default async function DepartmentsPage({ searchParams }: PageProps): Prom
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(query);
-  const departments = await getDepartmentDirectory(filters);
+  const [departments, managerOptions] = await Promise.all([
+    getDepartmentDirectory(filters),
+    getDepartmentManagerOptions(),
+  ]);
 
-  return <DepartmentManagement initialDepartments={departments} />;
+  return (
+    <DepartmentManagement
+      initialDepartments={departments}
+      managerOptions={managerOptions}
+    />
+  );
 }

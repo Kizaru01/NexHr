@@ -4,6 +4,7 @@ export interface IDepartment {
   nameKey: string;
   code?: string;
   description?: string;
+  manager?: Schema.Types.ObjectId;
   isActive: boolean;
 
   createdAt: Date;
@@ -36,6 +37,11 @@ const DepartmentSchema = new Schema<IDepartmentDoc>(
     description: {
       type: String,
       trim: true,
+    },
+
+    manager: {
+      type: Schema.Types.ObjectId,
+      ref: "Employee",
     },
 
     isActive: {

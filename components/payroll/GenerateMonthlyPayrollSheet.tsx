@@ -88,7 +88,7 @@ export default function GenerateMonthlyPayrollSheet(): React.JSX.Element {
           <SheetHeader>
             <SheetTitle>Generate monthly payroll</SheetTitle>
             <SheetDescription>
-              This creates base salary and allowance payrolls for all active
+              This creates position-based salary and allowance payrolls for all active
               employees.
             </SheetDescription>
           </SheetHeader>

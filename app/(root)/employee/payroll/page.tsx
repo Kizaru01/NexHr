@@ -47,7 +47,7 @@ export default async function EmployeePayrollPage(): Promise<
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Current salary"
+          label="Position basic salary"
           value={
             currentSalary === null
               ? "Not available"

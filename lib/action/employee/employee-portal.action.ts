@@ -25,6 +25,7 @@ function revalidateEmployeePortal(path?: string): void {
   revalidatePath("/employee");
   revalidatePath("/employee/profile");
   revalidatePath("/employee/settings");
+  revalidatePath("/personal");
   if (path) revalidatePath(path);
 }
 
@@ -36,17 +37,44 @@ export async function updateOwnEmployeeProfile(
       params,
       schema: ownEmployeeProfileSchema,
       roles: ["employee"],
+      allowIncompleteEmployeeProfile: true,
     });
     const { params: validatedParams, session } = validated;
-    const employee = await requireEmployeeRecord(session.user.id);
-    const { employeeDatabaseId } = employee;
-    const { email, ...employeeUpdates } = validatedParams!;
+    const employee = await requireEmployeeRecord(session.user.id, {
+      allowIncompleteProfile: true,
+    });
+    const { employeeDatabaseId, profileCompleted } = employee;
+    const {
+      email: submittedEmail,
+      firstName,
+      lastName,
+      phone,
+      ...employeeProvidedUpdates
+    } = validatedParams!;
+    let email = submittedEmail;
+    let employeeUpdates: Readonly<Record<string, unknown>> = {
+      firstName,
+      lastName,
+      phone,
+      ...employeeProvidedUpdates,
+    };
+
+    if (!profileCompleted) {
+      const user = await User.findById(session.user.id).select("email").lean();
+      if (!user) throw new NotFoundError("Employee user account");
+
+      email = user.email;
+      employeeUpdates = employeeProvidedUpdates;
+    }
 
     await updateEmployeeAndUserProfile({
       employeeDatabaseId,
       userId: session.user.id,
       email,
-      employeeUpdates,
+      employeeUpdates: {
+        ...employeeUpdates,
+        profileCompleted: true,
+      },
     });
 
     revalidateEmployeePortal();

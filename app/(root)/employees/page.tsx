@@ -36,7 +36,7 @@ function formatDate(date: string | null): string {
     : "—";
 }
 
-export default async function EmployeesPage({ searchParams }: PageProps): Promise<React.JSX.Element> {
+export default async function EmployeesPage({ searchParams }: PageProps) {
   await requireHrAdminPage();
 
   const filters = normaliseSearchParams(await searchParams);

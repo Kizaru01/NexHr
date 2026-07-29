@@ -132,6 +132,12 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
           </Detail>
         </ProfileSection>
         <ProfileSection title="System information" icon={ShieldCheck}>
+          <Detail label="Account activation">
+            {employee.accountActive ? "Activated" : "Pending activation"}
+          </Detail>
+          <Detail label="Personal profile">
+            {employee.profileCompleted ? "Complete" : "Pending completion"}
+          </Detail>
           <Detail label="Record created">
             {employee.createdAt
               ? new Date(employee.createdAt).toLocaleString()

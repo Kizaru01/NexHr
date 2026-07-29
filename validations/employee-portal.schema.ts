@@ -137,18 +137,22 @@ export const ownEmployeeProfileSchema = z.object({
   middleName: z.string().trim().max(80).optional(),
   lastName: z.string().trim().min(2).max(80),
   email: emailSchema,
-  phone: phoneSchema.optional(),
+  phone: phoneSchema,
   birthDate: z
     .date()
-    .max(new Date(), "Birth date cannot be in the future.")
-    .optional(),
-  gender: z.enum(["Male", "Female"]).optional(),
+    .max(new Date(), "Birth date cannot be in the future."),
+  gender: z
+    .union([z.enum(["Male", "Female"]), z.literal("")])
+    .refine(
+      (value): value is "Male" | "Female" => value !== "",
+      "Gender is required."
+    ),
   address: z.object({
-    street: z.string().trim().max(160).optional(),
-    barangay: z.string().trim().max(100).optional(),
-    city: z.string().trim().max(100).optional(),
-    province: z.string().trim().max(100).optional(),
-    postalCode: z.string().trim().max(20).optional(),
+    street: z.string().trim().min(2).max(160),
+    barangay: z.string().trim().min(2).max(100),
+    city: z.string().trim().min(2).max(100),
+    province: z.string().trim().min(2).max(100),
+    postalCode: z.string().trim().min(2).max(20),
   }),
   emergencyContact: z.object({
     name: z.string().trim().min(2).max(120),
@@ -162,21 +166,29 @@ export const ownEmployeeProfileFormSchema = z.object({
   middleName: z.string().trim().max(80).optional(),
   lastName: z.string().trim().min(2).max(80),
   email: emailSchema,
-  phone: z.string().trim().optional(),
+  phone: phoneSchema,
   birthDate: z
     .string()
-    .optional()
+    .min(1, "Birth date is required.")
     .refine(
-      (value) => !value || new Date(`${value}T00:00:00`) <= new Date(),
+      (value) => {
+        const birthDate = new Date(`${value}T00:00:00`);
+        return !Number.isNaN(birthDate.getTime()) && birthDate <= new Date();
+      },
       "Birth date cannot be in the future."
     ),
-  gender: z.union([z.enum(["Male", "Female"]), z.literal("")]),
+  gender: z
+    .union([z.enum(["Male", "Female"]), z.literal("")])
+    .refine(
+      (value): value is "Male" | "Female" => value !== "",
+      "Gender is required."
+    ),
   address: z.object({
-    street: z.string().trim().max(160).optional(),
-    barangay: z.string().trim().max(100).optional(),
-    city: z.string().trim().max(100).optional(),
-    province: z.string().trim().max(100).optional(),
-    postalCode: z.string().trim().max(20).optional(),
+    street: z.string().trim().min(2).max(160),
+    barangay: z.string().trim().min(2).max(100),
+    city: z.string().trim().min(2).max(100),
+    province: z.string().trim().min(2).max(100),
+    postalCode: z.string().trim().min(2).max(20),
   }),
   emergencyContact: z.object({
     name: z.string().trim().min(2).max(120),

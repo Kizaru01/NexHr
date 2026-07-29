@@ -6,6 +6,10 @@ export interface IUser {
   provider: string;
   providerId?: string;
   isActive: boolean;
+  activationIssuedAt?: Date;
+  activationTokenId?: string;
+  activationTokenExpiresAt?: Date;
+  activatedAt?: Date;
   lastLogin?: Date;
   notification?: {
     leave: boolean;
@@ -47,6 +51,19 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: true,
     },
+    activationIssuedAt: {
+      type: Date,
+      select: false,
+    },
+    activationTokenId: {
+      type: String,
+      select: false,
+    },
+    activationTokenExpiresAt: {
+      type: Date,
+      select: false,
+    },
+    activatedAt: Date,
     lastLogin: Date,
     notification: {
       leave: { type: Boolean, default: true },
