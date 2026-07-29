@@ -10,7 +10,6 @@ export type SendEmailParams = {
 
 type SendWelcomeEmailParams = {
   to: string;
-  employeeName: string;
   employeeId: string;
   activationToken: string;
   requestId: string;
@@ -55,35 +54,42 @@ export class EmailService {
       );
     }
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-      },
-      body: JSON.stringify({ from, to: [to], subject, html, text }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
 
-    if (!response.ok) {
-      const providerMessage = (await response.text()).slice(0, 300);
-      throw new Error(
-        `Email provider rejected the request (${response.status}): ${providerMessage}`
-      );
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+        },
+        body: JSON.stringify({ from, to: [to], subject, html, text }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const providerMessage = (await response.text()).slice(0, 300);
+        throw new Error(
+          `Email provider rejected the request (${response.status}): ${providerMessage}`
+        );
+      }
+
+      const result = (await response.json()) as ResendResponse;
+
+      if (!result.id) {
+        throw new Error("Email provider did not return a message identifier.");
+      }
+
+      return { messageId: result.id };
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const result = (await response.json()) as ResendResponse;
-
-    if (!result.id) {
-      throw new Error("Email provider did not return a message identifier.");
-    }
-
-    return { messageId: result.id };
   }
 
   async sendWelcomeEmail({
     to,
-    employeeName,
     employeeId,
     activationToken,
     requestId,
@@ -99,7 +105,6 @@ export class EmailService {
     const activationUrl = new URL("/api/auth/activate", applicationUrl);
     activationUrl.searchParams.set("token", activationToken);
 
-    const safeName = escapeHtml(employeeName);
     const safeEmployeeId = escapeHtml(employeeId);
     const safeActivationUrl = escapeHtml(activationUrl.toString());
 
@@ -108,16 +113,17 @@ export class EmailService {
       subject: "Welcome to the HR Management Portal",
       idempotencyKey: `employee-welcome-${requestId}`,
       text: [
-        `Welcome, ${employeeName}!`,
+        "Welcome to the HR Management Portal!",
         `Your employee ID is ${employeeId}.`,
-        "Activate your account using the link below. The link expires in 7 days.",
+        "Activate your account using the link below, then sign in and complete your personal profile. The link expires in 7 days.",
         activationUrl.toString(),
       ].join("\n\n"),
       html: `
         <main style="font-family: Arial, sans-serif; line-height: 1.6; color: #18181b;">
-          <h1>Welcome, ${safeName}!</h1>
-          <p>Your employee profile has been created.</p>
+          <h1>Welcome to the HR Management Portal!</h1>
+          <p>Your employee account has been created.</p>
           <p><strong>Employee ID:</strong> ${safeEmployeeId}</p>
+          <p>Activate your account, then sign in and complete your personal profile before entering the dashboard.</p>
           <p>
             <a href="${safeActivationUrl}" style="display: inline-block; border-radius: 6px; background: #18181b; color: #fff; padding: 10px 16px; text-decoration: none;">
               Activate account

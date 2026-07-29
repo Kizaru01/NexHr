@@ -10,7 +10,7 @@ export interface IEmployee {
   firstName: string;
   middleName?: string;
   lastName: string;
-  phone?: string;
+  phone: string;
   birthDate?: Date;
   gender?: "Male" | "Female";
   avatar?: string;
@@ -36,13 +36,9 @@ export interface IEmployee {
     | "Contractual"
     | "Intern"
     | "Part-time";
-  salary: {
-    basic: number;
-    allowance?: number;
-  };
   regularizedAt?: Date;
   terminationDate?: Date;
-  manager?: Schema.Types.ObjectId;
+  profileCompleted: boolean;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -86,7 +82,11 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
       required: true,
       trim: true,
     },
-    phone: { type: String },
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     birthDate: { type: Date },
     gender: {
       type: String,
@@ -141,21 +141,9 @@ const EmployeeSchema = new Schema<IEmployeeDoc>(
     },
     regularizedAt: { type: Date },
     terminationDate: { type: Date },
-    salary: {
-      basic: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-      allowance: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-    },
-    manager: {
-      type: Schema.Types.ObjectId,
-      ref: "Employee",
+    profileCompleted: {
+      type: Boolean,
+      default: false,
     },
 
     notes: { type: String },

@@ -17,7 +17,10 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import DepartmentFormSheet from "./DepartmentFormSheet";
 import type { FilterControl } from "@/types/filters";
-import type { DepartmentListItem } from "@/types/management";
+import type {
+  DepartmentListItem,
+  DepartmentManagerOption,
+} from "@/types/management";
 import type { CreateDepartmentInput } from "@/validations/department.schema";
 import {
   departmentSortOptions,
@@ -26,6 +29,7 @@ import {
 
 type DepartmentManagementProps = {
   initialDepartments: DepartmentListItem[];
+  managerOptions: DepartmentManagerOption[];
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
@@ -56,6 +60,7 @@ const departmentFilterControls: readonly FilterControl[] = [
 
 export default function DepartmentManagement({
   initialDepartments,
+  managerOptions,
 }: DepartmentManagementProps): React.JSX.Element {
   const router = useRouter();
   const [editingDepartment, setEditingDepartment] =
@@ -198,6 +203,9 @@ export default function DepartmentManagement({
                         {department.description}
                       </p>
                     )}
+                    <p className="text-sm text-muted-foreground">
+                      Manager: {department.managerName ?? "Not assigned"}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       Updated {dateFormatter.format(new Date(department.updatedAt))}
                     </p>
@@ -243,6 +251,7 @@ export default function DepartmentManagement({
       <DepartmentFormSheet
         key={`${editingDepartment?.id ?? "create"}-${isSheetOpen}`}
         department={editingDepartment}
+        managerOptions={managerOptions}
         isOpen={isSheetOpen}
         isPending={isPending}
         onOpenChange={handleSheetOpenChange}

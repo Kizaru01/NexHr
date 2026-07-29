@@ -10,7 +10,6 @@ import type {
   EmployeeListItem,
   EmployeePositionSelectOption,
   EmployeeSelectOption,
-  Salary,
 } from "@/types/global";
 import { NotFoundError } from "../http-errors";
 import { getUserEmail } from "./user.helper";
@@ -25,6 +24,7 @@ interface PopulatedRef {
   firstName?: string;
   middleName?: string;
   lastName?: string;
+  manager?: unknown;
 }
 
 function isPopulated(ref: unknown): ref is PopulatedRef {
@@ -70,11 +70,9 @@ function toEmergencyContact(
   };
 }
 
-function toSalary(salary: IEmployee["salary"]): Salary {
-  return {
-    basic: salary.basic,
-    allowance: salary.allowance,
-  };
+function managerNameForDepartment(department: unknown): string | undefined {
+  if (!isPopulated(department) || !department.manager) return undefined;
+  return refName(department.manager);
 }
 
 export async function findEmployeeDetailOrThrow(
@@ -82,9 +80,14 @@ export async function findEmployeeDetailOrThrow(
 ): Promise<IEmployeeDoc> {
   const employee = await Employee.findOne({ employeeId })
     .populate("userId", "email isActive")
-    .populate("department")
-    .populate("position")
-    .populate("manager");
+    .populate({
+      path: "department",
+      populate: {
+        path: "manager",
+        select: "firstName middleName lastName",
+      },
+    })
+    .populate("position");
 
   if (!employee) {
     throw new NotFoundError("Employee");
@@ -109,13 +112,12 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     gender,
     hireDate,
     lastName,
-    manager,
     middleName,
     notes,
     phone,
     position,
     regularizedAt,
-    salary,
+    profileCompleted,
     terminationDate,
     updatedAt,
     userId,
@@ -139,10 +141,10 @@ export function toEmployeeDetail(employee: IEmployeeDoc): EmployeeDetail {
     hireDate: serialiseDate(hireDate),
     employmentStatus,
     employmentType,
-    salary: toSalary(salary),
     regularizedAt: serialiseDate(regularizedAt),
     terminationDate: serialiseDate(terminationDate),
-    manager: manager ? refName(manager) : undefined,
+    profileCompleted,
+    manager: managerNameForDepartment(department),
     notes,
     createdAt: serialiseDate(createdAt),
     updatedAt: serialiseDate(updatedAt),
@@ -167,7 +169,8 @@ export function toEmployeeListItem(employee: IEmployeeDoc): EmployeeListItem {
   return {
     id: _id.toString(),
     employeeId,
-    fullName: [firstName, lastName].filter(Boolean).join(" "),
+    fullName:
+      [firstName, lastName].filter(Boolean).join(" ") || getUserEmail(userId),
     email: getUserEmail(userId),
     department: refName(department),
     position: refName(position),
@@ -202,9 +205,9 @@ export function toEmployeePositionOption(position: {
 
 export function toEmployeeManagerOption(manager: {
   _id: StringableReference;
-  firstName: string;
+  firstName?: string;
   middleName?: string;
-  lastName: string;
+  lastName?: string;
 }): EmployeeSelectOption {
   return {
     value: manager._id.toString(),

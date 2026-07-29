@@ -6,6 +6,10 @@ export interface IPosition {
   department: Schema.Types.ObjectId;
   description?: string;
   isActive: boolean;
+  salary: {
+    basic: number;
+    allowance?: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +26,18 @@ const PositionSchema = new Schema<IPositionDoc>(
     description: {
       type: String,
       trim: true,
+    },
+    salary: {
+      basic: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
+      allowance: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
     },
     isActive: {
       type: Boolean,

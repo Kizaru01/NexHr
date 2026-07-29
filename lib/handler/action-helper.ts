@@ -6,6 +6,7 @@ import { ZodError, type ZodSchema } from "zod";
 import { auth } from "@/auth";
 import connectToDatabase from "@/database/mongodb";
 import type { UserRole } from "@/types/global";
+import { requireEmployeeRecord } from "@/lib/handler/require-employee";
 
 import {
   ForbiddenError,
@@ -17,6 +18,7 @@ type ActionOptions<T> = {
   params?: T;
   schema?: ZodSchema<T>;
   roles?: UserRole[];
+  allowIncompleteEmployeeProfile?: boolean;
 };
 
 type ActionResult<T> = {
@@ -28,6 +30,7 @@ export default async function action<T>({
   params,
   schema,
   roles,
+  allowIncompleteEmployeeProfile = false,
 }: ActionOptions<T>): Promise<ActionResult<T>> {
   let validatedParams = params;
 
@@ -49,11 +52,21 @@ export default async function action<T>({
     throw new UnauthorizedError();
   }
 
+  if (!session.user.isActive) {
+    throw new UnauthorizedError("Your account is inactive.");
+  }
+
   if (roles && !roles.includes(session.user.role)) {
     throw new ForbiddenError();
   }
 
   await connectToDatabase();
+
+  if (session.user.role === "employee") {
+    await requireEmployeeRecord(session.user.id, {
+      allowIncompleteProfile: allowIncompleteEmployeeProfile,
+    });
+  }
 
   return {
     params: validatedParams,

@@ -26,9 +26,11 @@ import {
   type OwnEmployeeProfileInput,
 } from "@/validations/employee-portal.schema";
 
-type ProfileFormValues = z.infer<typeof ownEmployeeProfileFormSchema>;
+type ProfileFormInput = z.input<typeof ownEmployeeProfileFormSchema>;
+type ProfileFormValues = z.output<typeof ownEmployeeProfileFormSchema>;
 
 type ProfileFormProps = {
+  onboarding?: boolean;
   profile: OwnProfileFormProfile;
 };
 
@@ -38,6 +40,7 @@ function optional(value?: string): string | undefined {
 }
 
 export default function OwnProfileForm({
+  onboarding = false,
   profile,
 }: ProfileFormProps): React.JSX.Element {
   const router = useRouter();
@@ -52,12 +55,12 @@ export default function OwnProfileForm({
     middleName,
     phone,
   } = profile;
-  const form = useForm<ProfileFormValues>({
+  const form = useForm<ProfileFormInput, undefined, ProfileFormValues>({
     resolver: zodResolver(ownEmployeeProfileFormSchema),
     defaultValues: {
-      firstName,
+      firstName: firstName ?? "",
       middleName: middleName ?? "",
-      lastName,
+      lastName: lastName ?? "",
       email,
       phone: phone ?? "",
       birthDate: birthDate?.slice(0, 10) ?? "",
@@ -96,18 +99,10 @@ export default function OwnProfileForm({
       middleName: optional(formMiddleName),
       lastName: formLastName,
       email: formEmail,
-      phone: optional(formPhone),
-      birthDate: formBirthDate
-        ? new Date(`${formBirthDate}T00:00:00`)
-        : undefined,
-      gender: formGender || undefined,
-      address: {
-        street: optional(formAddress.street),
-        barangay: optional(formAddress.barangay),
-        city: optional(formAddress.city),
-        province: optional(formAddress.province),
-        postalCode: optional(formAddress.postalCode),
-      },
+      phone: formPhone,
+      birthDate: new Date(`${formBirthDate}T00:00:00`),
+      gender: formGender,
+      address: formAddress,
       emergencyContact: formEmergencyContact,
     };
     const response = await updateOwnEmployeeProfile(payload);
@@ -119,8 +114,16 @@ export default function OwnProfileForm({
       return;
     }
 
-    toast.success("Your profile has been updated.");
+    toast.success(
+      onboarding
+        ? "Your profile is complete. Welcome aboard."
+        : "Your profile has been updated."
+    );
     form.reset(values);
+    if (onboarding) {
+      router.push("/employee");
+      return;
+    }
     router.refresh();
   }
 
@@ -150,12 +153,28 @@ export default function OwnProfileForm({
               </FieldLabel>
               <Input
                 id={field}
+                readOnly={
+                  field === "email" ||
+                  (onboarding &&
+                    (field === "firstName" ||
+                      field === "lastName" ||
+                      field === "phone"))
+                }
                 type={
                   field === "birthDate"
                     ? "date"
                     : field === "email"
                       ? "email"
                       : "text"
+                }
+                className={
+                  field === "email" ||
+                  (onboarding &&
+                    (field === "firstName" ||
+                      field === "lastName" ||
+                      field === "phone"))
+                    ? "bg-muted"
+                    : undefined
                 }
                 {...form.register(field)}
               />
@@ -241,7 +260,7 @@ export default function OwnProfileForm({
           ) : (
             <Save />
           )}
-          Save changes
+          {onboarding ? "Complete profile" : "Save changes"}
         </Button>
       </div>
     </form>

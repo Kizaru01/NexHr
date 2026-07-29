@@ -31,10 +31,17 @@ export async function POST(request: Request): Promise<NextResponse> {
       throw new ForbiddenError("This is account is inactive.");
     }
 
-    const employee = await Employee.findOne({ userId: existingUser._id });
+    const employee = await Employee.findOne({
+      userId: existingUser._id,
+    }).select("employmentStatus");
 
     if (!employee) {
       throw new UnauthorizedError("Employee record not found.");
+    }
+    if (!["Active", "On Leave"].includes(employee.employmentStatus)) {
+      throw new ForbiddenError(
+        "Your employment status does not permit portal access."
+      );
     }
 
     const updatedData: Partial<IUser> = {

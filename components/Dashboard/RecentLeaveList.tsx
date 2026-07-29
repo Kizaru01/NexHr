@@ -21,7 +21,7 @@ const RecentLeaveList = (): React.JSX.Element => {
         <CardTitle>Recent Leave Requests</CardTitle>
         <CardAction>
           <Link
-            href="/leave"
+            href="/leave-requests"
             className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover"
           >
             View all <ArrowUpRight className="size-3.5" />

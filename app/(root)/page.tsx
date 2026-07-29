@@ -12,7 +12,7 @@ import { dashboardStats } from "@/constants/dashboard-static";
 
 const Home = async (): Promise<React.JSX.Element> => {
   const session = await auth();
-  console.log("Employee Page");
+
   if (session?.user?.role === "employee") {
     redirect("/employee");
   }
@@ -26,11 +26,9 @@ const Home = async (): Promise<React.JSX.Element> => {
         })}
       </div>
 
-      <section aria-labelledby="overview-heading">
-        <div className="grid gap-4 xl:grid-cols-2">
-          <EmployeeOverviewChart />
-          <AttendanceOverviewChart />
-        </div>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <EmployeeOverviewChart />
+        <AttendanceOverviewChart />
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 2xl:hidden">

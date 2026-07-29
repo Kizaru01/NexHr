@@ -70,21 +70,28 @@ export async function getEmployeeDirectory(
 
   if (searchTerm) {
     const matchingUserIds = await findUserIdsByEmailSearch(searchTerm);
-    query.$or = ["firstName", "lastName", "employeeId"].map(
-      (field) => ({ [field]: { $regex: searchTerm, $options: "i" } })
-    );
+    query.$or = ["firstName", "lastName", "employeeId"].map((field) => ({
+      [field]: { $regex: searchTerm, $options: "i" },
+    }));
     (query.$or as Array<Record<string, unknown>>).push({
       userId: { $in: matchingUserIds },
     });
   }
 
-  const sort = employeeSorts[sortFilter ?? ""] ?? employeeSorts["recently-added"];
+  const sort =
+    employeeSorts[sortFilter ?? ""] ?? employeeSorts["recently-added"];
   const [employees, total] = await Promise.all([
     Employee.find(query)
       .populate("userId", "email")
-      .populate("department", "name")
+      .populate({
+        path: "department",
+        select: "name manager",
+        populate: {
+          path: "manager",
+          select: "firstName middleName lastName",
+        },
+      })
       .populate("position", "name")
-      .populate("manager", "firstName lastName")
       .sort(sort)
       .skip((page - 1) * DEFAULT_PAGE_SIZE)
       .limit(DEFAULT_PAGE_SIZE)
@@ -102,21 +109,29 @@ export async function getEmployeeDirectory(
         employmentStatus,
         employmentType,
         hireDate,
-        manager,
         phone,
         position,
         userId,
       } = employee;
-      const departmentName =
-        (department as { name?: string })?.name ?? "Unassigned";
+      const populatedDepartment = department as
+        | {
+            name?: string;
+            manager?: {
+              firstName?: string;
+              middleName?: string;
+              lastName?: string;
+            };
+          }
+        | undefined;
+      const departmentName = populatedDepartment?.name ?? "Unassigned";
       const positionName =
         (position as { name?: string })?.name ?? "Unassigned";
-      const managerName = manager
+      const managerName = populatedDepartment?.manager
         ? nameOf(
-            manager as unknown as {
-              firstName: string;
+            populatedDepartment.manager as {
+              firstName?: string;
               middleName?: string;
-              lastName: string;
+              lastName?: string;
             }
           )
         : "—";
@@ -124,7 +139,7 @@ export async function getEmployeeDirectory(
       return {
         id: _id.toString(),
         employeeId,
-        name: nameOf(employee),
+        name: nameOf(employee) || getUserEmail(userId),
         avatar,
         department: departmentName,
         position: positionName,
@@ -148,10 +163,16 @@ export async function getEmployeeProfile(
   await connectToDatabase();
 
   const employee = await Employee.findOne({ employeeId })
-    .populate("userId", "email")
-    .populate("department", "name")
+    .populate("userId", "email isActive")
+    .populate({
+      path: "department",
+      select: "name manager",
+      populate: {
+        path: "manager",
+        select: "firstName middleName lastName",
+      },
+    })
     .populate("position", "name")
-    .populate("manager", "firstName middleName lastName")
     .lean();
 
   if (!employee) {
@@ -170,33 +191,49 @@ export async function getEmployeeProfile(
     employmentType,
     gender,
     hireDate,
-    manager,
     notes,
     phone,
     position,
+    profileCompleted,
     updatedAt,
     userId,
   } = employee;
+  const accountActive =
+    typeof userId === "object" &&
+    userId !== null &&
+    "isActive" in userId &&
+    userId.isActive === true;
+
+  const populatedDepartment = department as
+    | {
+        name?: string;
+        manager?: {
+          firstName?: string;
+          middleName?: string;
+          lastName?: string;
+        };
+      }
+    | undefined;
 
   return {
     employeeId: resolvedEmployeeId,
-    name: nameOf(employee),
+    name: nameOf(employee) || getUserEmail(userId),
     email: getUserEmail(userId),
     phone,
     avatar,
     gender,
     birthDate: serialiseDate(birthDate),
-    department: (department as { name?: string })?.name ?? "Unassigned",
+    department: populatedDepartment?.name ?? "Unassigned",
     position: (position as { name?: string })?.name ?? "Unassigned",
     hireDate: serialiseDate(hireDate),
     status: employmentStatus,
     type: employmentType,
-    manager: manager
+    manager: populatedDepartment?.manager
       ? nameOf(
-          manager as unknown as {
-            firstName: string;
+          populatedDepartment.manager as {
+            firstName?: string;
             middleName?: string;
-            lastName: string;
+            lastName?: string;
           }
         )
       : "—",
@@ -205,5 +242,7 @@ export async function getEmployeeProfile(
     createdAt: serialiseDate(createdAt),
     updatedAt: serialiseDate(updatedAt),
     notes,
+    accountActive,
+    profileCompleted,
   };
 }

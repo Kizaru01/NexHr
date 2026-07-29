@@ -20,6 +20,30 @@ import {
   isDuplicateKeyError,
 } from "../http-errors";
 
+type PopulatedPositionCompensation = {
+  salary?: {
+    basic?: number;
+    allowance?: number;
+  };
+};
+
+function getPositionCompensation(position: unknown): {
+  basic: number;
+  allowance: number;
+} {
+  const compensation = (position as PopulatedPositionCompensation | null)
+    ?.salary;
+
+  if (typeof compensation?.basic !== "number") {
+    throw new NotFoundError("Position compensation");
+  }
+
+  return {
+    basic: compensation.basic,
+    allowance: compensation.allowance ?? 0,
+  };
+}
+
 export async function generatePayroll(
   params: GeneratePayrollInput
 ): Promise<ActionResponse<null>> {
@@ -43,14 +67,17 @@ export async function generatePayroll(
     const employee = await Employee.findOne({
       _id: employeeId,
       employmentStatus: "Active",
-    }).select("salary");
+    })
+      .select("position")
+      .populate("position", "salary");
 
     if (!employee) {
       throw new NotFoundError("Active employee");
     }
 
-    const basicSalary = employee.salary.basic;
-    const allowance = employee.salary.allowance ?? 0;
+    const { basic: basicSalary, allowance } = getPositionCompensation(
+      employee.position
+    );
     const grossPay =
       basicSalary + allowance + overtimePay + bonus;
     const totalWithholdings = deductions + tax;
@@ -101,7 +128,8 @@ export async function generateMonthlyPayroll(
     const payrollPeriod = result.params!;
     const { month, year } = payrollPeriod;
     const employees = await Employee.find({ employmentStatus: "Active" })
-      .select("_id salary")
+      .select("_id position")
+      .populate("position", "salary")
       .lean();
 
     if (!employees.length) {
@@ -110,9 +138,11 @@ export async function generateMonthlyPayroll(
 
     const generatedAt = new Date();
     const bulkResult = await Payroll.bulkWrite(
-      employees.map(({ salary: { basic, allowance }, _id }) => {
-        const basicSalary = basic;
-        const employeeAllowance = allowance ?? 0;
+      employees.map(({ position, _id }) => {
+        const {
+          basic: basicSalary,
+          allowance: employeeAllowance,
+        } = getPositionCompensation(position);
 
         return {
           updateOne: {
@@ -127,7 +157,7 @@ export async function generateMonthlyPayroll(
                 month,
                 year,
                 basicSalary,
-                allowance,
+                allowance: employeeAllowance,
                 overtimePay: 0,
                 bonus: 0,
                 deductions: 0,

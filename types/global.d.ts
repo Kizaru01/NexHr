@@ -47,14 +47,13 @@ export interface Salary {
 export interface CreateEmployeeParams {
   requestId: string;
   firstName: string;
-  middleName?: string;
   lastName: string;
+  phone: string;
+  email: string;
   department: string;
   position: string;
   hireDate: Date;
   employmentType: EmploymentType;
-  salary: Salary;
-  manager?: string;
   notes?: string;
 }
 export interface Address {
@@ -71,15 +70,7 @@ export interface EmergencyContactInfo {
   phone?: string;
 }
 
-export interface CreateEmployeeInput extends CreateEmployeeParams {
-  email: string;
-  phone?: string;
-  birthDate?: Date;
-  gender?: Gender;
-  avatar?: string;
-  address?: Address;
-  emergencyContact?: EmergencyContactInfo;
-}
+export type CreateEmployeeInput = CreateEmployeeParams;
 
 export interface UpdateEmployeeInput extends Partial<
   Omit<CreateEmployeeInput, "requestId">
@@ -106,7 +97,6 @@ export interface UpdateEmploymentInformationParams {
   hireDate: Date;
   employmentType: CreateEmployeeParams["employmentType"];
   employmentStatus?: EmploymentStatus;
-  manager?: string;
   notes?: string;
 }
 
@@ -153,8 +143,8 @@ export interface EmployeeListItem {
 export interface EmployeeListResultItem {
   id: string;
   employeeId: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   department: string;
   position: string;
@@ -174,9 +164,9 @@ export interface GetEmployeesResult {
 export interface EmployeeDetail {
   id: string;
   employeeId: string;
-  firstName: string;
+  firstName?: string;
   middleName?: string;
-  lastName: string;
+  lastName?: string;
   email: string;
   phone?: string;
   birthDate: string | null;
@@ -189,9 +179,9 @@ export interface EmployeeDetail {
   hireDate: string;
   employmentStatus: EmploymentStatus;
   employmentType: EmploymentType;
-  salary: Salary;
   regularizedAt: string | null;
   terminationDate: string | null;
+  profileCompleted: boolean;
   manager?: string;
   notes?: string;
   createdAt: string;

@@ -13,6 +13,11 @@ const objectId = z
   .trim()
   .regex(/^[a-f\d]{24}$/i, "Department ID must be a valid ObjectId.");
 
+const optionalManager = z
+  .union([z.literal(""), objectId])
+  .transform((value) => value || undefined)
+  .optional();
+
 export const departmentFieldsSchema = z.object({
   name: z
     .string()
@@ -23,6 +28,7 @@ export const departmentFieldsSchema = z.object({
     value?.toUpperCase()
   ),
   description: optionalText(1_000, "Description"),
+  manager: optionalManager,
 });
 
 export const createDepartmentSchema = departmentFieldsSchema;

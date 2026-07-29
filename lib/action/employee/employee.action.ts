@@ -16,6 +16,7 @@ import logger from "@/lib/logger";
 import { createActivationToken } from "@/lib/services/activation-token.service";
 import emailService from "@/lib/services/email.service";
 import { registerEmployeeAccount } from "@/lib/services/employee-registration.service";
+import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import User from "@/models/user.model";
 import type {
@@ -60,10 +61,6 @@ export async function createEmployee(
         });
         await emailService.sendWelcomeEmail({
           to: registration.email,
-          employeeName: [
-            registration.employee.firstName,
-            registration.employee.lastName,
-          ].join(" "),
           employeeId: registration.employee.employeeId,
           activationToken,
           requestId: registration.requestId,
@@ -118,10 +115,17 @@ export async function deleteEmployee(
 
     try {
       await session.withTransaction(async (): Promise<void> => {
-        const [employeeResult, userResult] = await Promise.all([
-          Employee.deleteOne({ _id: employee._id }).session(session),
-          User.deleteOne({ _id: userId }).session(session),
-        ]);
+        await Department.updateMany(
+          { manager: employee._id },
+          { $unset: { manager: "" } },
+          { session }
+        );
+        const employeeResult = await Employee.deleteOne({
+          _id: employee._id,
+        }).session(session);
+        const userResult = await User.deleteOne({ _id: userId }).session(
+          session
+        );
 
         if (
           employeeResult.deletedCount !== 1 ||

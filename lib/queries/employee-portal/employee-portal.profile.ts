@@ -11,19 +11,32 @@ export async function getOwnEmployeeProfile(
 ): Promise<EmployeeProfileResult | null> {
   const [employee, user] = await Promise.all([
     Employee.findById(employeeId)
-      .populate("department", "name")
+      .populate({
+        path: "department",
+        select: "name manager",
+        populate: {
+          path: "manager",
+          select: "firstName middleName lastName",
+        },
+      })
       .populate("position", "name")
-      .populate("manager", "firstName middleName lastName")
       .lean(),
     User.findById(userId).select("email notification").lean(),
   ]);
 
   if (!employee || !user) return null;
 
-  const manager = employee.manager as
-    | { firstName: string; middleName?: string; lastName: string }
+  const department = employee.department as
+    | {
+        name?: string;
+        manager?: {
+          firstName?: string;
+          middleName?: string;
+          lastName?: string;
+        };
+      }
     | undefined;
-  const department = employee.department as { name?: string } | undefined;
+  const manager = department?.manager;
   const position = employee.position as { name?: string } | undefined;
   const notification = user?.notification;
 
@@ -32,7 +45,7 @@ export async function getOwnEmployeeProfile(
     firstName: employee.firstName,
     middleName: employee.middleName,
     lastName: employee.lastName,
-    fullName: nameOf(employee),
+    fullName: nameOf(employee) || "Profile pending",
     email: user.email,
     phone: employee.phone,
     birthDate: serialiseDate(employee.birthDate),
@@ -46,6 +59,7 @@ export async function getOwnEmployeeProfile(
     hireDate: serialiseDate(employee.hireDate),
     status: employee.employmentStatus,
     type: employee.employmentType,
+    profileCompleted: employee.profileCompleted,
     notification: {
       leave: notification?.leave ?? true,
       attendance: notification?.attendance ?? true,

@@ -114,9 +114,9 @@ export type NotificationPreferences = {
 
 export type EmployeeProfileResult = {
   employeeId: string;
-  firstName: string;
+  firstName?: string;
   middleName?: string;
-  lastName: string;
+  lastName?: string;
   fullName: string;
   email: string;
   phone?: string;
@@ -131,6 +131,7 @@ export type EmployeeProfileResult = {
   hireDate: string | null;
   status: IEmployee["employmentStatus"];
   type: IEmployee["employmentType"];
+  profileCompleted: boolean;
   notification: NotificationPreferences;
 };
 

@@ -4,11 +4,13 @@ import { Types } from "mongoose";
 
 import connectToDatabase from "@/database/mongodb";
 import Department from "@/models/department.model";
+import Employee from "@/models/employee.model";
 import Position from "@/models/position.model";
 import type { FilterValues } from "@/types/filters";
 import type { SortDefinition } from "@/types/hr-dashboard";
 import type {
   DepartmentListItem,
+  DepartmentManagerOption,
   PositionDirectoryResult,
 } from "@/types/management";
 
@@ -44,9 +46,9 @@ function getSearchExpression(search?: string): RegExp | undefined {
   return searchTerm ? new RegExp(searchTerm, "i") : undefined;
 }
 
-export async function getDepartmentDirectory(filters: FilterValues): Promise<
-  DepartmentListItem[]
-> {
+export async function getDepartmentDirectory(
+  filters: FilterValues
+): Promise<DepartmentListItem[]> {
   await connectToDatabase();
 
   const query: Record<string, unknown> = {};
@@ -65,20 +67,63 @@ export async function getDepartmentDirectory(filters: FilterValues): Promise<
     query.isActive = isActive;
   }
 
-  const sort = departmentSorts[filters.sort ?? ""] ?? departmentSorts["name-asc"];
+  const sort =
+    departmentSorts[filters.sort ?? ""] ?? departmentSorts["name-asc"];
   const departments = await Department.find(query)
-    .select("_id name code description isActive createdAt updatedAt")
+    .select("_id name code description manager isActive createdAt updatedAt")
+    .populate("manager", "firstName middleName lastName")
     .sort(sort)
     .lean();
 
-  return departments.map((department) => ({
-    id: department._id.toString(),
-    name: department.name,
-    code: department.code,
-    description: department.description,
-    isActive: department.isActive,
-    createdAt: department.createdAt.toISOString(),
-    updatedAt: department.updatedAt.toISOString(),
+  return departments.map((department) => {
+    const manager = department.manager as unknown as
+      | {
+          _id: { toString(): string };
+          firstName?: string;
+          middleName?: string;
+          lastName?: string;
+        }
+      | undefined;
+    const managerName = manager
+      ? [manager.firstName, manager.middleName, manager.lastName]
+          .filter(Boolean)
+          .join(" ")
+      : undefined;
+
+    return {
+      id: department._id.toString(),
+      name: department.name,
+      code: department.code,
+      description: department.description,
+      managerId: manager?._id.toString(),
+      managerName: managerName || undefined,
+      isActive: department.isActive,
+      createdAt: department.createdAt.toISOString(),
+      updatedAt: department.updatedAt.toISOString(),
+    };
+  });
+}
+
+export async function getDepartmentManagerOptions(): Promise<
+  DepartmentManagerOption[]
+> {
+  await connectToDatabase();
+
+  const employees = await Employee.find({
+    employmentStatus: "Active",
+    profileCompleted: true,
+  })
+    .select("_id employeeId firstName middleName lastName department")
+    .sort({ firstName: 1, lastName: 1 })
+    .lean();
+
+  return employees.map((employee) => ({
+    id: employee._id.toString(),
+    name:
+      [employee.firstName, employee.middleName, employee.lastName]
+        .filter(Boolean)
+        .join(" ") || employee.employeeId,
+    departmentId: employee.department.toString(),
   }));
 }
 
@@ -92,10 +137,7 @@ export async function getPositionDirectory(
   const searchExpression = getSearchExpression(search);
   const isActive = getManagementStatus(status);
   const [departments, matchingDepartmentIds] = await Promise.all([
-    Department.find({})
-      .select("_id name isActive")
-      .sort({ name: 1 })
-      .lean(),
+    Department.find({}).select("_id name isActive").sort({ name: 1 }).lean(),
     searchExpression
       ? Department.find({ name: searchExpression }).distinct("_id")
       : Promise.resolve([]),
@@ -122,7 +164,9 @@ export async function getPositionDirectory(
 
   const sort = positionSorts[sortFilter ?? ""] ?? positionSorts["name-asc"];
   const positions = await Position.find(query)
-    .select("_id name department description isActive createdAt updatedAt")
+    .select(
+      "_id name department description salary isActive createdAt updatedAt"
+    )
     .sort(sort)
     .lean();
   const departmentsById = new Map(
@@ -145,6 +189,10 @@ export async function getPositionDirectory(
         departmentName: department?.name ?? "Deleted department",
         departmentIsActive: department?.isActive ?? false,
         description: position.description,
+        salary: {
+          basic: position.salary.basic,
+          allowance: position.salary.allowance,
+        },
         isActive: position.isActive,
         createdAt: position.createdAt.toISOString(),
         updatedAt: position.updatedAt.toISOString(),

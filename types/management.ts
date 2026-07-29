@@ -1,8 +1,12 @@
+import type { Salary } from "@/types/global";
+
 export type DepartmentListItem = {
   id: string;
   name: string;
   code?: string;
   description?: string;
+  managerId?: string;
+  managerName?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -14,6 +18,12 @@ export type DepartmentOption = {
   isActive: boolean;
 };
 
+export type DepartmentManagerOption = {
+  id: string;
+  name: string;
+  departmentId: string;
+};
+
 export type PositionListItem = {
   id: string;
   name: string;
@@ -21,6 +31,7 @@ export type PositionListItem = {
   departmentName: string;
   departmentIsActive: boolean;
   description?: string;
+  salary: Salary;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +42,7 @@ export type DepartmentListSource = {
   name: string;
   code?: string;
   description?: string;
+  manager?: unknown;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +53,7 @@ export type PositionListSource = {
   name: string;
   department: { toString(): string };
   description?: string;
+  salary: Salary;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

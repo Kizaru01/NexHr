@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Types } from "mongoose";
 
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
@@ -35,6 +36,8 @@ function revalidateDepartmentViews(): void {
   revalidatePath(POSITIONS_PATH);
   revalidatePath(NEW_EMPLOYEE_PATH);
   revalidatePath("/employees");
+  revalidatePath("/employee");
+  revalidatePath("/employee/profile");
 }
 
 function normalizeName(name: string): string {
@@ -71,6 +74,26 @@ async function assertDepartmentCodeIsUnique(
   }
 }
 
+async function assertDepartmentManager(
+  managerId: string | undefined,
+  departmentId: string
+): Promise<void> {
+  if (!managerId) return;
+
+  const manager = await Employee.exists({
+    _id: managerId,
+    department: departmentId,
+    employmentStatus: "Active",
+    profileCompleted: true,
+  });
+
+  if (!manager) {
+    throw new ConflictError(
+      "The department manager must be an active employee in this department."
+    );
+  }
+}
+
 function toDepartmentListItem(
   department: DepartmentListSource
 ): DepartmentListItem {
@@ -80,15 +103,46 @@ function toDepartmentListItem(
     createdAt,
     description,
     isActive,
+    manager,
     name,
     updatedAt,
   } = department;
+
+  const populatedManager =
+    typeof manager === "object" &&
+    manager !== null &&
+    "_id" in manager &&
+    ("firstName" in manager || "lastName" in manager)
+      ? (manager as {
+          _id: { toString(): string };
+          firstName?: string;
+          middleName?: string;
+          lastName?: string;
+        })
+      : undefined;
+  const managerId = populatedManager
+    ? populatedManager._id.toString()
+    : manager &&
+        typeof manager === "object" &&
+        "toString" in manager
+      ? manager.toString()
+      : undefined;
 
   return {
     id: _id.toString(),
     name,
     code,
     description,
+    managerId,
+    managerName: populatedManager
+      ? [
+          populatedManager.firstName,
+          populatedManager.middleName,
+          populatedManager.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : undefined,
     isActive,
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),
@@ -105,11 +159,13 @@ export async function createDepartment(
       roles: ["admin", "hr"],
     });
     const departmentParams = validationResult.params!;
-    const { code, name } = departmentParams;
+    const { code, manager, name } = departmentParams;
 
     await assertDepartmentNameIsUnique(name);
     await assertDepartmentCodeIsUnique(code);
-    await Department.create(departmentParams);
+    const department = new Department(departmentParams);
+    await assertDepartmentManager(manager, department._id.toString());
+    await department.save();
 
     revalidateDepartmentViews();
 
@@ -135,18 +191,21 @@ export async function updateDepartment(
       roles: ["admin", "hr"],
     });
     const { id, ...departmentParams } = validationResult.params!;
-    const { code, description, name } = departmentParams;
+    const { code, description, manager, name } = departmentParams;
 
     const department = await Department.findById(id);
     if (!department) throw new NotFoundError("Department");
 
     await assertDepartmentNameIsUnique(name, id);
     await assertDepartmentCodeIsUnique(code, id);
+    await assertDepartmentManager(manager, id);
 
     department.name = name;
     department.code = code;
     department.description = description;
+    department.manager = manager ? new Types.ObjectId(manager) : undefined;
     await department.save();
+    await department.populate("manager", "firstName middleName lastName");
 
     revalidateDepartmentViews();
     return { success: true, data: toDepartmentListItem(department) };

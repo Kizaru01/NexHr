@@ -6,7 +6,7 @@ import z from "zod";
 import { UnauthorizedError } from "@/lib/http-errors";
 import { emailSchema } from "@/validations/user.schema";
 
-const ACTIVATION_TOKEN_LIFETIME_SECONDS = 60 * 60 * 24 * 7;
+export const ACTIVATION_TOKEN_LIFETIME_SECONDS = 60 * 60 * 24 * 7;
 
 const activationTokenPayloadSchema = z.object({
   sub: z.string().min(1),
@@ -26,6 +26,12 @@ type CreateActivationTokenParams = {
   issuedAt?: Date;
   tokenId?: string;
 };
+
+export function getActivationTokenExpiresAt(issuedAt: Date): Date {
+  return new Date(
+    issuedAt.getTime() + ACTIVATION_TOKEN_LIFETIME_SECONDS * 1_000
+  );
+}
 
 function getSigningSecret(): string {
   const secret = process.env.AUTH_SECRET;
@@ -57,6 +63,7 @@ export function createActivationToken({
     expiresAt: issuedAt + ACTIVATION_TOKEN_LIFETIME_SECONDS,
     tokenId,
   };
+
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
     "base64url"
   );

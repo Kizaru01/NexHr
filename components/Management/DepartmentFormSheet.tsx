@@ -1,12 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import {
   Sheet,
   SheetContent,
@@ -16,7 +23,10 @@ import {
   SheetTitle,
 } from "../ui/sheet";
 import { Textarea } from "../ui/textarea";
-import type { DepartmentListItem } from "@/types/management";
+import type {
+  DepartmentListItem,
+  DepartmentManagerOption,
+} from "@/types/management";
 import {
   createDepartmentSchema,
   type CreateDepartmentInput,
@@ -26,6 +36,7 @@ type DepartmentFormInput = z.input<typeof createDepartmentSchema>;
 
 type DepartmentFormSheetProps = {
   department: DepartmentListItem | null;
+  managerOptions: DepartmentManagerOption[];
   isOpen: boolean;
   isPending: boolean;
   onOpenChange(open: boolean): void;
@@ -36,10 +47,12 @@ const emptyValues: DepartmentFormInput = {
   name: "",
   code: "",
   description: "",
+  manager: "",
 };
 
 export default function DepartmentFormSheet({
   department,
+  managerOptions,
   isOpen,
   isPending,
   onOpenChange,
@@ -52,10 +65,16 @@ export default function DepartmentFormSheet({
           name: department.name,
           code: department.code ?? "",
           description: department.description ?? "",
+          manager: department.managerId ?? "",
         }
       : emptyValues,
   });
   const { errors } = form.formState;
+  const availableManagers = department
+    ? managerOptions.filter(
+        (manager) => manager.departmentId === department.id
+      )
+    : [];
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -108,6 +127,48 @@ export default function DepartmentFormSheet({
             />
             <FieldError errors={[errors.description]} />
           </Field>
+
+          <Controller
+            name="manager"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="department-manager">
+                  Manager (optional)
+                </FieldLabel>
+                <Select
+                  name={field.name}
+                  value={field.value ?? ""}
+                  onValueChange={(value) =>
+                    field.onChange(value === "unassigned" ? "" : value)
+                  }
+                  disabled={!department}
+                >
+                  <SelectTrigger
+                    id="department-manager"
+                    aria-invalid={fieldState.invalid}
+                  >
+                    <SelectValue
+                      placeholder={
+                        department
+                          ? "Select a department manager"
+                          : "Create the department before assigning a manager"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">No manager</SelectItem>
+                    {availableManagers.map((manager) => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError errors={[fieldState.error]} />
+              </Field>
+            )}
+          />
 
           <SheetFooter className="mt-auto px-0">
             <Button

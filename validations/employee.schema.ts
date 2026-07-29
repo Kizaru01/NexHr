@@ -12,17 +12,6 @@ const objectIdSchema = (field: string) =>
     .min(1, `${field} is required`)
     .regex(objectIdPattern, `${field} must be a valid ObjectId`);
 
-const optionalObjectIdSchema = (field: string) =>
-  z
-    .string()
-    .trim()
-    .refine(
-      (value) => value === "" || objectIdPattern.test(value),
-      `${field} must be a valid ObjectId`
-    )
-    .transform((value) => value || undefined)
-    .optional();
-
 const optionalTrimmedStringSchema = z
   .string()
   .trim()
@@ -30,12 +19,14 @@ const optionalTrimmedStringSchema = z
   .optional();
 
 const optionalUrlSchema = z
-  .union([
-    z.literal(""),
-    z.string().trim().url("Invalid avatar URL"),
-  ])
+  .union([z.literal(""), z.string().trim().url("Invalid avatar URL")])
   .transform((value) => value || undefined)
   .optional();
+
+const requiredPhoneSchema = z
+  .string()
+  .trim()
+  .regex(/^[+]?[-\s()\d]{7,20}$/, "Enter a valid contact number.");
 
 const dateInputSchema = z.union([z.iso.date(), z.date()]);
 
@@ -54,7 +45,11 @@ const requiredDateSchema = (field: string) =>
 const optionalDateSchema = z
   .union([z.literal(""), dateInputSchema])
   .transform((value) => (value === "" ? undefined : toDate(value)))
-  .optional();
+  .optional()
+  .refine(
+    (value) => value === undefined || value <= new Date(),
+    "Birth date cannot be in the future."
+  );
 
 export const addressSchema = z.object({
   street: optionalTrimmedStringSchema,
@@ -68,11 +63,6 @@ export const emergencyContactSchema = z.object({
   name: optionalTrimmedStringSchema,
   relationship: optionalTrimmedStringSchema,
   phone: optionalTrimmedStringSchema,
-});
-
-export const salarySchema = z.object({
-  basic: z.number().min(0, "Basic salary must be a positive number"),
-  allowance: z.number().min(0).optional(),
 });
 
 const employmentTypeEnum = z.enum([
@@ -122,17 +112,20 @@ export const employmentInformationSchema = z.object({
   hireDate: requiredDateSchema("Hire date"),
   employmentType: requiredEmploymentTypeSchema,
   employmentStatus: employmentStatusEnum.optional(),
-  manager: optionalObjectIdSchema("Manager"),
   notes: optionalTrimmedStringSchema,
 });
 
 export const createEmployeeSchema = z.object({
   requestId: z.string().uuid("Invalid employee creation request."),
-  ...personalInformationSchema.shape,
-  ...employmentInformationSchema.shape,
-  address: addressSchema.optional(),
-  emergencyContact: emergencyContactSchema.optional(),
-  salary: salarySchema,
+  firstName: z.string().trim().min(2).max(80),
+  lastName: z.string().trim().min(2).max(80),
+  phone: requiredPhoneSchema,
+  email: emailSchema,
+  department: employmentInformationSchema.shape.department,
+  position: employmentInformationSchema.shape.position,
+  hireDate: employmentInformationSchema.shape.hireDate,
+  employmentType: employmentInformationSchema.shape.employmentType,
+  notes: employmentInformationSchema.shape.notes,
 });
 
 export const updateEmployeeSchema = createEmployeeSchema

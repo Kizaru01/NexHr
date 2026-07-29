@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
 import type {
   ActionResponse,
@@ -151,6 +152,17 @@ export async function updateEmploymentInformation(
       .populate("position");
 
     if (!updated) throw new Error("Failed to update employment information");
+
+    if (
+      validationResult.params!.employmentStatus &&
+      validationResult.params!.employmentStatus !== "Active"
+    ) {
+      await Department.updateMany(
+        { manager: updated._id },
+        { $unset: { manager: "" } }
+      );
+      revalidatePath("/departments");
+    }
 
     revalidateEmployee(employeeId);
 
