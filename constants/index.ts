@@ -14,6 +14,7 @@ import {
   ClipboardList,
   UserRound,
   Bell,
+  MessageSquareWarning,
 } from "lucide-react";
 
 export type NavigationItem = {
@@ -52,6 +53,11 @@ export const navigationSections: readonly NavigationSection[] = [
     items: [
       { title: "Payroll", href: "/payroll", icon: Wallet },
       { title: "Announcements", href: "/announcements", icon: Megaphone },
+      {
+        title: "Employee Concerns",
+        href: "/employee-concerns",
+        icon: MessageSquareWarning,
+      },
       { title: "Reports", href: "/reports", icon: BarChart3 },
     ],
   },
@@ -79,6 +85,11 @@ export const employeeNavigationSections: readonly NavigationSection[] = [
       { title: "Attendance", href: "/employee/attendance", icon: ShieldCheck },
       { title: "Leave Requests", href: "/employee/leave", icon: CalendarCheck },
       { title: "Payroll", href: "/employee/payroll", icon: Wallet },
+      {
+        title: "Employee Concerns",
+        href: "/employee/concerns",
+        icon: MessageSquareWarning,
+      },
     ],
   },
   {

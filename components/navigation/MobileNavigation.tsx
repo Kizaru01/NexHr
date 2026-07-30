@@ -5,12 +5,20 @@ import MobileDrawer from "./MobileDrawer";
 
 type MobileNavigationProps = {
   user?: { image?: string | null; name?: string | null; role?: UserRole };
+  concernUnreadCount?: number;
 };
 
-export default function MobileNavigation({ user }: MobileNavigationProps): React.JSX.Element {
+export default function MobileNavigation({
+  user,
+  concernUnreadCount = 0,
+}: MobileNavigationProps): React.JSX.Element {
   return (
     <MobileDrawer>
-      <ApplicationNavigation user={user} variant="mobile" />
+      <ApplicationNavigation
+        user={user}
+        variant="mobile"
+        concernUnreadCount={concernUnreadCount}
+      />
     </MobileDrawer>
   );
 }

@@ -22,11 +22,13 @@ type ApplicationNavigationProps = {
   };
   variant: "desktop" | "mobile";
   onNavigate?: () => void;
+  concernUnreadCount?: number;
 };
 
 export default function ApplicationNavigation({
   user,
   variant,
+  concernUnreadCount = 0,
 }: ApplicationNavigationProps): React.JSX.Element {
   const isDesktop = variant === "desktop";
   const router = useRouter();
@@ -87,7 +89,11 @@ export default function ApplicationNavigation({
           </span>
         </Link>
         <nav aria-label="Main navigation">
-          <NavLinks variant={variant} role={user?.role} />
+          <NavLinks
+            variant={variant}
+            role={user?.role}
+            concernUnreadCount={concernUnreadCount}
+          />
         </nav>
       </div>
 

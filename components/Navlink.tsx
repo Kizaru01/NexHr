@@ -10,9 +10,14 @@ import type { UserRole } from "@/types/global";
 interface NavLinksProps {
   variant: "desktop" | "mobile";
   role?: UserRole;
+  concernUnreadCount?: number;
 }
 
-const NavLinks = ({ variant, role }: NavLinksProps): React.JSX.Element => {
+const NavLinks = ({
+  variant,
+  role,
+  concernUnreadCount = 0,
+}: NavLinksProps): React.JSX.Element => {
   const pathname = usePathname();
   const { closeMobileDrawer, isSidebarExpanded } = useNavigation();
   const isCompact = variant === "desktop" && !isSidebarExpanded;
@@ -45,6 +50,9 @@ const NavLinks = ({ variant, role }: NavLinksProps): React.JSX.Element => {
                     : normalizedPathname === normalizedHref ||
                       normalizedPathname.startsWith(`${normalizedHref}/`);
               const Icon = item.icon;
+              const isConcernLink =
+                item.href === "/employee-concerns" ||
+                item.href === "/employee/concerns";
 
               return (
                 <Link
@@ -54,7 +62,7 @@ const NavLinks = ({ variant, role }: NavLinksProps): React.JSX.Element => {
                   aria-label={isCompact ? item.title : undefined}
                   onClick={variant === "mobile" ? closeMobileDrawer : undefined}
                   className={cn(
-                    "group flex min-h-10 items-center gap-2 rounded-lg py-2.5 text-[0.8125rem] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                    "group relative flex min-h-10 items-center gap-2 rounded-lg py-2.5 text-[0.8125rem] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                     isCompact
                       ? "justify-center px-2 xl:justify-start xl:px-3"
                       : "gap-3 px-3",
@@ -72,6 +80,18 @@ const NavLinks = ({ variant, role }: NavLinksProps): React.JSX.Element => {
                   >
                     {item.title}
                   </span>
+                  {isConcernLink && concernUnreadCount > 0 ? (
+                    <span
+                      className={cn(
+                        "ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 py-0.5 text-[0.625rem] leading-none font-bold text-white shadow-sm",
+                        isCompact &&
+                          "absolute top-0.5 right-0.5 ml-0 min-w-4 px-1 xl:static xl:ml-auto xl:min-w-5 xl:px-1.5"
+                      )}
+                      aria-label={`${concernUnreadCount} unread concern updates`}
+                    >
+                      {concernUnreadCount > 99 ? "99+" : concernUnreadCount}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}

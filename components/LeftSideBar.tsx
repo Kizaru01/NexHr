@@ -4,11 +4,19 @@ import type { UserRole } from "@/types/global";
 
 type LeftSideBarProps = {
   user?: { image?: string | null; name?: string | null; role?: UserRole };
+  concernUnreadCount?: number;
 };
 
-const LeftSideBar = ({ user }: LeftSideBarProps): React.JSX.Element => (
+const LeftSideBar = ({
+  user,
+  concernUnreadCount = 0,
+}: LeftSideBarProps): React.JSX.Element => (
   <DesktopSidebar>
-    <ApplicationNavigation user={user} variant="desktop" />
+    <ApplicationNavigation
+      user={user}
+      variant="desktop"
+      concernUnreadCount={concernUnreadCount}
+    />
   </DesktopSidebar>
 );
 
