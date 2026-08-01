@@ -1,9 +1,6 @@
 import "server-only";
 
-import type {
-  ConcernCategory,
-  ConcernStatus,
-} from "@/constants/concerns";
+import type { ConcernCategory } from "@/constants/concerns";
 import emailService from "@/lib/services/email.service";
 import logger from "@/lib/logger";
 
@@ -99,7 +96,7 @@ function emailShell({
           ? `<p style="margin-top: 24px;"><a href="${escapeHtml(actionUrl)}" style="display: inline-block; border-radius: 8px; background: #6366f1; color: #fff; padding: 10px 16px; text-decoration: none; font-weight: 600;">${escapeHtml(actionLabel)}</a></p>`
           : ""
       }
-      <p style="margin-top: 28px; color: #7b879d; font-size: 12px;">This is an automated message from NexHR. Sign in to the portal to view the concern and its current status.</p>
+      <p style="margin-top: 28px; color: #7b879d; font-size: 12px;">This is an automated message from NexHR. Sign in to the HR portal to review the concern.</p>
     </main>
   `;
 }
@@ -133,40 +130,6 @@ export async function emailHrAboutNewConcern({
       heading: subject,
       body,
       actionLabel: "Review concern",
-      actionUrl: url,
-    }),
-  });
-}
-
-export async function emailEmployeeAboutConcernUpdate({
-  caseNumber,
-  employeeEmail,
-  idempotencyKey,
-  status,
-  subject,
-  update,
-}: {
-  caseNumber: string;
-  employeeEmail: string;
-  idempotencyKey: string;
-  status: ConcernStatus;
-  subject: string;
-  update: string;
-}): Promise<void> {
-  const url = applicationLink(`/employee/concerns/${caseNumber}`);
-  const body = `${update} Current status: ${status}.`;
-
-  await deliverSafely({
-    context: { caseNumber },
-    idempotencyKey,
-    recipients: [{ email: employeeEmail }],
-    subject: `[${caseNumber}] ${subject}`,
-    text: `${body}${url ? `\n\nView concern: ${url}` : ""}`,
-    html: emailShell({
-      eyebrow: `Concern update · ${caseNumber}`,
-      heading: subject,
-      body,
-      actionLabel: "View update",
       actionUrl: url,
     }),
   });

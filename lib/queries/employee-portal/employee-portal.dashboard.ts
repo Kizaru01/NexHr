@@ -2,6 +2,7 @@ import "server-only";
 
 import Announcement from "@/models/announcement.model";
 import Attendance from "@/models/attendance.model";
+import EmployeeProfileNote from "@/models/employee-profile-note.model";
 import Holiday from "@/models/holiday.model";
 import Leave from "@/models/leave.model";
 import type { EmployeeDashboardResult } from "@/types/employee-portal";
@@ -18,12 +19,28 @@ export async function getEmployeeDashboard(
   const now = new Date();
   const month = getDateBounds(now.getFullYear(), now.getMonth());
   const today = getTodayBounds();
-  const [todayAttendance, monthAttendance, pendingLeaves, balances, recentLeaves, announcements, holidays] =
-    await Promise.all([
-      Attendance.findOne({ employee: employeeId, date: { $gte: today.start, $lt: today.end } })
-        .select("date checkInTime checkOutTime breakDuration workingHours overtimeHours status remarks")
+  const [
+    todayAttendance,
+    monthAttendance,
+    pendingLeaves,
+    balances,
+    recentLeaves,
+    announcements,
+    holidays,
+    hrNotes,
+  ] = await Promise.all([
+      Attendance.findOne({
+        employee: employeeId,
+        date: { $gte: today.start, $lt: today.end },
+      })
+        .select(
+          "date checkInTime checkOutTime breakDuration workingHours overtimeHours status remarks"
+        )
         .lean(),
-      Attendance.find({ employee: employeeId, date: { $gte: month.start, $lt: month.end } })
+      Attendance.find({
+        employee: employeeId,
+        date: { $gte: month.start, $lt: month.end },
+      })
         .select("status overtimeHours")
         .lean(),
       Leave.countDocuments({ employee: employeeId, status: "Pending" }),
@@ -43,7 +60,14 @@ export async function getEmployeeDashboard(
         .sort({ date: 1 })
         .limit(4)
         .lean(),
-    ]);
+      EmployeeProfileNote.find({
+        employee: employeeId,
+        expiresAt: { $gt: now },
+      })
+        .select("body createdAt expiresAt")
+        .sort({ createdAt: -1 })
+        .lean(),
+  ]);
 
   const attended = monthAttendance.filter((record) =>
     ["Present", "Late", "Half Day"].includes(record.status)
@@ -61,6 +85,12 @@ export async function getEmployeeDashboard(
   );
 
   return {
+    hrNotes: hrNotes.map((note) => ({
+      id: note._id.toString(),
+      body: note.body,
+      createdAt: serialiseDate(note.createdAt),
+      expiresAt: serialiseDate(note.expiresAt),
+    })),
     stats: {
       attendanceToday: todayAttendance?.status ?? "Not recorded",
       remainingLeave,

@@ -67,6 +67,14 @@ export type EmployeeProfileResult = {
   accountActive: boolean;
   profileCompleted: boolean;
   welcomeEmailFailed: boolean;
+  temporaryNotes: Array<{
+    id: string;
+    author: string;
+    body: string;
+    createdAt: string | null;
+    expiresAt: string | null;
+    remainingDays: number;
+  }>;
 };
 
 export type AttendanceDashboardRecord = {
