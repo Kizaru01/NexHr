@@ -1,24 +1,11 @@
 import Link from "next/link";
 
-import {
-  ArrowRight,
-  CheckCircle2,
-  CircleDot,
-  Clock3,
-  Inbox,
-  MessageSquareHeart,
-} from "lucide-react";
+import { ArrowRight, MessageSquareHeart } from "lucide-react";
 
 import ConcernComposer from "@/components/concerns/ConcernComposer";
-import {
-  ConcernPriorityBadge,
-  ConcernStatusBadge,
-} from "@/components/concerns/ConcernBadges";
 import EmptyState from "@/components/employee-portal/EmptyState";
 import PageHeader from "@/components/employee-portal/PageHeader";
-import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import Pagination from "@/components/hr/Pagination";
-import StatCard from "@/components/hr/StatCard";
 import {
   Card,
   CardAction,
@@ -27,11 +14,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { concernStatusOptions } from "@/constants/concerns";
 import { requireEmployeePage } from "@/lib/handler/require-employee";
 import { getEmployeeConcernList } from "@/lib/queries/concern.queries";
 import { normaliseSearchParams } from "@/lib/search-params";
-import type { FilterControl, PageSearchParams } from "@/types/filters";
+import type { PageSearchParams } from "@/types/filters";
 
 type PageProps = {
   searchParams: Promise<PageSearchParams>;
@@ -50,64 +36,28 @@ export default async function EmployeeConcernsPage({
   searchParams,
 }: PageProps): Promise<React.JSX.Element> {
   const { employeeDatabaseId } = await requireEmployeePage();
-  const filters = normaliseSearchParams(await searchParams);
-  const { concerns, page, stats, total, totalPages } =
-    await getEmployeeConcernList(employeeDatabaseId, filters);
-  const filterControls: readonly FilterControl[] = [
-    {
-      type: "search",
-      key: "search",
-      placeholder: "Search subject or case number",
-      ariaLabel: "Search your concerns",
-      className: "md:w-80",
-    },
-    {
-      type: "select",
-      key: "status",
-      label: "Status",
-      emptyLabel: "All statuses",
-      options: concernStatusOptions,
-    },
-  ];
+  const parameters = normaliseSearchParams(await searchParams);
+  const { concerns, page, total, totalPages } = await getEmployeeConcernList(
+    employeeDatabaseId,
+    parameters
+  );
 
   return (
     <section className="space-y-6">
       <PageHeader
         eyebrow="Private support"
         title="Employee concerns"
-        description="A secure, trackable channel for questions or workplace matters that need HR attention."
+        description="Write privately to HR and keep a copy of every concern you submit."
       />
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="All concerns" value={stats.total} icon={Inbox} />
-        <StatCard
-          label="In review"
-          value={stats.inReview}
-          icon={Clock3}
-        />
-        <StatCard
-          label="In progress"
-          value={stats.inProgress}
-          icon={CircleDot}
-        />
-        <StatCard
-          label="Resolved"
-          value={stats.resolved}
-          icon={CheckCircle2}
-        />
-      </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)]">
         <Card className="order-2 gap-0 xl:order-1">
           <CardHeader className="border-b">
-            <CardTitle>Submitted concerns</CardTitle>
+            <CardTitle>Your submitted concerns</CardTitle>
             <CardDescription>
-              {total} {total === 1 ? "case" : "cases"} · newest activity first
+              {total} {total === 1 ? "concern" : "concerns"} · newest first
             </CardDescription>
           </CardHeader>
-          <CardContent className="border-b py-4">
-            <FilterToolbar controls={filterControls} />
-          </CardContent>
           {concerns.length ? (
             <div className="divide-y">
               {concerns.map((concern) => (
@@ -118,14 +68,10 @@ export default async function EmployeeConcernsPage({
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-primary">
-                          {concern.caseNumber}
-                        </span>
-                        <ConcernStatusBadge status={concern.status} />
-                        <ConcernPriorityBadge priority={concern.priority} />
-                      </div>
-                      <h2 className="mt-2.5 font-semibold tracking-[-0.01em] group-hover:text-primary">
+                      <span className="font-mono text-xs font-semibold text-primary">
+                        {concern.caseNumber}
+                      </span>
+                      <h2 className="mt-2 font-semibold tracking-[-0.01em] group-hover:text-primary">
                         {concern.subject}
                       </h2>
                       <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -143,7 +89,7 @@ export default async function EmployeeConcernsPage({
                     </div>
                     <div className="flex shrink-0 items-center justify-between gap-3 sm:block sm:text-right">
                       <p className="text-xs text-muted-foreground">
-                        Updated {formatDateTime(concern.lastActivityAt)}
+                        {formatDateTime(concern.submittedAt)}
                       </p>
                       <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary sm:mt-3 sm:ml-auto" />
                     </div>
@@ -153,19 +99,15 @@ export default async function EmployeeConcernsPage({
             </div>
           ) : (
             <EmptyState
-              title="No concerns found"
-              description={
-                filters.search || filters.status
-                  ? "Try adjusting the search or status filter."
-                  : "When you contact HR, your concern and every update will appear here."
-              }
+              title="No concerns submitted"
+              description="Your submitted letters will appear here."
               icon={MessageSquareHeart}
             />
           )}
           <Pagination
             page={page}
             totalPages={totalPages}
-            parameters={filters}
+            parameters={parameters}
           />
         </Card>
 
@@ -176,8 +118,7 @@ export default async function EmployeeConcernsPage({
             </div>
             <CardTitle>Write to HR</CardTitle>
             <CardDescription>
-              Submit a private concern letter and track its status as HR
-              reviews it.
+              Submit a private concern letter with optional supporting files.
             </CardDescription>
             <CardAction>
               <span className="rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success-foreground">

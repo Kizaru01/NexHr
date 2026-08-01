@@ -1,42 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  ArrowUpRight,
-  CheckCircle2,
-  CircleDot,
-  Inbox,
-  MessageSquareWarning,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowUpRight, Inbox, ShieldCheck } from "lucide-react";
 
-import {
-  ConcernPriorityBadge,
-  ConcernStatusBadge,
-} from "@/components/concerns/ConcernBadges";
-import FilterToolbar from "@/components/hr/filters/FilterToolbar";
 import Pagination from "@/components/hr/Pagination";
-import StatCard from "@/components/hr/StatCard";
-import UrlFilterSelect from "@/components/hr/filters/UrlFilterSelect";
 import {
   Card,
-  CardAction,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  concernCategoryOptions,
-  concernPriorityOptions,
-  concernSortOptions,
-  concernStatusOptions,
-} from "@/constants/concerns";
 import { requireHrAdminPage } from "@/lib/handler/require-hr-admin";
 import { getHrConcernDashboard } from "@/lib/queries/concern.queries";
-import { getEmployeeFilters } from "@/lib/queries/hr-dashboard.queries";
 import { normaliseSearchParams } from "@/lib/search-params";
-import type { FilterControl, PageSearchParams } from "@/types/filters";
+import type { PageSearchParams } from "@/types/filters";
 
 type PageProps = {
   searchParams: Promise<PageSearchParams>;
@@ -56,50 +33,9 @@ export default async function EmployeeConcernsManagementPage({
 }: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
-  const filters = normaliseSearchParams(await searchParams);
-  const [{ concerns, page, stats, total, totalPages }, options] =
-    await Promise.all([
-      getHrConcernDashboard(filters),
-      getEmployeeFilters(),
-    ]);
-  const filterControls: readonly FilterControl[] = [
-    {
-      type: "search",
-      key: "search",
-      placeholder: "Search employee, case, or subject",
-      ariaLabel: "Search employee concerns",
-      className: "md:w-80",
-    },
-    {
-      type: "select",
-      key: "department",
-      label: "Department",
-      emptyLabel: "All departments",
-      options: options.departments,
-    },
-    {
-      type: "select",
-      key: "category",
-      label: "Category",
-      emptyLabel: "All categories",
-      options: concernCategoryOptions,
-      className: "md:w-60",
-    },
-    {
-      type: "select",
-      key: "status",
-      label: "Status",
-      emptyLabel: "All statuses",
-      options: concernStatusOptions,
-    },
-    {
-      type: "select",
-      key: "priority",
-      label: "Priority",
-      emptyLabel: "All priorities",
-      options: concernPriorityOptions,
-    },
-  ];
+  const parameters = normaliseSearchParams(await searchParams);
+  const { concerns, page, total, totalPages } =
+    await getHrConcernDashboard(parameters);
 
   return (
     <section className="space-y-6">
@@ -108,8 +44,8 @@ export default async function EmployeeConcernsManagementPage({
           <p className="page-eyebrow">Employee relations</p>
           <h1 className="heading-1">Employee concerns</h1>
           <p className="page-description">
-            Triage confidential submissions, collaborate with employees, and
-            keep every response and decision accountable.
+            Review private letters submitted by employees. Unread concerns
+            always appear first.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2.5 shadow-[var(--shadow-card)]">
@@ -123,70 +59,33 @@ export default async function EmployeeConcernsManagementPage({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Total concerns" value={stats.total} icon={Inbox} />
-        <StatCard
-          label="New"
-          value={stats.new}
-          icon={MessageSquareWarning}
-        />
-        <StatCard
-          label="In progress"
-          value={stats.inProgress}
-          icon={CircleDot}
-        />
-        <StatCard
-          label="Resolved"
-          value={stats.resolved}
-          icon={CheckCircle2}
-        />
-        <StatCard label="Closed" value={stats.closed} icon={ShieldCheck} />
-      </div>
-
       <Card className="gap-0">
         <CardHeader className="border-b">
-          <CardTitle>Concern queue</CardTitle>
+          <CardTitle>Concern inbox</CardTitle>
           <CardDescription>
-            {total} {total === 1 ? "concern" : "concerns"} match this view
+            {total} {total === 1 ? "concern" : "concerns"}
           </CardDescription>
-          <CardAction>
-            <UrlFilterSelect
-              field="sort"
-              label="Sort concerns"
-              options={concernSortOptions}
-              defaultValue="activity-desc"
-              className="w-48"
-            />
-          </CardAction>
         </CardHeader>
-        <CardContent className="border-b py-4">
-          <FilterToolbar controls={filterControls} />
-        </CardContent>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-350 text-sm">
+          <table className="w-full min-w-250 text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground">
               <tr>
-                {[
-                  "Employee",
-                  "Case",
-                  "Subject",
-                  "Category",
-                  "Status",
-                  "Priority",
-                  "Submitted",
-                  "Last updated",
-                  "",
-                ].map((heading) => (
-                  <th key={heading} className="px-4 py-3 font-medium">
-                    {heading}
-                  </th>
-                ))}
+                {["Employee", "Case", "Subject", "Category", "Submitted", ""].map(
+                  (heading) => (
+                    <th key={heading} className="px-4 py-3 font-medium">
+                      {heading}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
               {concerns.map((concern) => (
-                <tr key={concern.id} className="border-t">
+                <tr
+                  key={concern.id}
+                  className={concern.isNew ? "border-t bg-primary/[0.035]" : "border-t"}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <Image
@@ -206,29 +105,29 @@ export default async function EmployeeConcernsManagementPage({
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">
-                    {concern.caseNumber}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-primary">
+                        {concern.caseNumber}
+                      </span>
+                      {concern.isNew ? (
+                        <span className="rounded-full bg-primary px-2 py-0.5 text-[0.625rem] font-semibold text-primary-foreground">
+                          New
+                        </span>
+                      ) : null}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="max-w-64 truncate font-medium">
+                    <p className="max-w-72 truncate font-medium">
                       {concern.subject}
                     </p>
-                    <p className="mt-0.5 max-w-64 truncate text-xs text-muted-foreground">
+                    <p className="mt-0.5 max-w-72 truncate text-xs text-muted-foreground">
                       {concern.message}
                     </p>
                   </td>
                   <td className="px-4 py-3">{concern.category}</td>
-                  <td className="px-4 py-3">
-                    <ConcernStatusBadge status={concern.status} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <ConcernPriorityBadge priority={concern.priority} />
-                  </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {formatDateTime(concern.submittedAt)}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {formatDateTime(concern.lastActivityAt)}
                   </td>
                   <td className="px-4 py-3">
                     <Link
@@ -250,9 +149,9 @@ export default async function EmployeeConcernsManagementPage({
             <div className="mx-auto flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <Inbox className="size-5" />
             </div>
-            <h2 className="mt-4 font-semibold">No concerns match this view</h2>
+            <h2 className="mt-4 font-semibold">No employee concerns</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Adjust the filters or search to broaden the queue.
+              New submissions will appear here automatically.
             </p>
           </div>
         ) : null}
@@ -260,7 +159,7 @@ export default async function EmployeeConcernsManagementPage({
         <Pagination
           page={page}
           totalPages={totalPages}
-          parameters={filters}
+          parameters={parameters}
         />
       </Card>
     </section>

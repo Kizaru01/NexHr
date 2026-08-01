@@ -8,6 +8,7 @@ import {
 } from "@/lib/handler/user.helper";
 import Department from "@/models/department.model";
 import Employee from "@/models/employee.model";
+import EmployeeProfileNote from "@/models/employee-profile-note.model";
 import Position from "@/models/position.model";
 import type {
   EmployeeDirectoryResult,
@@ -181,6 +182,15 @@ export async function getEmployeeProfile(
     return null;
   }
 
+  const noteQueryTime = new Date();
+  const temporaryNotes = await EmployeeProfileNote.find({
+    employee: employee._id,
+    expiresAt: { $gt: noteQueryTime },
+  })
+    .populate("author", "email")
+    .sort({ createdAt: -1 })
+    .lean();
+
   const {
     address,
     avatar,
@@ -247,5 +257,20 @@ export async function getEmployeeProfile(
     accountActive,
     profileCompleted,
     welcomeEmailFailed: hasFailedWelcomeEmail(userId),
+    temporaryNotes: temporaryNotes.map((note) => ({
+      id: note._id.toString(),
+      author:
+        (note.author as unknown as { email?: string })?.email ?? "HR team",
+      body: note.body,
+      createdAt: serialiseDate(note.createdAt),
+      expiresAt: serialiseDate(note.expiresAt),
+      remainingDays: Math.max(
+        1,
+        Math.ceil(
+          (note.expiresAt.getTime() - noteQueryTime.getTime()) /
+            (24 * 60 * 60 * 1_000)
+        )
+      ),
+    })),
   };
 }

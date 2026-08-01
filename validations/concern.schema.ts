@@ -2,9 +2,8 @@ import z from "zod";
 
 import {
   CONCERN_CATEGORIES,
-  CONCERN_PRIORITIES,
-  CONCERN_STATUSES,
 } from "@/constants/concerns";
+import { noteDurationDaysSchema } from "@/validations/note.schema";
 
 const objectIdSchema = (label: string) =>
   z
@@ -57,17 +56,6 @@ export const createConcernSchema = z.object({
   attachments: attachmentsSchema,
 });
 
-export const concernStatusUpdateSchema = z.object({
-  concernId: objectIdSchema("Concern"),
-  status: z.enum(CONCERN_STATUSES),
-  reason: z.string().trim().max(500).optional(),
-});
-
-export const concernPriorityUpdateSchema = z.object({
-  concernId: objectIdSchema("Concern"),
-  priority: z.enum(CONCERN_PRIORITIES),
-});
-
 export const concernInternalNoteSchema = z.object({
   concernId: objectIdSchema("Concern"),
   note: z
@@ -75,6 +63,7 @@ export const concernInternalNoteSchema = z.object({
     .trim()
     .min(2, "Note must contain at least 2 characters.")
     .max(3_000),
+  durationDays: noteDurationDaysSchema,
 });
 
 export const concernIdSchema = z.object({
@@ -85,12 +74,6 @@ export type ConcernAttachmentInput = z.infer<
   typeof concernAttachmentInputSchema
 >;
 export type CreateConcernInput = z.infer<typeof createConcernSchema>;
-export type ConcernStatusUpdateInput = z.infer<
-  typeof concernStatusUpdateSchema
->;
-export type ConcernPriorityUpdateInput = z.infer<
-  typeof concernPriorityUpdateSchema
->;
 export type ConcernInternalNoteInput = z.infer<
   typeof concernInternalNoteSchema
 >;

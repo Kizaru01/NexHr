@@ -2,11 +2,7 @@ import { Document, model, models, Schema } from "mongoose";
 
 import {
   CONCERN_CATEGORIES,
-  CONCERN_PRIORITIES,
-  CONCERN_STATUSES,
   type ConcernCategory,
-  type ConcernPriority,
-  type ConcernStatus,
 } from "@/constants/concerns";
 
 export interface IConcern {
@@ -16,16 +12,9 @@ export interface IConcern {
   subject: string;
   message: string;
   category: ConcernCategory;
-  priority: ConcernPriority;
-  status: ConcernStatus;
   attachmentCount: number;
-  lastActivityAt: Date;
+  isViewed: boolean;
   viewedAt?: Date;
-  resolvedAt?: Date;
-  closedAt?: Date;
-  isArchived: boolean;
-  archivedAt?: Date;
-  archivedBy?: Schema.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,37 +49,15 @@ const ConcernSchema = new Schema<IConcernDoc>(
       enum: CONCERN_CATEGORIES,
       required: true,
     },
-    priority: {
-      type: String,
-      enum: CONCERN_PRIORITIES,
-      required: true,
-      default: "Medium",
-    },
-    status: {
-      type: String,
-      enum: CONCERN_STATUSES,
-      required: true,
-      default: "New",
-    },
     attachmentCount: { type: Number, default: 0, min: 0 },
-    lastActivityAt: { type: Date, required: true, default: Date.now },
+    isViewed: { type: Boolean, default: false },
     viewedAt: Date,
-    resolvedAt: Date,
-    closedAt: Date,
-    isArchived: { type: Boolean, default: false },
-    archivedAt: Date,
-    archivedBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );
 
-ConcernSchema.index({ employee: 1, isArchived: 1, lastActivityAt: -1 });
-ConcernSchema.index({
-  isArchived: 1,
-  status: 1,
-  priority: 1,
-  lastActivityAt: -1,
-});
+ConcernSchema.index({ employee: 1, createdAt: -1 });
+ConcernSchema.index({ isViewed: 1, createdAt: -1 });
 ConcernSchema.index({ subject: "text", caseNumber: "text" });
 
 const Concern =

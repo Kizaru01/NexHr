@@ -8,9 +8,7 @@ export interface INotification {
     | "Attendance Correction Approved"
     | "New Announcement"
     | "Payslip Available"
-    | "Concern Submitted"
-    | "Concern Status Changed"
-    | "Concern Resolved";
+    | "Concern Submitted";
   title: string;
   description: string;
   href?: string;
@@ -33,8 +31,6 @@ const NotificationSchema = new Schema<INotificationDoc>(
         "New Announcement",
         "Payslip Available",
         "Concern Submitted",
-        "Concern Status Changed",
-        "Concern Resolved",
       ],
       required: true,
     },

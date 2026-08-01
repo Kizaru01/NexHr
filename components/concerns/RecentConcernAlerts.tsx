@@ -2,10 +2,6 @@ import Link from "next/link";
 
 import { ArrowRight, BellRing, MessageSquareWarning } from "lucide-react";
 
-import {
-  ConcernPriorityBadge,
-  ConcernStatusBadge,
-} from "@/components/concerns/ConcernBadges";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,8 +27,7 @@ export default function RecentConcernAlerts({
           <BellRing className="size-5" />
         </div>
         <CardTitle>
-          {alerts.unread} unread employee{" "}
-          {alerts.unread === 1 ? "concern" : "concern updates"}
+          {alerts.unread} new employee {alerts.unread === 1 ? "concern" : "concerns"}
         </CardTitle>
         <CardDescription>
           Review new submissions that are waiting for the HR team.
@@ -60,8 +55,6 @@ export default function RecentConcernAlerts({
                 <span className="text-xs font-semibold text-primary">
                   {concern.caseNumber}
                 </span>
-                <ConcernPriorityBadge priority={concern.priority} />
-                <ConcernStatusBadge status={concern.status} />
               </div>
               <p className="mt-2 truncate text-sm font-semibold group-hover:text-primary">
                 {concern.subject}

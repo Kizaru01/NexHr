@@ -1,5 +1,6 @@
 import { LockKeyhole } from "lucide-react";
 
+import ConcernNoteComposer from "@/components/concerns/ConcernNoteComposer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ConcernNoteView } from "@/types/concerns";
 
@@ -12,9 +13,20 @@ function formatDateTime(value: string | null): string {
   }).format(new Date(value));
 }
 
+function formatExpiration(value: string | null): string {
+  if (!value) return "No expiration set";
+
+  return `Visible until ${new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))}`;
+}
+
 export default function ConcernInternalNotes({
+  concernId,
   notes,
 }: {
+  concernId: string;
   notes: ConcernNoteView[];
 }): React.JSX.Element {
   return (
@@ -25,7 +37,7 @@ export default function ConcernInternalNotes({
           Internal notes
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {notes.length ? (
           <div className="space-y-3">
             {notes.map((note) => (
@@ -39,6 +51,9 @@ export default function ConcernInternalNotes({
                 <p className="mt-2 text-[0.6875rem] text-muted-foreground">
                   {note.author} · {formatDateTime(note.createdAt)}
                 </p>
+                <p className="mt-1 text-[0.6875rem] font-medium text-warning-foreground">
+                  {formatExpiration(note.expiresAt)}
+                </p>
               </article>
             ))}
           </div>
@@ -48,6 +63,7 @@ export default function ConcernInternalNotes({
             the employee.
           </p>
         )}
+        <ConcernNoteComposer concernId={concernId} />
       </CardContent>
     </Card>
   );

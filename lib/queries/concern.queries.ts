@@ -5,10 +5,8 @@ import { Types } from "mongoose";
 import connectToDatabase from "@/database/mongodb";
 import ConcernAttachment from "@/models/concern-attachment.model";
 import ConcernNote from "@/models/concern-note.model";
-import ConcernStatusHistory from "@/models/concern-status-history.model";
 import Concern from "@/models/concern.model";
 import Department from "@/models/department.model";
-import Employee from "@/models/employee.model";
 import Notification from "@/models/notification.model";
 import Position from "@/models/position.model";
 import User from "@/models/user.model";
@@ -17,8 +15,7 @@ import type {
   ConcernDashboardAlerts,
   ConcernDetail,
   ConcernListItem,
-  EmployeeConcernListResult,
-  HrConcernDashboardResult,
+  ConcernListResult,
 } from "@/types/concerns";
 import type { FilterValues } from "@/types/filters";
 
@@ -27,18 +24,9 @@ void Position;
 void User;
 
 const PAGE_SIZE = 10;
-const CONCERN_NOTIFICATION_TYPES = [
-  "Concern Submitted",
-  "Concern Status Changed",
-  "Concern Resolved",
-] as const;
 
 function safePage(value?: string): number {
   return Math.max(Number(value) || 1, 1);
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function fullName(employee: {
@@ -52,7 +40,6 @@ function fullName(employee: {
 }
 
 type PopulatedEmployee = {
-  _id: Types.ObjectId;
   userId?: { email?: string };
   employeeId: string;
   firstName?: string;
@@ -67,27 +54,30 @@ type PopulatedConcern = {
   _id: Types.ObjectId;
   caseNumber: string;
   employee?: PopulatedEmployee;
-  subject: ConcernListItem["subject"];
+  subject: string;
   message: string;
   category: ConcernListItem["category"];
-  status: ConcernListItem["status"];
-  priority: ConcernListItem["priority"];
-  createdAt: Date;
-  updatedAt: Date;
-  lastActivityAt: Date;
   attachmentCount: number;
-  isArchived: boolean;
+  isViewed: boolean;
   viewedAt?: Date;
-  resolvedAt?: Date;
-  closedAt?: Date;
+  createdAt: Date;
+};
+
+const concernPopulation = {
+  path: "employee",
+  select:
+    "userId employeeId firstName middleName lastName avatar department position",
+  populate: [
+    { path: "userId", select: "email" },
+    { path: "department", select: "name" },
+    { path: "position", select: "name" },
+  ],
 };
 
 function toListItem(concern: PopulatedConcern): ConcernListItem | null {
   const employee = concern.employee;
 
-  if (!employee) {
-    return null;
-  }
+  if (!employee) return null;
 
   return {
     id: concern._id.toString(),
@@ -99,128 +89,32 @@ function toListItem(concern: PopulatedConcern): ConcernListItem | null {
     subject: concern.subject,
     message: concern.message,
     category: concern.category,
-    status: concern.status,
-    priority: concern.priority,
     submittedAt: serialiseDate(concern.createdAt),
-    updatedAt: serialiseDate(concern.updatedAt),
-    lastActivityAt: serialiseDate(concern.lastActivityAt),
     attachmentCount: concern.attachmentCount,
+    isNew: !concern.isViewed,
   };
-}
-
-const concernPopulation = [
-  {
-    path: "employee",
-    select:
-      "userId employeeId firstName middleName lastName avatar department position",
-    populate: [
-      { path: "userId", select: "email" },
-      { path: "department", select: "name" },
-      { path: "position", select: "name" },
-    ],
-  },
-];
-
-async function employeeIdsForDepartment(
-  department?: string
-): Promise<Types.ObjectId[] | undefined> {
-  if (!department) return undefined;
-
-  if (!Types.ObjectId.isValid(department)) {
-    return [];
-  }
-
-  return Employee.distinct("_id", { department });
-}
-
-async function employeeIdsForSearch(search: string): Promise<Types.ObjectId[]> {
-  const expression = new RegExp(escapeRegExp(search), "i");
-  const matchingUsers = await User.distinct("_id", { email: expression });
-
-  return Employee.distinct("_id", {
-    $or: [
-      { firstName: expression },
-      { middleName: expression },
-      { lastName: expression },
-      { employeeId: expression },
-      { userId: { $in: matchingUsers } },
-    ],
-  });
 }
 
 export async function getHrConcernDashboard(
   filters: FilterValues
-): Promise<HrConcernDashboardResult> {
+): Promise<ConcernListResult> {
   await connectToDatabase();
 
   const page = safePage(filters.page);
-  const baseQuery: Record<string, unknown> = { isArchived: false };
-  const departmentEmployeeIds = await employeeIdsForDepartment(
-    filters.department
-  );
-
-  if (departmentEmployeeIds) {
-    baseQuery.employee = { $in: departmentEmployeeIds };
-  }
-
-  const recordQuery: Record<string, unknown> = { ...baseQuery };
-  const search = filters.search?.trim();
-
-  if (search) {
-    const expression = new RegExp(escapeRegExp(search), "i");
-    const matchingEmployeeIds = await employeeIdsForSearch(search);
-    recordQuery.$or = [
-      { caseNumber: expression },
-      { subject: expression },
-      { message: expression },
-      { category: expression },
-      { employee: { $in: matchingEmployeeIds } },
-    ];
-  }
-  if (filters.status) recordQuery.status = filters.status;
-  if (filters.category) recordQuery.category = filters.category;
-  if (filters.priority) recordQuery.priority = filters.priority;
-
-  let sort: Record<string, 1 | -1> = { lastActivityAt: -1 };
-
-  if (filters.sort === "submitted-asc") {
-    sort = { createdAt: 1 };
-  } else if (filters.sort === "submitted-desc") {
-    sort = { createdAt: -1 };
-  }
-
-  const [entries, total, statusCounts] = await Promise.all([
-    Concern.find(recordQuery)
+  const [entries, total] = await Promise.all([
+    Concern.find({})
       .populate(concernPopulation)
-      .sort(sort)
+      .sort({ isViewed: 1, createdAt: -1 })
       .skip((page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .lean(),
-    Concern.countDocuments(recordQuery),
-    Concern.aggregate<{ _id: string; count: number }>([
-      { $match: baseQuery },
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
+    Concern.countDocuments(),
   ]);
-  const counts = Object.fromEntries(
-    statusCounts.map((record) => [record._id, record.count])
-  );
-  const inProgress = (counts.Viewed ?? 0) + (counts["In Progress"] ?? 0);
 
   return {
     concerns: entries
       .map((entry) => toListItem(entry as unknown as PopulatedConcern))
       .filter((entry): entry is ConcernListItem => Boolean(entry)),
-    stats: {
-      total: Object.values(counts).reduce(
-        (totalCount, count) => totalCount + count,
-        0
-      ),
-      new: counts.New ?? 0,
-      inProgress,
-      resolved: counts.Resolved ?? 0,
-      closed: counts.Closed ?? 0,
-    },
     page,
     totalPages: Math.max(Math.ceil(total / PAGE_SIZE), 1),
     total,
@@ -230,54 +124,25 @@ export async function getHrConcernDashboard(
 export async function getEmployeeConcernList(
   employeeId: string,
   filters: FilterValues
-): Promise<EmployeeConcernListResult> {
+): Promise<ConcernListResult> {
   await connectToDatabase();
 
   const page = safePage(filters.page);
-  const baseQuery = { employee: employeeId, isArchived: false };
-  const recordQuery: Record<string, unknown> = { ...baseQuery };
-  const search = filters.search?.trim();
-
-  if (search) {
-    const expression = new RegExp(escapeRegExp(search), "i");
-    recordQuery.$or = [
-      { caseNumber: expression },
-      { subject: expression },
-      { message: expression },
-      { category: expression },
-    ];
-  }
-  if (filters.status) recordQuery.status = filters.status;
-
-  const [entries, total, statusCounts] = await Promise.all([
-    Concern.find(recordQuery)
+  const query = { employee: employeeId };
+  const [entries, total] = await Promise.all([
+    Concern.find(query)
       .populate(concernPopulation)
-      .sort({ lastActivityAt: -1 })
+      .sort({ createdAt: -1 })
       .skip((page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .lean(),
-    Concern.countDocuments(recordQuery),
-    Concern.aggregate<{ _id: string; count: number }>([
-      { $match: baseQuery },
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
+    Concern.countDocuments(query),
   ]);
-  const counts = Object.fromEntries(
-    statusCounts.map((record) => [record._id, record.count])
-  );
+
   return {
     concerns: entries
       .map((entry) => toListItem(entry as unknown as PopulatedConcern))
       .filter((entry): entry is ConcernListItem => Boolean(entry)),
-    stats: {
-      total: Object.values(counts).reduce(
-        (totalCount, count) => totalCount + count,
-        0
-      ),
-      inReview: (counts.New ?? 0) + (counts.Viewed ?? 0),
-      inProgress: counts["In Progress"] ?? 0,
-      resolved: counts.Resolved ?? 0,
-    },
     page,
     totalPages: Math.max(Math.ceil(total / PAGE_SIZE), 1),
     total,
@@ -298,14 +163,14 @@ export async function getConcernDetail({
   const selector = Types.ObjectId.isValid(idOrCaseNumber)
     ? { _id: idOrCaseNumber }
     : { caseNumber: idOrCaseNumber.toUpperCase() };
-  const concernQuery: Record<string, unknown> = { ...selector };
+  const query: Record<string, unknown> = { ...selector };
 
   if (role === "employee") {
     if (!employeeId) return null;
-    concernQuery.employee = employeeId;
+    query.employee = employeeId;
   }
 
-  const concern = await Concern.findOne(concernQuery)
+  const concern = await Concern.findOne(query)
     .populate(concernPopulation)
     .lean();
 
@@ -317,31 +182,30 @@ export async function getConcernDetail({
 
   if (!listItem || !employee) return null;
 
-  const [attachments, notes, history] = await Promise.all([
+  const [attachments, notes] = await Promise.all([
     ConcernAttachment.find({ concern: populatedConcern._id })
       .select("name mimeType size")
       .sort({ createdAt: 1 })
       .lean(),
     role === "employee"
       ? Promise.resolve([])
-      : ConcernNote.find({ concern: populatedConcern._id })
+      : ConcernNote.find({
+          concern: populatedConcern._id,
+          $or: [
+            { expiresAt: { $gt: new Date() } },
+            { expiresAt: { $exists: false } },
+          ],
+        })
           .populate("author", "email")
           .sort({ createdAt: -1 })
           .lean(),
-    ConcernStatusHistory.find({ concern: populatedConcern._id })
-      .populate("changedBy", "email")
-      .sort({ createdAt: 1 })
-      .lean(),
   ]);
 
   return {
     ...listItem,
     employeeEmail: employee.userId?.email ?? "",
     employeePosition: employee.position?.name ?? "Unassigned",
-    isArchived: populatedConcern.isArchived,
     viewedAt: serialiseDate(populatedConcern.viewedAt),
-    resolvedAt: serialiseDate(populatedConcern.resolvedAt),
-    closedAt: serialiseDate(populatedConcern.closedAt),
     attachments: attachments.map((attachment) => ({
       id: attachment._id.toString(),
       name: attachment.name,
@@ -354,16 +218,7 @@ export async function getConcernDetail({
         (note.author as unknown as { email?: string })?.email ?? "HR team",
       body: note.body,
       createdAt: serialiseDate(note.createdAt),
-    })),
-    history: history.map((entry) => ({
-      id: entry._id.toString(),
-      from: entry.from,
-      to: entry.to,
-      changedBy:
-        (entry.changedBy as unknown as { email?: string })?.email ??
-        "System",
-      reason: entry.reason,
-      createdAt: serialiseDate(entry.createdAt),
+      expiresAt: serialiseDate(note.expiresAt),
     })),
   };
 }
@@ -374,7 +229,7 @@ export async function getConcernUnreadCount(userId: string): Promise<number> {
   return Notification.countDocuments({
     recipient: userId,
     isRead: false,
-    type: { $in: CONCERN_NOTIFICATION_TYPES },
+    type: "Concern Submitted",
   });
 }
 
@@ -388,31 +243,22 @@ export async function getConcernDashboardAlerts(
     Notification.find({
       recipient: userId,
       isRead: false,
-      type: { $in: CONCERN_NOTIFICATION_TYPES },
+      type: "Concern Submitted",
       entityType: "Concern",
       entityId: { $exists: true },
     })
       .select("entityId")
       .sort({ createdAt: -1 })
-      .limit(12)
+      .limit(5)
       .lean(),
   ]);
-  const concernIds = Array.from(
-    new Set(
-      notifications
-        .map((notification) => notification.entityId?.toString())
-        .filter((id): id is string => Boolean(id))
-    )
-  ).slice(0, 5);
+  const concernIds = notifications
+    .map((notification) => notification.entityId?.toString())
+    .filter((id): id is string => Boolean(id));
 
-  if (!concernIds.length) {
-    return { unread, concerns: [] };
-  }
+  if (!concernIds.length) return { unread, concerns: [] };
 
-  const concerns = await Concern.find({
-    _id: { $in: concernIds },
-    isArchived: false,
-  })
+  const concerns = await Concern.find({ _id: { $in: concernIds } })
     .populate(concernPopulation)
     .lean();
   const byId = new Map(
@@ -436,9 +282,6 @@ export async function getConcernDashboardAlerts(
           caseNumber: concern.caseNumber,
           subject: concern.subject,
           employee: fullName(employee),
-          priority: concern.priority,
-          status: concern.status,
-          createdAt: serialiseDate(concern.createdAt),
         },
       ];
     }),

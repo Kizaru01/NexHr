@@ -133,8 +133,7 @@ export default function ConcernComposer(): React.JSX.Element {
             <p className="text-xs font-semibold">Private HR channel</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
               Only you and authorized HR or admin staff can access this
-              letter. HR will review it and keep the status updated in your
-              portal.
+              letter.
             </p>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import EmptyState from "@/components/employee-portal/EmptyState";
+import EmployeeHrNotes from "@/components/employee-portal/EmployeeHrNotes";
 import PageHeader from "@/components/employee-portal/PageHeader";
 import StatCard from "@/components/hr/StatCard";
 import StatusBadge from "@/components/hr/StatusBadge";
@@ -33,6 +34,7 @@ export default async function EmployeeDashboardPage(): Promise<
   const {
     announcements,
     holidays,
+    hrNotes,
     recentLeaves,
     stats,
     todayAttendance,
@@ -57,6 +59,8 @@ export default async function EmployeeDashboardPage(): Promise<
           </Button>
         }
       />
+
+      <EmployeeHrNotes notes={hrNotes} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard

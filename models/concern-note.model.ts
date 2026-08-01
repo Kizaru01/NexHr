@@ -4,6 +4,7 @@ export interface IConcernNote {
   concern: Schema.Types.ObjectId;
   author: Schema.Types.ObjectId;
   body: string;
+  expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,11 +26,13 @@ const ConcernNoteSchema = new Schema<IConcernNoteDoc>(
       immutable: true,
     },
     body: { type: String, required: true, trim: true, maxlength: 3_000 },
+    expiresAt: { type: Date, required: true },
   },
   { timestamps: true }
 );
 
-ConcernNoteSchema.index({ concern: 1, createdAt: -1 });
+ConcernNoteSchema.index({ concern: 1, expiresAt: 1, createdAt: -1 });
+ConcernNoteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const ConcernNote =
   models?.ConcernNote ||

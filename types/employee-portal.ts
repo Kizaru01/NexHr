@@ -189,6 +189,12 @@ export type EmployeeNotificationsResult = {
 };
 
 export type EmployeeDashboardResult = {
+  hrNotes: Array<{
+    id: string;
+    body: string;
+    createdAt: string | null;
+    expiresAt: string | null;
+  }>;
   stats: {
     attendanceToday: IAttendance["status"] | "Not recorded";
     remainingLeave: number;

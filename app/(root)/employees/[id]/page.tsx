@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatusBadge from "@/components/hr/StatusBadge";
 import ResendWelcomeEmailButton from "@/components/employees/ResendWelcomeEmailButton";
+import EmployeeProfileNotes from "@/components/employees/EmployeeProfileNotes";
 type PageProps = { params: Promise<{ id: string }> };
 const value = (item?: string | null) => item || "Not provided";
 function ProfileSection({
@@ -55,7 +56,9 @@ function Detail({
     </div>
   );
 }
-export default async function EmployeeProfilePage({ params }: PageProps): Promise<React.JSX.Element> {
+export default async function EmployeeProfilePage({
+  params,
+}: PageProps): Promise<React.JSX.Element> {
   await requireHrAdminPage();
 
   const { id } = await params;
@@ -96,6 +99,10 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
         </CardContent>
       </Card>
       <div className="grid gap-6 lg:grid-cols-2">
+        <EmployeeProfileNotes
+          employeeId={employee.employeeId}
+          notes={employee.temporaryNotes}
+        />
         <ProfileSection title="Personal information" icon={UserRound}>
           <Detail label="Email">{email}</Detail>
           <Detail label="Phone">{value(employee.phone)}</Detail>
@@ -154,7 +161,7 @@ export default async function EmployeeProfilePage({ params }: PageProps): Promis
               ? new Date(employee.updatedAt).toLocaleString()
               : "—"}
           </Detail>
-          <Detail label="Notes">{value(employee.notes)}</Detail>
+          <Detail label="Employment remarks">{value(employee.notes)}</Detail>
         </ProfileSection>
       </div>
     </section>

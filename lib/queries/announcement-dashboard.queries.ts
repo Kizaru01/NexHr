@@ -24,6 +24,7 @@ const categories = [
   "Events",
 ] as const;
 const priorities = ["Low", "Normal", "High"] as const;
+
 const sorts: Record<string, SortDefinition> = {
   newest: { createdAt: -1 },
   oldest: { createdAt: 1 },
